@@ -15,9 +15,14 @@ export default function DebtGroupsPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div>
-        <h2 className="text-lg font-semibold text-primary">Nhóm nợ</h2>
-        <p className="text-xs text-muted">{openGroups.length} nhóm đang mở</p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold text-primary">Nhóm nợ</h2>
+          <p className="text-xs text-muted">{openGroups.length} nhóm đang mở</p>
+        </div>
+        <a href="/debts/new" className="btn-accent text-xs px-3 py-1.5 rounded-sm">
+          + Tạo nợ
+        </a>
       </div>
 
       {/* Filter */}

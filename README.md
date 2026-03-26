@@ -33,11 +33,13 @@ npm run dev
 |---|---|
 | `/login` | Login |
 | `/` | Dashboard — Net Worth, Nợ, Giao dịch gần đây |
-| `/transactions` | Danh sách giao dịch |
-| `/add` | Thêm giao dịch mới |
+| `/transactions` | Danh sách giao dịch + filter tabs |
+| `/add` | Thêm giao dịch mới (Quick + Advanced) |
 | `/debts` | Nhóm nợ BNPL / vay nợ |
+| `/debts/new` | Tạo nhóm nợ mới |
 | `/debts/:id` | Chi tiết nhóm nợ + thanh toán |
-| `/wallets` | Quản lý ví |
+| `/wallets` | Quản lý ví (CRUD) |
+| `/profile` | Cài đặt + đăng xuất |
 
 ## Design System
 

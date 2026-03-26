@@ -9,7 +9,9 @@ const TransactionsPage = lazy(() => import('@/pages/wallet/TransactionsPage'))
 const AddTransactionPage = lazy(() => import('@/pages/wallet/AddTransactionPage'))
 const DebtGroupsPage = lazy(() => import('@/pages/wallet/DebtGroupsPage'))
 const DebtGroupDetailPage = lazy(() => import('@/pages/wallet/DebtGroupDetailPage'))
+const CreateDebtGroupPage = lazy(() => import('@/pages/wallet/CreateDebtGroupPage'))
 const WalletsPage = lazy(() => import('@/pages/wallet/WalletsPage'))
+const ProfilePage = lazy(() => import('@/pages/wallet/ProfilePage'))
 const LoginPage = lazy(() => import('@/pages/wallet/LoginPage'))
 
 const queryClient = new QueryClient({
@@ -141,7 +143,9 @@ export default function App() {
           <Route path="/transactions" element={<ProtectedRoute><AppShell><TransactionsPage /></AppShell></ProtectedRoute>} />
           <Route path="/add" element={<ProtectedRoute><AppShell><AddTransactionPage /></AppShell></ProtectedRoute>} />
           <Route path="/debts" element={<ProtectedRoute><AppShell><DebtGroupsPage /></AppShell></ProtectedRoute>} />
+          <Route path="/debts/new" element={<ProtectedRoute><AppShell><CreateDebtGroupPage /></AppShell></ProtectedRoute>} />
           <Route path="/debts/:id" element={<ProtectedRoute><AppShell><DebtGroupDetailPage /></AppShell></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><AppShell><ProfilePage /></AppShell></ProtectedRoute>} />
           <Route path="/wallets" element={<ProtectedRoute><AppShell><WalletsPage /></AppShell></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

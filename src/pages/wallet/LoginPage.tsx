@@ -1,10 +1,10 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
 import apiClient from '@/api/client'
+import { useAuthStore } from '@/stores/authStore'
 
 export default function LoginPage() {
-  const navigate = useNavigate()
+  const setToken = useAuthStore((s) => s.setToken)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
@@ -14,7 +14,7 @@ export default function LoginPage() {
     setLoading(true)
     try {
       const res = await apiClient.post('/auth/login', { email, password })
-      localStorage.setItem('wallet_token', res.data.token)
+      setToken(res.data.token)
       toast.success('Đăng nhập thành công!')
       window.location.href = '/'
     } catch (err: unknown) {
