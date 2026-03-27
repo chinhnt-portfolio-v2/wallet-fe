@@ -48,7 +48,6 @@ export default function DebtGroupsPage() {
           {[1, 2, 3].map((i) => <CardSkeleton key={i} />)}
         </div>
       )}
-      )}
 
       {/* Error */}
       {error && (

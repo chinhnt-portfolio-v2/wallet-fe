@@ -2,11 +2,14 @@ import axios from 'axios'
 
 const BASE_URL = '/api/v1'
 
-export const apiClient = axios.create({
+const apiClient = axios.create({
   baseURL: BASE_URL,
   timeout: 10_000,
   headers: { 'Content-Type': 'application/json' },
 })
+
+export const { get, post, put, delete: del, patch } = apiClient
+export default apiClient
 
 apiClient.interceptors.request.use((config) => {
   const token = localStorage.getItem('wallet_token')

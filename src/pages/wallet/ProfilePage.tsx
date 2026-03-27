@@ -1,14 +1,11 @@
-import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { Card } from '@/components/ui/Card'
-import { Button } from '@/components/ui/Button'
 
 export default function ProfilePage() {
-  const navigate = useNavigate()
-  const { clearTokens } = useAuthStore()
+  const clearToken = useAuthStore((s) => s.clearToken)
 
   const handleLogout = () => {
-    clearTokens()
+    clearToken()
     localStorage.removeItem('wallet_theme')
     window.location.href = '/login'
   }

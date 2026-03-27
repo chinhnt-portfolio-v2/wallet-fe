@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { toast } from 'sonner'
-import { useDebtGroup } from '@/hooks/useDebtGroups'
+import { useDebtGroup, useSettleDebt } from '@/hooks/useDebtGroups'
 import { useWallets } from '@/hooks/useWallets'
 import { useTransactions } from '@/hooks/useTransactions'
 import { Card } from '@/components/ui/Card'

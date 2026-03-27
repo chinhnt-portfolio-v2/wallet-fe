@@ -2,10 +2,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import type { Transaction, CreateTransactionRequest } from '@/types'
 
-export function useTransactions(params?: { type?: string; size?: number }) {
+export function useTransactions(params?: { type?: string; size?: number; groupId?: number }) {
   return useQuery<Transaction[]>({
     queryKey: ['transactions', params],
-    queryFn: () => apiClient.get('/wallet/transactions', { params }).then((r) => r.data),
+    queryFn: () => apiClient.get('/wallet/transactions', { params: params as Record<string, string | number> }).then((r) => r.data),
   })
 }
 
