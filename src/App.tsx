@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
@@ -133,21 +133,6 @@ function AppShell({ children }: { children: React.ReactNode }) {
 }
 
 export default function App() {
-  // Handle OAuth2 callback: extract tokens from URL query params
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const accessToken = params.get('accessToken')
-    const refreshToken = params.get('refreshToken')
-    const tokenType = params.get('tokenType')
-
-    if (accessToken && refreshToken && tokenType) {
-      localStorage.setItem('wallet_token', accessToken)
-      localStorage.setItem('wallet_refresh_token', refreshToken)
-      // Remove query params from URL
-      window.history.replaceState({}, '', window.location.pathname)
-    }
-  }, [])
-
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>

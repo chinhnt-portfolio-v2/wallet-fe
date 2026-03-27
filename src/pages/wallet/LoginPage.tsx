@@ -2,6 +2,21 @@ const API_BASE = (import.meta.env.VITE_API_BASE_URL || '') + '/api'
 const FRONTEND_URL = window.location.origin
 
 export default function LoginPage() {
+  // Handle OAuth2 callback: extract tokens from URL, store, redirect to dashboard
+  const params = new URLSearchParams(window.location.search)
+  const accessToken = params.get('accessToken')
+  const refreshToken = params.get('refreshToken')
+  const tokenType = params.get('tokenType')
+
+  if (accessToken && refreshToken && tokenType) {
+    localStorage.setItem('wallet_token', accessToken)
+    localStorage.setItem('wallet_refresh_token', refreshToken)
+    // Clean URL immediately, then navigate to dashboard
+    window.history.replaceState({}, '', '/')
+    window.location.href = '/'
+    return null
+  }
+
   const handleGoogleLogin = () => {
     window.location.href = `${API_BASE}/v1/auth/oauth2/login/google?redirect_uri=${encodeURIComponent(FRONTEND_URL)}`
   }
