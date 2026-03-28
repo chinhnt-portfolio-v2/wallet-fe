@@ -1,8 +1,12 @@
+import { useNavigate } from 'react-router-dom'
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '') + '/api'
 const FRONTEND_URL = window.location.origin
 
 export default function LoginPage() {
-  // Handle OAuth2 callback: extract tokens from URL, store, redirect to dashboard
+  const navigate = useNavigate()
+
+  // Handle OAuth2 callback: extract tokens from URL, store, navigate to dashboard
   const params = new URLSearchParams(window.location.search)
   const accessToken = params.get('accessToken')
   const refreshToken = params.get('refreshToken')
@@ -11,9 +15,9 @@ export default function LoginPage() {
   if (accessToken && refreshToken && tokenType) {
     localStorage.setItem('wallet_token', accessToken)
     localStorage.setItem('wallet_refresh_token', refreshToken)
-    // Clean URL immediately, then navigate to dashboard
+    // Clean URL then navigate via React Router (no full reload)
     window.history.replaceState({}, '', '/')
-    window.location.href = '/'
+    navigate('/', { replace: true })
     return null
   }
 
