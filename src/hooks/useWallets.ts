@@ -6,6 +6,8 @@ export function useWallets() {
   return useQuery<Wallet[]>({
     queryKey: ['wallets'],
     queryFn: () => apiClient.get('/wallet/wallets').then((r) => r.data),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

@@ -6,5 +6,7 @@ export function useCategories() {
   return useQuery<Category[]>({
     queryKey: ['categories'],
     queryFn: () => apiClient.get('/wallet/categories').then((r) => r.data),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }

@@ -6,6 +6,8 @@ export function useTransactions(params?: { type?: string; size?: number; groupId
   return useQuery<Transaction[]>({
     queryKey: ['transactions', params],
     queryFn: () => apiClient.get('/wallet/transactions', { params: params as Record<string, string | number> }).then((r) => r.data),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -13,6 +15,8 @@ export function useRecentTransactions(size = 5) {
   return useQuery<Transaction[]>({
     queryKey: ['recent-txs', size],
     queryFn: () => apiClient.get('/wallet/transactions', { params: { size } }).then((r) => r.data),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 

@@ -6,6 +6,8 @@ export function useDebtGroups(status?: string) {
   return useQuery<DebtGroup[]>({
     queryKey: ['debt-groups', status],
     queryFn: () => apiClient.get('/wallet/groups', { params: { status } }).then((r) => r.data),
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
@@ -14,6 +16,8 @@ export function useDebtGroup(id: number | string) {
     queryKey: ['debt-group', id],
     queryFn: () => apiClient.get(`/wallet/groups/${id}`).then((r) => r.data),
     enabled: !!id,
+    staleTime: 0,
+    refetchOnMount: true,
   })
 }
 
