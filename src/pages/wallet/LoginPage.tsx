@@ -1,29 +1,7 @@
-import { useNavigate } from 'react-router-dom'
-import { useEffect } from 'react'
-
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '') + '/api'
 const FRONTEND_URL = window.location.origin
 
 export default function LoginPage() {
-  const navigate = useNavigate()
-
-  // Handle OAuth2 callback in useEffect (after render, stable)
-  useEffect(() => {
-    const params = new URLSearchParams(window.location.search)
-    const accessToken = params.get('accessToken')
-    const refreshToken = params.get('refreshToken')
-    const tokenType = params.get('tokenType')
-
-    if (accessToken && refreshToken && tokenType) {
-      console.log('[OAuth2] Tokens received! Saving to localStorage')
-      localStorage.setItem('wallet_token', accessToken)
-      localStorage.setItem('wallet_refresh_token', refreshToken)
-      // Clean URL, navigate to dashboard
-      window.history.replaceState({}, '', '/login')
-      navigate('/', { replace: true })
-    }
-  }, [navigate])
-
   const handleGoogleLogin = () => {
     window.location.href = API_BASE + '/v1/auth/oauth2/login/google?redirect_uri=' + encodeURIComponent(FRONTEND_URL)
   }

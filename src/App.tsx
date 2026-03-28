@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
@@ -132,11 +133,33 @@ function AppShell({ children }: { children: React.ReactNode }) {
   )
 }
 
+function OAuthCallbackHandler() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const accessToken = params.get('accessToken')
+    const refreshToken = params.get('refreshToken')
+    const tokenType = params.get('tokenType')
+
+    if (accessToken && refreshToken && tokenType) {
+      console.log('[OAuth] Tokens detected, saving to localStorage')
+      localStorage.setItem('wallet_token', accessToken)
+      localStorage.setItem('wallet_refresh_token', refreshToken)
+      window.history.replaceState(null, '', '/login')
+      navigate('/', { replace: true })
+    }
+  }, [navigate])
+
+  return null
+}
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
       <BrowserRouter>
         <Toaster position="bottom-center" richColors />
+        <OAuthCallbackHandler />
         <Routes>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/" element={<ProtectedRoute><AppShell><DashboardPage /></AppShell></ProtectedRoute>} />
