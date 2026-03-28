@@ -1,7 +1,14 @@
+import { Navigate } from 'react-router-dom'
+
 const API_BASE = (import.meta.env.VITE_API_BASE_URL || '') + '/api'
 const FRONTEND_URL = window.location.origin
 
 export default function LoginPage() {
+  const token = localStorage.getItem('wallet_token')
+  if (token) {
+    return <Navigate to="/" replace />
+  }
+
   const handleGoogleLogin = () => {
     window.location.href = API_BASE + '/v1/auth/oauth2/login/google?redirect_uri=' + encodeURIComponent(FRONTEND_URL)
   }
