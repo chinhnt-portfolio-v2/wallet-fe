@@ -7,8 +7,5 @@
   "regions": ["sin1"],
   "env": {
     "VITE_API_BASE_URL": "https://portfolio-platform-1095331155372.asia-southeast1.run.app"
-  },
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/index.html" }
-  ]
+  }
 }
