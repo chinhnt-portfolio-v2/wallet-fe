@@ -38,7 +38,7 @@ export default function WalletsPage() {
     )
   }
 
-  const active = wallets ?? []
+  const active = Array.isArray(wallets) ? wallets : []
   const byType = {
     CASH: active.filter((w) => w.type === 'CASH'),
     BANK: active.filter((w) => w.type === 'BANK'),
