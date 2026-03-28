@@ -143,7 +143,6 @@ function OAuthCallbackHandler() {
     const tokenType = params.get('tokenType')
 
     if (accessToken && refreshToken && tokenType) {
-      console.log('[OAuth] Tokens detected, saving to localStorage')
       localStorage.setItem('wallet_token', accessToken)
       localStorage.setItem('wallet_refresh_token', refreshToken)
       window.history.replaceState(null, '', '/')
