@@ -49,10 +49,13 @@ function ZoneA() {
 }
 
 function ZoneE() {
-  const { data: debts } = useOpenDebts()
+  const { data: debts, isLoading } = useOpenDebts()
   const navigate = useNavigate()
 
-  if (!debts || debts.length === 0) return null
+  if (isLoading) return null
+  if (!debts || !Array.isArray(debts) || debts.length === 0) return null
+
+  const visibleDebts = debts.slice(0, 3)
 
   return (
     <div className="space-y-2">
@@ -61,10 +64,10 @@ function ZoneE() {
         <a href="/debts" className="text-xs text-accent hover:underline">Xem tất cả</a>
       </div>
       <Card padding="none">
-        {debts.slice(0, 3).map((d, i) => (
+        {visibleDebts.map((d, i) => (
           <div
             key={d.groupId}
-            className={`flex items-center justify-between p-3 ${i < Math.min(debts.length, 3) - 1 ? 'border-b border-border' : ''}`}
+            className={`flex items-center justify-between p-3 ${i < visibleDebts.length - 1 ? 'border-b border-border' : ''}`}
           >
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-primary truncate">{d.title}</p>
@@ -98,7 +101,6 @@ function ZoneE() {
 
 function ZoneF() {
   const { data: txs, isLoading } = useRecentTransactions(5)
-  const navigate = useNavigate()
 
   return (
     <div className="space-y-2">
@@ -120,7 +122,7 @@ function ZoneF() {
               </div>
             ))}
           </div>
-        ) : txs && txs.length > 0 ? txs.map((tx, i) => (
+        ) : Array.isArray(txs) && txs.length > 0 ? txs.map((tx, i) => (
           <div
             key={tx.id}
             className={`flex items-center gap-3 p-3 ${i < txs.length - 1 ? 'border-b border-border' : ''}`}
