@@ -19,6 +19,7 @@ const TransferPage = lazy(() => import('@/pages/wallet/TransferPage'))
 const BudgetsPage = lazy(() => import('@/pages/wallet/BudgetsPage'))
 const RecurringPage = lazy(() => import('@/pages/wallet/RecurringPage'))
 const ExportPage = lazy(() => import('@/pages/wallet/ExportPage'))
+const NotificationsPage = lazy(() => import('@/pages/wallet/NotificationsPage'))
 const LoginPage = lazy(() => import('@/pages/wallet/LoginPage'))
 
 const queryClient = new QueryClient({
@@ -115,6 +116,16 @@ function AppShell({ children }: { children: React.ReactNode }) {
           </a>
           {/* Actions */}
           <div className="flex items-center gap-1">
+            <a
+              href="/notifications"
+              aria-label="Thông báo"
+              className="w-8 h-8 flex items-center justify-center rounded-md text-sm text-muted hover:text-primary hover:bg-surface-2 transition-colors relative"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+                <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+              </svg>
+            </a>
             <DarkModeToggle isDark={isDark} onToggle={toggleDark} />
             <a
               href="/profile"
@@ -269,6 +280,7 @@ export default function App() {
           <Route path="/budgets" element={<ProtectedRoute><AppShell><BudgetsPage /></AppShell></ProtectedRoute>} />
           <Route path="/recurring" element={<ProtectedRoute><AppShell><RecurringPage /></AppShell></ProtectedRoute>} />
           <Route path="/export" element={<ProtectedRoute><AppShell><ExportPage /></AppShell></ProtectedRoute>} />
+          <Route path="/notifications" element={<ProtectedRoute><AppShell><NotificationsPage /></AppShell></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

@@ -26,8 +26,8 @@ const STEPS = [
     total: 3,
     emoji: '📊',
     title: 'Theo dõi tài chính',
-    description: 'Xem báo cáo chi tiêu, quản lý nợ và kiểm soát dòng tiền dễ dàng.',
-    cta: 'Bắt đầu ngay',
+    description: 'Xem báo cáo chi tiêu, quản lý nợ và kiểm soát dòng tiền dễ dàng. Tạo ví đầu tiên để bắt đầu!',
+    cta: 'Tạo ví & thêm giao dịch',
   },
 ]
 
@@ -100,7 +100,7 @@ export function OnboardingModal() {
 
   const handleNext = async () => {
     if (isLast) {
-      // Create a sample wallet then navigate to /wallets
+      // Create a sample wallet then navigate to /wallets (where FAB is enabled)
       try {
         await createWallet.mutateAsync({
           name: 'Ví của tôi',
@@ -114,7 +114,7 @@ export function OnboardingModal() {
         // Wallet may already exist (race condition); navigate regardless
       }
       localStorage.setItem(STORAGE_KEY, 'true')
-      navigate('/wallets')
+      navigate('/wallets', { replace: true })
       return
     }
     setCurrent((c) => c + 1)

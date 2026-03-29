@@ -1,7 +1,9 @@
+import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDashboardSummary, useOpenDebts, useMonthlyComparison } from '@/hooks/useDashboard'
 import { useRecentTransactions } from '@/hooks/useTransactions'
 import { useBudgetWithSpending } from '@/hooks/useBudgets'
+import { checkDueDebts } from '@/lib/notifications'
 import { DashboardSkeleton } from '@/components/ui/Skeleton'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -133,6 +135,13 @@ function ZoneB() {
 function ZoneE() {
   const { data: debts, isLoading } = useOpenDebts()
   const navigate = useNavigate()
+
+  // Fire debt reminder notifications on mount
+  useEffect(() => {
+    if (debts && debts.length > 0) {
+      checkDueDebts(debts.map((d) => ({ id: d.groupId, title: d.title, dueDate: d.dueDate, remaining: d.remaining })))
+    }
+  }, [debts])
 
   if (isLoading) return null
   if (!debts || !Array.isArray(debts) || debts.length === 0) return null
