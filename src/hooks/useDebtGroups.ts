@@ -43,3 +43,21 @@ export function useSettleDebt(groupId: number | string) {
     },
   })
 }
+
+export function useUpdateDebtGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: CreateDebtGroupRequest & { id: number }) =>
+      apiClient.put(`/wallet/groups/${id}`, body).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['debt-groups'] }),
+  })
+}
+
+export function useDeleteDebtGroup() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) =>
+      apiClient.delete(`/wallet/groups/${id}`).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['debt-groups'] }),
+  })
+}

@@ -19,3 +19,21 @@ export function useCreateWallet() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ['wallets'] }),
   })
 }
+
+export function useUpdateWallet() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: CreateWalletRequest & { id: number }) =>
+      apiClient.put(`/wallet/wallets/${id}`, body).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['wallets'] }),
+  })
+}
+
+export function useDeleteWallet() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) =>
+      apiClient.delete(`/wallet/wallets/${id}`).then((r) => r.data),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['wallets'] }),
+  })
+}

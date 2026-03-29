@@ -10,7 +10,14 @@ import { useCategories } from '@/hooks/useCategories'
 import { useCreateTransaction } from '@/hooks/useTransactions'
 import { formatCurrency } from '@/lib/utils'
 import { WALLET_TYPE_LABEL } from '@/lib/utils'
-import type { TxnType } from '@/types'
+import type { TxnType, CreateTransactionRequest } from '@/types'
+
+// Helper: today's date + N days as YYYY-MM-DD
+function addDays(days: number): string {
+  const d = new Date()
+  d.setDate(d.getDate() + days)
+  return d.toISOString().split('T')[0]
+}
 
 export default function AddTransactionPage() {
   const navigate = useNavigate()
@@ -21,33 +28,60 @@ export default function AddTransactionPage() {
   const [note, setNote] = useState('')
   const [showAdvanced, setShowAdvanced] = useState(false)
 
+  // BNPL debt creation fields
+  const [createDebt, setCreateDebt] = useState(false)
+  const [debtTitle, setDebtTitle] = useState('')
+  const [debtDueDate, setDebtDueDate] = useState(addDays(30))
+  const [debtCounterparty, setDebtCounterparty] = useState('')
+
   const { data: wallets, isLoading: loadingWallets } = useWallets()
   const { data: categories } = useCategories()
   const createTx = useCreateTransaction()
 
   const filteredCategories = categories?.filter((c) => c.type === txType) ?? []
 
+  // Selected wallet info
+  const selectedWallet = wallets?.find((w) => w.id === walletId)
+  const isPostpaid = selectedWallet?.type === 'POSTPAID'
+  const isExpenseOnPostpaid = txType === 'EXPENSE' && isPostpaid
+
+  // When category is selected and wallet is POSTPAID, pre-fill debt title
+  const selectedCategory = categories?.find((c) => c.id === categoryId)
+  if (isExpenseOnPostpaid && selectedCategory && !debtTitle) {
+    setDebtTitle(`Mua hàng: ${selectedCategory.name}`)
+  }
+
   const handleSubmit = () => {
     if (!walletId || !amount) {
       toast.error('Chọn ví và nhập số tiền')
       return
     }
-    createTx.mutate(
-      {
-        walletId,
-        amount: parseFloat(amount),
-        type: txType,
-        categoryId: categoryId ?? undefined,
-        note: note || undefined,
+
+    const payload: CreateTransactionRequest = {
+      walletId,
+      amount: parseFloat(amount),
+      type: txType,
+      categoryId: categoryId ?? undefined,
+      note: note || undefined,
+    }
+
+    // If expense on POSTPAID wallet and user opted to create BNPL debt
+    if (isExpenseOnPostpaid && createDebt) {
+      payload.groupTitle = debtTitle || `Mua trả sau ${new Date().toLocaleDateString('vi-VN')}`
+      payload.groupDueDate = debtDueDate || undefined
+      payload.groupCounterparty = debtCounterparty || undefined
+    }
+
+    createTx.mutate(payload, {
+      onSuccess: (res) => {
+        toast.success('Đã thêm giao dịch!')
+        if (res.group) {
+          toast.info('Đã tạo nhóm nợ trả sau — vào mục Nhóm nợ để thanh toán khi đến hạn.')
+        }
+        navigate('/')
       },
-      {
-        onSuccess: () => {
-          toast.success('Đã thêm giao dịch!')
-          navigate('/')
-        },
-        onError: (err: Error) => toast.error(err.message),
-      }
-    )
+      onError: (err: Error) => toast.error(err.message),
+    })
   }
 
   return (
@@ -66,7 +100,11 @@ export default function AddTransactionPage() {
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
-            onClick={() => setTxType(t)}
+            onClick={() => {
+              setTxType(t)
+              // Reset debt creation when switching away from expense
+              if (t !== 'EXPENSE') setCreateDebt(false)
+            }}
             className={`flex-1 py-2 text-sm rounded-sm transition-all ${
               txType === t
                 ? t === 'EXPENSE'
@@ -202,6 +240,68 @@ export default function AddTransactionPage() {
             onChange={(e) => setNote(e.target.value)}
             placeholder="VD: Ăn trưa công ty"
           />
+
+          {/* BNPL Debt toggle — shown only for EXPENSE on POSTPAID wallet */}
+          {isExpenseOnPostpaid && (
+            <div className="border border-negative/30 bg-negative/5 rounded-md p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-xs font-semibold text-negative">🛒 Ghi nhận nợ trả sau</p>
+                  <p className="text-2xs text-muted mt-0.5">
+                    Tạo nhóm nợ BNPL để theo dõi và thanh toán sau
+                  </p>
+                </div>
+                <button
+                  onClick={() => setCreateDebt(!createDebt)}
+                  className={`w-10 h-6 rounded-full transition-all relative shrink-0 ${
+                    createDebt ? 'bg-negative' : 'bg-border'
+                  }`}
+                >
+                  <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
+                    createDebt ? 'right-1' : 'left-1'
+                  }`} />
+                </button>
+              </div>
+
+              {createDebt && (
+                <div className="space-y-2">
+                  <Input
+                    label="Tên khoản nợ"
+                    value={debtTitle}
+                    onChange={(e) => setDebtTitle(e.target.value)}
+                    placeholder="VD: Mua trả sau tháng 3"
+                  />
+                  <Input
+                    label="Ngày hết hạn"
+                    type="date"
+                    value={debtDueDate}
+                    onChange={(e) => setDebtDueDate(e.target.value)}
+                    hint="Mặc định: 30 ngày sau"
+                  />
+                  <Input
+                    label="Đơn vị / người bán (tùy chọn)"
+                    value={debtCounterparty}
+                    onChange={(e) => setDebtCounterparty(e.target.value)}
+                    placeholder="VD: Shopee, MoMo, Lazada..."
+                  />
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* BNPL notice when wallet is POSTPAID but not creating debt */}
+      {isExpenseOnPostpaid && !createDebt && (
+        <div className="flex items-start gap-2 p-3 border border-border rounded-md bg-surface-2">
+          <span className="text-negative text-sm">⚠️</span>
+          <p className="text-xs text-muted">
+            Ví trả sau. Nếu muốn theo dõi khoản nợ để thanh toán sau, bấm{' '}
+            <button onClick={() => setShowAdvanced(true)} className="text-accent hover:underline">
+              Thêm chi tiết
+            </button>{' '}
+            và bật <strong className="text-primary">"Ghi nhận nợ trả sau"</strong>.
+          </p>
         </div>
       )}
 

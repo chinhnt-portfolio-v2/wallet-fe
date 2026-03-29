@@ -1,21 +1,38 @@
 import { useNavigate } from 'react-router-dom'
-import { useDashboardSummary, useOpenDebts } from '@/hooks/useDashboard'
+import { useDashboardSummary, useOpenDebts, useMonthlyComparison } from '@/hooks/useDashboard'
 import { useRecentTransactions } from '@/hooks/useTransactions'
 import { DashboardSkeleton } from '@/components/ui/Skeleton'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
 import { formatCurrency } from '@/lib/utils'
+import {
+  BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
+} from 'recharts'
 
+// ── Zone A: Net Worth Hero ──────────────────────────────────
 function ZoneA() {
   const { data: summary, isLoading } = useDashboardSummary()
+  const { data: months } = useMonthlyComparison(2)
 
   if (isLoading) return <DashboardSkeleton />
 
   const s = summary ?? { totalAssets: 0, totalDebt: 0, totalReceivable: 0, netWorth: 0, currency: 'VND' }
+  const thisMonth = months?.[0]
+  const lastMonth  = months?.[1]
+
+  const deltaExpense = thisMonth && lastMonth
+    ? thisMonth.totalExpense - lastMonth.totalExpense
+    : null
+
+  const deltaPercent = deltaExpense !== null && lastMonth && lastMonth.totalExpense > 0
+    ? ((deltaExpense / lastMonth.totalExpense) * 100).toFixed(0)
+    : null
+
+  const isExpenseUp = deltaExpense !== null && deltaExpense > 0
 
   return (
     <Card padding="lg">
-      {/* Net worth hero */}
+      {/* Net worth */}
       <div className="text-center mb-4 pb-4 border-b border-border">
         <p className="text-xs text-muted uppercase tracking-wide mb-1">Số dư thực</p>
         <p className="text-2xl font-bold text-primary font-mono tabular-nums">
@@ -44,10 +61,73 @@ function ZoneA() {
           </p>
         </div>
       </div>
+
+      {/* Comparison badge */}
+      {deltaPercent !== null && (
+        <div className="mt-4 pt-3 border-t border-border flex items-center justify-center gap-2">
+          <span className="text-2xs text-muted">So với tháng trước</span>
+          <Badge variant={isExpenseUp ? 'negative' : 'positive'}>
+            {isExpenseUp ? '↑' : '↓'} {Math.abs(Number(deltaPercent))}% chi tiêu
+          </Badge>
+        </div>
+      )}
     </Card>
   )
 }
 
+// ── Zone B: Monthly Bar Chart ───────────────────────────────
+function ZoneB() {
+  const { data: months, isLoading } = useMonthlyComparison(4)
+
+  if (isLoading || !months || months.length === 0) return null
+
+  const chartData = months.slice().reverse().map((m) => ({
+    label: m.label,
+    Thu: m.totalIncome,
+    Chi: m.totalExpense,
+  }))
+
+  return (
+    <div className="space-y-2">
+      <p className="text-xs font-medium text-muted uppercase tracking-wide">📊 Thu / Chi</p>
+      <Card padding="md">
+        <ResponsiveContainer width="100%" height={140}>
+          <BarChart data={chartData} barGap={3} barSize={14}>
+            <XAxis
+              dataKey="label"
+              tick={{ fontSize: 10, fill: '#94A3B8' }}
+              axisLine={false}
+              tickLine={false}
+            />
+            <YAxis hide />
+            <Tooltip
+              contentStyle={{
+                background: '#1E293B',
+                border: '1px solid #334155',
+                borderRadius: '6px',
+                fontSize: 12,
+                color: '#E2E8F0',
+              }}
+              formatter={(value: number, name: string) => [
+                formatCurrency(value),
+                name === 'Thu' ? '📥 Thu' : '💸 Chi',
+              ]}
+              labelStyle={{ color: '#94A3B8', marginBottom: 4 }}
+            />
+            <Bar dataKey="Thu" fill="#10B981" radius={[3, 3, 0, 0]} />
+            <Bar dataKey="Chi" fill="#F43F5E" radius={[3, 3, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
+        <div className="flex justify-center gap-4 mt-2">
+          <span className="flex items-center gap-1 text-2xs text-positive">📥 Thu nhập</span>
+          <span className="flex items-center gap-1 text-2xs text-negative">💸 Chi tiêu</span>
+        </div>
+      </Card>
+    </div>
+  )
+}
+
+// ── Zone E: Open Debts ──────────────────────────────────────
 function ZoneE() {
   const { data: debts, isLoading } = useOpenDebts()
   const navigate = useNavigate()
@@ -61,7 +141,7 @@ function ZoneE() {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted uppercase tracking-wide">📋 Nợ đang mở</p>
-        <a href="/debts" className="text-xs text-accent hover:underline">Xem tất cả</a>
+        <button onClick={() => navigate('/debts')} className="text-xs text-accent hover:underline">Xem tất cả</button>
       </div>
       <Card padding="none">
         {visibleDebts.map((d, i) => (
@@ -85,12 +165,12 @@ function ZoneE() {
               <p className="text-sm font-semibold text-negative font-mono tabular-nums whitespace-nowrap">
                 {formatCurrency(d.remaining)}
               </p>
-              <a
-                href={`/debts/${d.groupId}`}
+              <button
+                onClick={() => navigate(`/debts/${d.groupId}`)}
                 className="bg-accent text-white text-xs px-3 py-1.5 rounded-sm font-medium hover:bg-accent/90 transition-colors whitespace-nowrap"
               >
                 Thanh toán
-              </a>
+              </button>
             </div>
           </div>
         ))}
@@ -99,6 +179,7 @@ function ZoneE() {
   )
 }
 
+// ── Zone F: Recent Transactions ────────────────────────────
 function ZoneF() {
   const { data: txs, isLoading } = useRecentTransactions(5)
 
@@ -106,7 +187,7 @@ function ZoneF() {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted uppercase tracking-wide">Gần đây</p>
-        <a href="/transactions" className="text-xs text-accent hover:underline">Xem tất cả</a>
+        <button onClick={() => window.location.href = '/transactions'} className="text-xs text-accent hover:underline">Xem tất cả</button>
       </div>
       <Card padding="none">
         {isLoading ? (
@@ -151,10 +232,12 @@ function ZoneF() {
   )
 }
 
+// ── Main ────────────────────────────────────────────────────
 export default function DashboardPage() {
   return (
     <div className="space-y-4">
       <ZoneA />
+      <ZoneB />
       <ZoneE />
       <ZoneF />
     </div>

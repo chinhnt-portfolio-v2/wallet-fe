@@ -30,6 +30,7 @@ export interface CreateWalletRequest {
   currency?: string
   icon?: string
   color?: string
+  initialBalance?: number
 }
 
 // ── Category ────────────────────────────────────────────────
@@ -111,6 +112,10 @@ export interface CreateTransactionRequest {
   txnType?: TxnSubType
   note?: string
   date?: string
+  // For auto-creating BNPL debt group on POSTPAID expense
+  groupTitle?: string
+  groupDueDate?: string
+  groupCounterparty?: string
 }
 
 // ── Dashboard ───────────────────────────────────────────────

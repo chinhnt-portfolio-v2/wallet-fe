@@ -22,3 +22,21 @@ export function useOpenDebts() {
     refetchOnWindowFocus: true,
   })
 }
+
+export interface MonthlyStats {
+  month: string        // "2026-03"
+  label: string        // "Thg 3"
+  totalIncome: number
+  totalExpense: number
+  netSavings: number
+  transactionCount: number
+}
+
+export function useMonthlyComparison(months = 3) {
+  return useQuery<MonthlyStats[]>({
+    queryKey: ['monthly-comparison', months],
+    queryFn: () => apiClient.get('/wallet/dashboard/monthly', { params: { months } }).then((r) => r.data),
+    staleTime: 5 * 60 * 1000,
+    refetchOnMount: true,
+  })
+}

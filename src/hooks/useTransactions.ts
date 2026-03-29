@@ -2,10 +2,32 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
 import type { Transaction, CreateTransactionRequest } from '@/types'
 
-export function useTransactions(params?: { type?: string; size?: number; groupId?: number }) {
+export interface TransactionFilters {
+  type?: string
+  size?: number
+  page?: number
+  groupId?: number
+  dateFrom?: string
+  dateTo?: string
+  search?: string
+}
+
+export function useTransactions(params?: TransactionFilters) {
+  const { page = 1, size = 20, ...rest } = params ?? {}
   return useQuery<Transaction[]>({
-    queryKey: ['transactions', params],
-    queryFn: () => apiClient.get('/wallet/transactions', { params: params as Record<string, string | number> }).then((r) => r.data),
+    queryKey: ['transactions', { page, size, ...rest }],
+    queryFn: () => {
+      const queryParams: Record<string, string | number> = {
+        page,
+        size,
+        ...(rest.type ? { type: rest.type } : {}),
+        ...(rest.groupId ? { groupId: rest.groupId } : {}),
+        ...(rest.dateFrom ? { dateFrom: rest.dateFrom } : {}),
+        ...(rest.dateTo ? { dateTo: rest.dateTo } : {}),
+        ...(rest.search ? { search: rest.search } : {}),
+      }
+      return apiClient.get('/wallet/transactions', { params: queryParams }).then((r) => r.data)
+    },
     staleTime: 0,
     refetchOnMount: true,
   })
@@ -31,6 +53,33 @@ export function useCreateTransaction() {
       qc.invalidateQueries({ queryKey: ['recent-txs'] })
       qc.invalidateQueries({ queryKey: ['transactions'] })
       qc.invalidateQueries({ queryKey: ['wallets'] })
+      qc.invalidateQueries({ queryKey: ['debt-groups'] })
+    },
+  })
+}
+
+export function useUpdateTransaction() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: ({ id, ...body }: CreateTransactionRequest & { id: number }) =>
+      apiClient.put(`/wallet/transactions/${id}`, body).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['recent-txs'] })
+      qc.invalidateQueries({ queryKey: ['dashboard-summary'] })
+    },
+  })
+}
+
+export function useDeleteTransaction() {
+  const qc = useQueryClient()
+  return useMutation({
+    mutationFn: (id: number) =>
+      apiClient.delete(`/wallet/transactions/${id}`).then((r) => r.data),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ['transactions'] })
+      qc.invalidateQueries({ queryKey: ['recent-txs'] })
+      qc.invalidateQueries({ queryKey: ['dashboard-summary'] })
     },
   })
 }

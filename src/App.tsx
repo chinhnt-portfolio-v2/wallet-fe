@@ -12,6 +12,7 @@ const DebtGroupsPage = lazy(() => import('@/pages/wallet/DebtGroupsPage'))
 const DebtGroupDetailPage = lazy(() => import('@/pages/wallet/DebtGroupDetailPage'))
 const CreateDebtGroupPage = lazy(() => import('@/pages/wallet/CreateDebtGroupPage'))
 const WalletsPage = lazy(() => import('@/pages/wallet/WalletsPage'))
+const CategoriesPage = lazy(() => import('@/pages/wallet/CategoriesPage'))
 const ProfilePage = lazy(() => import('@/pages/wallet/ProfilePage'))
 const LoginPage = lazy(() => import('@/pages/wallet/LoginPage'))
 
@@ -115,7 +116,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
           {[
             { href: '/', label: 'Dashboard', icon: '🏠' },
             { href: '/transactions', label: 'Giao dịch', icon: '📋' },
-            { href: '/debts', label: 'Nợ', icon: '📑' },
+            { href: '/categories', label: 'Danh mục', icon: '🏷️' },
             { href: '/wallets', label: 'Ví', icon: '💼' },
           ].map(({ href, label, icon }) => (
             <a
@@ -169,6 +170,7 @@ export default function App() {
           <Route path="/debts/:id" element={<ProtectedRoute><AppShell><DebtGroupDetailPage /></AppShell></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><AppShell><ProfilePage /></AppShell></ProtectedRoute>} />
           <Route path="/wallets" element={<ProtectedRoute><AppShell><WalletsPage /></AppShell></ProtectedRoute>} />
+          <Route path="/categories" element={<ProtectedRoute><AppShell><CategoriesPage /></AppShell></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

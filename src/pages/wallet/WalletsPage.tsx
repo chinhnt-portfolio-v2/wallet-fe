@@ -1,41 +1,273 @@
 import { useState } from 'react'
-import { useWallets, useCreateWallet } from '@/hooks/useWallets'
+import { useWallets, useCreateWallet, useUpdateWallet, useDeleteWallet } from '@/hooks/useWallets'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { formatCurrency, WALLET_TYPE_LABEL } from '@/lib/utils'
 import { WALLET_ICONS, WALLET_COLORS } from '@/stores/walletStore'
-import type { CreateWalletRequest } from '@/types'
+import { toast } from 'sonner'
+import type { Wallet, CreateWalletRequest } from '@/types'
+
+function WalletForm({
+  initial,
+  onSubmit,
+  onCancel,
+  isPending,
+}: {
+  initial?: { id?: number; name: string; icon: string; color: string; type: Wallet['type']; balance?: number }
+  onSubmit: (data: { name: string; icon: string; color: string; type: Wallet['type']; initialBalance?: number }) => void
+  onCancel: () => void
+  isPending: boolean
+}) {
+  const [name, setName] = useState(initial?.name ?? '')
+  const [type, setType] = useState<Wallet['type']>(initial?.type ?? 'CASH')
+  const [icon, setIcon] = useState(initial?.icon ?? '💰')
+  const [color, setColor] = useState(initial?.color ?? '#0EA5E9')
+  const [initialBalance, setInitialBalance] = useState(initial?.balance?.toString() ?? '')
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!name.trim()) { toast.error('Nhập tên ví'); return }
+    const balance = initialBalance ? parseFloat(initialBalance) : undefined
+    onSubmit({ name: name.trim(), icon, color, type, initialBalance: balance })
+  }
+
+  return (
+    <Card className="space-y-4">
+      <p className="text-sm font-semibold text-primary">
+        {initial?.id ? '✏️ Sửa ví' : '+ Tạo ví mới'}
+      </p>
+
+      <Input
+        label="Tên ví"
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        placeholder="VD: Ví MoMo, Timo..."
+        required
+      />
+
+      <div>
+        <label className="block text-xs font-medium text-secondary mb-2">Loại</label>
+        <select
+          value={type}
+          onChange={(e) => setType(e.target.value as Wallet['type'])}
+          className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+        >
+          {Object.entries(WALLET_TYPE_LABEL).map(([k, v]) => (
+            <option key={k} value={k}>{v}</option>
+          ))}
+        </select>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-secondary mb-2">Icon</label>
+        <div className="flex gap-2 flex-wrap">
+          {WALLET_ICONS.map((i) => (
+            <button
+              key={i}
+              type="button"
+              onClick={() => setIcon(i)}
+              className={`w-9 h-9 text-lg rounded-md border transition-all flex items-center justify-center ${
+                icon === i
+                  ? 'border-accent ring-2 ring-accent/30'
+                  : 'border-border hover:border-accent/50'
+              }`}
+            >
+              {i}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div>
+        <label className="block text-xs font-medium text-secondary mb-2">Màu</label>
+        <div className="flex gap-2">
+          {WALLET_COLORS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              onClick={() => setColor(c)}
+              className={`w-7 h-7 rounded-full transition-all ${
+                color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-110'
+              }`}
+              style={{ backgroundColor: c }}
+            />
+          ))}
+        </div>
+      </div>
+
+      {/* Initial balance — hidden for edit */}
+      {!initial?.id && (
+        <div>
+          <label className="block text-xs font-medium text-secondary mb-1.5">
+            Số dư ban đầu
+          </label>
+          <div className="relative">
+            <input
+              type="number"
+              inputMode="decimal"
+              value={initialBalance}
+              onChange={(e) => setInitialBalance(e.target.value)}
+              className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm font-mono pr-10 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              placeholder="0"
+              min="0"
+            />
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₫</span>
+          </div>
+          <p className="text-2xs text-muted mt-1">
+            Bỏ trống nếu ví mới không có tiền.
+          </p>
+        </div>
+      )}
+
+      {/* Preview */}
+      <div className="flex items-center gap-3 p-3 rounded-md border border-border">
+        <div
+          className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
+          style={{ backgroundColor: `${color}20` }}
+        >
+          {icon}
+        </div>
+        <div>
+          <p className="text-sm font-medium text-primary">{name || 'Xem trước'}</p>
+          <p className="text-2xs text-muted">{WALLET_TYPE_LABEL[type] ?? type}</p>
+        </div>
+      </div>
+
+      <div className="flex gap-2">
+        <Button variant="outline" onClick={onCancel} className="flex-1">Hủy</Button>
+        <Button onClick={handleSubmit} disabled={isPending || !name.trim()} className="flex-1">
+          {isPending ? 'Đang lưu...' : initial?.id ? 'Lưu thay đổi' : 'Tạo ví'}
+        </Button>
+      </div>
+    </Card>
+  )
+}
+
+function WalletCard({
+  wallet,
+  onEdit,
+}: {
+  wallet: Wallet
+  onEdit: (w: Wallet) => void
+}) {
+  return (
+    <div className="card p-4 flex items-center gap-3 group">
+      <div
+        className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0"
+        style={{ backgroundColor: `${wallet.color}20` }}
+      >
+        {wallet.icon}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-primary">{wallet.name}</p>
+        <p className="text-2xs text-muted">{WALLET_TYPE_LABEL[wallet.type] ?? wallet.type}</p>
+      </div>
+      <div className="text-right">
+        <p className={`text-sm font-semibold font-mono tabular-nums ${
+          Number(wallet.balance) < 0 ? 'text-negative' : 'text-primary'
+        }`}>
+          {formatCurrency(Number(wallet.balance))}
+        </p>
+        <p className="text-2xs text-muted">₫</p>
+      </div>
+      <button
+        onClick={() => onEdit(wallet)}
+        className="opacity-0 group-hover:opacity-100 text-muted hover:text-primary transition-all text-sm px-2 py-1 rounded border border-border hover:border-accent/50"
+      >
+        ✏️
+      </button>
+    </div>
+  )
+}
+
+function EditModal({
+  wallet,
+  onClose,
+}: {
+  wallet: Wallet
+  onClose: () => void
+}) {
+  const update = useUpdateWallet()
+  const del = useDeleteWallet()
+  const [showDelete, setShowDelete] = useState(false)
+
+  const handleUpdate = (data: { name: string; icon: string; color: string; type: Wallet['type']; initialBalance?: number }) => {
+    // Preserve original balance on update (balance field not editable in edit form)
+    update.mutate({ id: wallet.id, ...data, initialBalance: Number(wallet.balance) }, {
+      onSuccess: () => { toast.success('Đã cập nhật ví!'); onClose() },
+      onError: (e: Error) => toast.error(e.message),
+    })
+  }
+
+  const handleDelete = () => {
+    del.mutate(wallet.id, {
+      onSuccess: () => { toast.success('Đã xóa ví'); onClose() },
+      onError: (e: Error) => toast.error(e.message),
+    })
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
+      <div className="bg-surface w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4">
+        <div className="flex items-center justify-between">
+          <p className="text-sm font-semibold text-primary">✏️ Sửa ví</p>
+          <button onClick={onClose} className="text-muted hover:text-primary text-xl">×</button>
+        </div>
+        <WalletForm
+          initial={wallet}
+          onSubmit={handleUpdate}
+          onCancel={onClose}
+          isPending={update.isPending}
+        />
+        <div className="border-t border-border pt-3">
+          {showDelete ? (
+            <div className="space-y-2">
+              <p className="text-xs text-negative text-center">
+                Xóa ví "{wallet.name}"? Tất cả giao dịch liên quan sẽ bị ảnh hưởng.
+              </p>
+              <div className="flex gap-2">
+                <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
+                <Button
+                  onClick={handleDelete}
+                  disabled={del.isPending}
+                  className="flex-1 !bg-negative !text-white"
+                >
+                  {del.isPending ? 'Đang xóa...' : '🗑️ Xóa ví'}
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <button
+              onClick={() => setShowDelete(true)}
+              className="w-full text-center text-xs text-negative hover:underline py-1"
+            >
+              🗑️ Xóa ví
+            </button>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
 
 export default function WalletsPage() {
-  const [isAdding, setIsAdding] = useState(false)
-  const [name, setName] = useState('')
-  const [type, setType] = useState<CreateWalletRequest['type']>('CASH')
-  const [icon, setIcon] = useState('💰')
-  const [color, setColor] = useState('#0EA5E9')
+  const [showAdd, setShowAdd] = useState(false)
+  const [editTarget, setEditTarget] = useState<Wallet | null>(null)
 
   const { data: wallets, isLoading, error } = useWallets()
   const createWallet = useCreateWallet()
 
-  const handleCreate = (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!name) return
-    createWallet.mutate(
-      { name, type, icon, color },
-      {
-        onSuccess: () => {
-          setIsAdding(false)
-          setName('')
-          setType('CASH')
-          setIcon('💰')
-          setColor('#0EA5E9')
-        },
-        onError: (err: Error) => alert(err.message),
-      }
-    )
+  const handleCreate = (data: { name: string; icon: string; color: string; type: Wallet['type'] }) => {
+    createWallet.mutate(data, {
+      onSuccess: () => {
+        toast.success('Đã tạo ví!')
+        setShowAdd(false)
+      },
+      onError: (e: Error) => toast.error(e.message),
+    })
   }
 
   const active = Array.isArray(wallets) ? wallets : []
@@ -55,88 +287,21 @@ export default function WalletsPage() {
           <p className="text-xs text-muted">{active.length} ví</p>
         </div>
         <Button
-          variant={isAdding ? 'outline' : 'accent'}
+          variant={showAdd ? 'outline' : 'accent'}
           size="sm"
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => setShowAdd(!showAdd)}
         >
-          {isAdding ? '− Đóng' : '+ Thêm ví'}
+          {showAdd ? '− Đóng' : '+ Thêm ví'}
         </Button>
       </div>
 
-      {/* Add wallet form */}
-      {isAdding && (
-        <Card className="space-y-4">
-          <p className="text-sm font-semibold text-primary">Tạo ví mới</p>
-
-          <Input
-            label="Tên ví"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            placeholder="VD: Ví MoMo, Timo..."
-            required
-          />
-
-          <div>
-            <label className="block text-xs font-medium text-secondary mb-2">Loại</label>
-            <select
-              value={type}
-              onChange={(e) => setType(e.target.value as CreateWalletRequest['type'])}
-              className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
-            >
-              {Object.entries(WALLET_TYPE_LABEL).map(([k, v]) => (
-                <option key={k} value={k}>{v}</option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-secondary mb-2">Icon</label>
-            <div className="flex gap-2 flex-wrap">
-              {WALLET_ICONS.map((i) => (
-                <button
-                  key={i}
-                  type="button"
-                  onClick={() => setIcon(i)}
-                  className={`w-9 h-9 text-lg rounded-md border transition-all ${
-                    icon === i ? 'border-accent ring-2 ring-accent/30' : 'border-border hover:border-accent/50'
-                  }`}
-                >
-                  {i}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-xs font-medium text-secondary mb-2">Màu</label>
-            <div className="flex gap-2">
-              {WALLET_COLORS.map((c) => (
-                <button
-                  key={c}
-                  type="button"
-                  onClick={() => setColor(c)}
-                  className={`w-7 h-7 rounded-full transition-all ${
-                    color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-110'
-                  }`}
-                  style={{ backgroundColor: c }}
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="flex gap-2">
-            <Button variant="outline" onClick={() => setIsAdding(false)} className="flex-1">
-              Hủy
-            </Button>
-            <Button
-              onClick={handleCreate}
-              disabled={createWallet.isPending || !name}
-              className="flex-1"
-            >
-              {createWallet.isPending ? 'Đang tạo...' : 'Tạo ví'}
-            </Button>
-          </div>
-        </Card>
+      {/* Add form */}
+      {showAdd && (
+        <WalletForm
+          onSubmit={handleCreate}
+          onCancel={() => setShowAdd(false)}
+          isPending={createWallet.isPending}
+        />
       )}
 
       {/* Loading */}
@@ -151,7 +316,7 @@ export default function WalletsPage() {
         <EmptyState icon="⚠️" title="Không tải được ví" description="Hãy thử lại sau." />
       )}
 
-      {/* Wallet list by type */}
+      {/* Wallet list */}
       {!isLoading && !error && (
         <div className="space-y-6">
           {(['CASH', 'BANK', 'E_WALLET', 'POSTPAID'] as const).map((t) => {
@@ -164,32 +329,38 @@ export default function WalletsPage() {
                 </p>
                 <div className="space-y-2">
                   {items.map((w) => (
-                    <div key={w.id} className="card p-4 flex items-center gap-3">
-                      <div
-                        className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0"
-                        style={{ backgroundColor: `${w.color}20` }}
-                      >
-                        {w.icon}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-primary">{w.name}</p>
-                        <p className="text-2xs text-muted">{WALLET_TYPE_LABEL[w.type]}</p>
-                      </div>
-                      <div className="text-right">
-                        <p className={`text-sm font-semibold font-mono tabular-nums ${
-                          Number(w.balance) < 0 ? 'text-negative' : 'text-primary'
-                        }`}>
-                          {formatCurrency(Number(w.balance))}
-                        </p>
-                        <p className="text-2xs text-muted">₫</p>
-                      </div>
-                    </div>
+                    <WalletCard
+                      key={w.id}
+                      wallet={w}
+                      onEdit={(wallet) => setEditTarget(wallet)}
+                    />
                   ))}
                 </div>
               </div>
             )
           })}
+
+          {active.length === 0 && (
+            <EmptyState
+              icon="💼"
+              title="Chưa có ví nào"
+              description="Tạo ví đầu tiên để bắt đầu theo dõi tài chính."
+              action={
+                <Button variant="accent" size="sm" onClick={() => setShowAdd(true)}>
+                  + Tạo ví
+                </Button>
+              }
+            />
+          )}
         </div>
+      )}
+
+      {/* Edit modal */}
+      {editTarget && (
+        <EditModal
+          wallet={editTarget}
+          onClose={() => setEditTarget(null)}
+        />
       )}
     </div>
   )
