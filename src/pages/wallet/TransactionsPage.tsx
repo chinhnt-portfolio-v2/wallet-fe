@@ -1,13 +1,12 @@
 import { useState, useRef } from 'react'
 import { useTransactions, useUpdateTransaction, useDeleteTransaction } from '@/hooks/useTransactions'
-import { useWallets, useCreateWallet } from '@/hooks/useWallets'
-import { useCategories, useCreateCategory } from '@/hooks/useCategories'
-import { useQuery } from '@tanstack/react-query'
-import apiClient from '@/api/client'
+import { useWallets } from '@/hooks/useWallets'
+import { useCategories } from '@/hooks/useCategories'
 import { ListSkeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Input } from '@/components/ui/Input'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { toast } from 'sonner'
@@ -229,47 +228,41 @@ function EditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
-      <div className="bg-surface w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-3">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-primary">Sửa giao dịch</p>
-          <button onClick={onClose} className="text-muted hover:text-primary text-xl">×</button>
-        </div>
-        <TransactionForm
-          initial={tx}
-          onSubmit={handleUpdate}
-          onCancel={onClose}
-          isPending={update.isPending}
-          title="Chỉnh sửa"
-        />
-        <div className="border-t border-border pt-3">
-          {showDelete ? (
-            <div className="space-y-2">
-              <p className="text-xs text-negative text-center">
-                Xóa giao dịch này? Hành động không thể hoàn tác.
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
-                <Button
-                  onClick={handleDelete}
-                  disabled={del.isPending}
-                  className="flex-1 !bg-negative !text-white"
-                >
-                  {del.isPending ? 'Đang xóa...' : '🗑️ Xóa'}
-                </Button>
-              </div>
+    <BottomSheet open onClose={onClose} title="Sửa giao dịch">
+      <TransactionForm
+        initial={tx}
+        onSubmit={handleUpdate}
+        onCancel={onClose}
+        isPending={update.isPending}
+        title="Chỉnh sửa"
+      />
+      <div className="border-t border-border pt-3 mt-3">
+        {showDelete ? (
+          <div className="space-y-2">
+            <p className="text-xs text-negative text-center">
+              Xóa giao dịch này? Hành động không thể hoàn tác.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
+              <Button
+                onClick={handleDelete}
+                disabled={del.isPending}
+                className="flex-1 !bg-negative !text-white"
+              >
+                {del.isPending ? 'Đang xóa...' : '🗑️ Xóa'}
+              </Button>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowDelete(true)}
-              className="w-full text-center text-xs text-negative hover:underline py-1"
-            >
-              🗑️ Xóa giao dịch
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowDelete(true)}
+            className="w-full text-center text-xs text-negative hover:underline py-1"
+          >
+            🗑️ Xóa giao dịch
+          </button>
+        )}
       </div>
-    </div>
+    </BottomSheet>
   )
 }
 
@@ -302,7 +295,7 @@ export default function TransactionsPage() {
   const handleSearchChange = (val: string) => {
     setSearch(val)
     if (searchTimer.current) clearTimeout(searchTimer.current)
-    searchTimer.current = setTimeout(() => setDebouncedSearch(val), 400)
+    searchTimer.current = setTimeout(() => setDebouncedSearch(val), 250)
   }
 
   const hasFilters = !!(typeFilter || dateFrom || dateTo || debouncedSearch)
@@ -448,7 +441,7 @@ export default function TransactionsPage() {
         />
       )}
 
-      {/* Edit modal */}
+      {/* Edit modal — BottomSheet */}
       {editTarget && (
         <EditModal
           tx={editTarget}

@@ -56,6 +56,10 @@ export default function DebtGroupDetailPage() {
       toast.error('Chọn ví và nhập số tiền')
       return
     }
+    if (parseFloat(settleAmount) > remaining) {
+      toast.error('Số tiền vượt quá số nợ còn lại')
+      return
+    }
     settleMutation.mutate(
       { amount: parseFloat(settleAmount), walletId: settleWalletId },
       {

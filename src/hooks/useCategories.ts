@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import apiClient from '@/api/client'
-import type { Category } from '@/types'
+import type { Category, CreateCategoryRequest } from '@/types'
+
+export type { CreateCategoryRequest } from '@/types'
 
 export function useCategories() {
   return useQuery<Category[]>({
@@ -36,11 +38,4 @@ export function useDeleteCategory() {
       apiClient.delete(`/wallet/categories/${id}`).then((r) => r.data),
     onSuccess: () => qc.invalidateQueries({ queryKey: ['categories'] }),
   })
-}
-
-export interface CreateCategoryRequest {
-  name: string
-  icon: string
-  color: string
-  type: 'INCOME' | 'EXPENSE'
 }

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useQuery, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
@@ -47,9 +47,12 @@ export default function AddTransactionPage() {
 
   // When category is selected and wallet is POSTPAID, pre-fill debt title
   const selectedCategory = categories?.find((c) => c.id === categoryId)
-  if (isExpenseOnPostpaid && selectedCategory && !debtTitle) {
-    setDebtTitle(`Mua hàng: ${selectedCategory.name}`)
-  }
+
+  useEffect(() => {
+    if (isExpenseOnPostpaid && selectedCategory && !debtTitle) {
+      setDebtTitle(`Mua hàng: ${selectedCategory.name}`)
+    }
+  }, [isExpenseOnPostpaid, selectedCategory, debtTitle])
 
   const handleSubmit = () => {
     if (!walletId || !amount) {
@@ -163,7 +166,9 @@ export default function AddTransactionPage() {
               <button
                 key={w.id}
                 onClick={() => setWalletId(w.id)}
-                className={`card p-3 text-left transition-all ${
+                aria-pressed={walletId === w.id}
+                aria-label={`Chọn ví ${w.name}`}
+                className={`card p-3 text-left transition-all relative ${
                   walletId === w.id
                     ? 'border-accent ring-2 ring-accent/20'
                     : 'hover:border-accent/50'
@@ -178,13 +183,13 @@ export default function AddTransactionPage() {
                   </div>
                   <div className="min-w-0">
                     <p className="text-sm font-medium text-primary truncate">{w.name}</p>
-                    <p className="text-2xs text-muted">{WALLET_TYPE_LABEL[w.type] ?? w.type}</p>
+                    <p className="text-xs text-muted">{WALLET_TYPE_LABEL[w.type] ?? w.type}</p>
                   </div>
                 </div>
                 {walletId === w.id && (
-                  <div className="absolute top-2 right-2 w-4 h-4 bg-accent rounded-full flex items-center justify-center">
+                  <span className="absolute top-2 right-2 w-4 h-4 bg-accent rounded-full flex items-center justify-center" aria-hidden="true">
                     <span className="text-white text-2xs">✓</span>
-                  </div>
+                  </span>
                 )}
               </button>
             ))}
@@ -252,14 +257,17 @@ export default function AddTransactionPage() {
                   </p>
                 </div>
                 <button
+                  role="switch"
+                  aria-checked={createDebt}
+                  aria-label="Ghi nhận nợ trả sau"
                   onClick={() => setCreateDebt(!createDebt)}
                   className={`w-10 h-6 rounded-full transition-all relative shrink-0 ${
                     createDebt ? 'bg-negative' : 'bg-border'
                   }`}
                 >
-                  <div className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
+                  <span className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
                     createDebt ? 'right-1' : 'left-1'
-                  }`} />
+                  }`} aria-hidden="true" />
                 </button>
               </div>
 

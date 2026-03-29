@@ -182,12 +182,13 @@ function ZoneE() {
 // ── Zone F: Recent Transactions ────────────────────────────
 function ZoneF() {
   const { data: txs, isLoading } = useRecentTransactions(5)
+  const navigate = useNavigate()
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted uppercase tracking-wide">Gần đây</p>
-        <button onClick={() => window.location.href = '/transactions'} className="text-xs text-accent hover:underline">Xem tất cả</button>
+        <button onClick={() => navigate('/transactions')} className="text-xs text-accent hover:underline">Xem tất cả</button>
       </div>
       <Card padding="none">
         {isLoading ? (

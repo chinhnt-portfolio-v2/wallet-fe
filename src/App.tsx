@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { lazy, Suspense } from 'react'
 import { Toaster } from 'sonner'
+import { useWallets } from '@/hooks/useWallets'
 
 const DashboardPage = lazy(() => import('@/pages/wallet/DashboardPage'))
 const TransactionsPage = lazy(() => import('@/pages/wallet/TransactionsPage'))
@@ -38,7 +39,7 @@ function DarkModeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () =>
   return (
     <button
       onClick={onToggle}
-      aria-label="Toggle dark mode"
+      aria-label={isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
       className="w-8 h-8 flex items-center justify-center rounded-md text-sm hover:bg-surface-2 transition-colors"
     >
       {isDark ? (
@@ -64,12 +65,32 @@ function DarkModeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () =>
   )
 }
 
+function WalletLogo() {
+  return (
+    <svg
+      width="20"
+      height="20"
+      viewBox="0 0 24 24"
+      fill="none"
+      aria-hidden="true"
+    >
+      <rect x="2" y="4" width="20" height="16" rx="3" fill="#0EA5E9" opacity="0.15"/>
+      <rect x="2" y="4" width="20" height="16" rx="3" stroke="#0EA5E9" strokeWidth="1.5"/>
+      <circle cx="16" cy="12" r="2" fill="#0EA5E9"/>
+      <line x1="2" y1="9" x2="22" y2="9" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.5"/>
+    </svg>
+  )
+}
+
 function AppShell({ children }: { children: React.ReactNode }) {
   const [isDark, setIsDark] = useState(() => {
     const stored = localStorage.getItem('wallet_theme')
     if (stored) return stored === 'dark'
     return window.matchMedia('(prefers-color-scheme: dark)').matches
   })
+
+  const { data: wallets } = useWallets()
+  const hasNoWallets = !wallets || wallets.length === 0
 
   const toggleDark = () => {
     const next = !isDark
@@ -83,11 +104,24 @@ function AppShell({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-sm border-b border-border">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
-          <a href="/" className="text-base font-semibold text-primary">💰 Wallet</a>
+          {/* Logo */}
+          <a href="/" className="flex items-center gap-2 text-base font-semibold text-primary">
+            <WalletLogo />
+            <span>Wallet</span>
+          </a>
+          {/* Actions */}
           <div className="flex items-center gap-1">
             <DarkModeToggle isDark={isDark} onToggle={toggleDark} />
-            <a href="/debts" className="text-sm text-muted hover:text-primary px-3 py-1.5 rounded-md hover:bg-surface-2 transition-colors">Nợ</a>
-            <a href="/wallets" className="text-sm text-muted hover:text-primary px-3 py-1.5 rounded-md hover:bg-surface-2 transition-colors">Ví</a>
+            <a
+              href="/profile"
+              aria-label="Cài đặt"
+              className="w-8 h-8 flex items-center justify-center rounded-md text-sm text-muted hover:text-primary hover:bg-surface-2 transition-colors"
+            >
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
+                <circle cx="12" cy="8" r="4"/>
+                <path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+              </svg>
+            </a>
           </div>
         </div>
       </header>
@@ -100,31 +134,47 @@ function AppShell({ children }: { children: React.ReactNode }) {
       </main>
 
       {/* FAB */}
-      <a
-        href="/add"
-        aria-label="Thêm giao dịch"
-        className="fixed bottom-20 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg
-                   flex items-center justify-center text-2xl font-light
-                   hover:bg-primary/90 active:scale-95 transition-all duration-150 z-40"
-      >
-        +
-      </a>
+      {hasNoWallets ? (
+        <button
+          aria-label="Tạo ví trước khi thêm giao dịch"
+          title="Tạo ví trước khi thêm giao dịch"
+          className="fixed bottom-20 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg
+                     flex items-center justify-center text-2xl font-light
+                     opacity-40 cursor-not-allowed transition-all duration-150 z-40
+                     pb-[env(safe-area-inset-bottom)]"
+          disabled
+        >
+          +
+        </button>
+      ) : (
+        <a
+          href="/add"
+          aria-label="Thêm giao dịch"
+          className="fixed bottom-20 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg
+                     flex items-center justify-center text-2xl font-light
+                     hover:bg-primary/90 active:scale-95 transition-all duration-150 z-40
+                     pb-[env(safe-area-inset-bottom)]"
+        >
+          +
+        </a>
+      )}
 
       {/* Bottom nav */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-30">
-        <div className="max-w-lg mx-auto flex">
+      <nav aria-label="Điều hướng chính" className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-30">
+        <div className="max-w-lg mx-auto flex pb-[env(safe-area-inset-bottom)]">
           {[
-            { href: '/', label: 'Dashboard', icon: '🏠' },
+            { href: '/', label: 'Tổng quan', icon: '🏠' },
             { href: '/transactions', label: 'Giao dịch', icon: '📋' },
-            { href: '/categories', label: 'Danh mục', icon: '🏷️' },
+            { href: '/debts', label: 'Nợ', icon: '📑' },
             { href: '/wallets', label: 'Ví', icon: '💼' },
           ].map(({ href, label, icon }) => (
             <a
               key={href}
               href={href}
+              aria-label={label}
               className="flex-1 flex flex-col items-center py-2 text-xs text-muted hover:text-primary transition-colors"
             >
-              <span>{icon}</span>
+              <span aria-hidden="true">{icon}</span>
               <span className="mt-0.5">{label}</span>
             </a>
           ))}
@@ -134,20 +184,50 @@ function AppShell({ children }: { children: React.ReactNode }) {
   )
 }
 
+/**
+ * OAuthCallbackHandler
+ *
+ * SECURITY FIX: Sử dụng Authorization Code flow thay vì Implicit flow.
+ *
+ * Backend mới cần implement:
+ * 1. GET  /api/v1/auth/oauth2/login/google?redirect_uri=FRONTEND_URL
+ *    → redirect về FRONTEND_URL?code=AUTH_CODE
+ * 2. POST /api/v1/auth/oauth2/callback  { code: AUTH_CODE }
+ *    → server gọi Google token endpoint
+ *    → set tokens vào httpOnly cookies
+ *    → trả { success: true }
+ *
+ * Nếu backend chưa support code flow, tạm thời dùng localStorage nhưng
+ * KHÔNG gửi tokens qua URL query params nữa.
+ */
 function OAuthCallbackHandler() {
   const navigate = useNavigate()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const accessToken = params.get('accessToken')
-    const refreshToken = params.get('refreshToken')
-    const tokenType = params.get('tokenType')
+    const code = params.get('code')
 
-    if (accessToken && refreshToken && tokenType) {
-      localStorage.setItem('wallet_token', accessToken)
-      localStorage.setItem('wallet_refresh_token', refreshToken)
-      window.history.replaceState(null, '', '/')
-      navigate('/', { replace: true })
+    if (code) {
+      // Authorization Code flow: gửi code lên server, server set cookie
+      fetch('/api/v1/auth/oauth2/callback', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ code }),
+        credentials: 'include', // Gửi nhận cookies
+      })
+        .then((r) => r.json())
+        .then((data) => {
+          if (data.accessToken) {
+            localStorage.setItem('wallet_token', data.accessToken)
+            localStorage.setItem('wallet_refresh_token', data.refreshToken ?? '')
+          }
+          window.history.replaceState(null, '', '/')
+          navigate('/', { replace: true })
+        })
+        .catch(() => {
+          window.history.replaceState(null, '', '/login')
+          navigate('/login', { replace: true })
+        })
     }
   }, [navigate])
 

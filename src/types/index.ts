@@ -47,6 +47,13 @@ export interface Category {
   updatedAt: string
 }
 
+export interface CreateCategoryRequest {
+  name: string
+  icon: string
+  color: string
+  type: CategoryType
+}
+
 // ── Debt Group ──────────────────────────────────────────────
 export interface DebtGroup {
   id: number

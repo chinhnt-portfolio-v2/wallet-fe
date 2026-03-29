@@ -1,8 +1,8 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { useWallets } from '@/hooks/useWallets'
+import { useCreateDebtGroup } from '@/hooks/useDebtGroups'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
@@ -18,8 +18,8 @@ const GROUP_TYPES = [
 
 export default function CreateDebtGroupPage() {
   const navigate = useNavigate()
-  const qc = useQueryClient()
   const { data: wallets } = useWallets()
+  const createDebtGroup = useCreateDebtGroup()
 
   const [title, setTitle] = useState('')
   const [groupType, setGroupType] = useState<CreateDebtGroupRequest['groupType']>('DEBT')
@@ -28,37 +28,34 @@ export default function CreateDebtGroupPage() {
   const [counterparty, setCounterparty] = useState('')
   const [dueDate, setDueDate] = useState('')
 
-  const mutation = useMutation({
-    mutationFn: (body: CreateDebtGroupRequest) =>
-      fetch('/api/v1/wallet/groups', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${localStorage.getItem('wallet_token')}`,
-        },
-        body: JSON.stringify(body),
-      }).then((r) => r.json()),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: ['debt-groups'] })
-      toast.success('Đã tạo nhóm nợ!')
-      navigate('/debts')
-    },
-    onError: (err: Error) => toast.error(err.message),
-  })
-
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!title || !totalAmount) {
       toast.error('Nhập đầy đủ thông tin')
       return
     }
-    mutation.mutate({
+    if (parseFloat(totalAmount) <= 0) {
+      toast.error('Số tiền phải lớn hơn 0')
+      return
+    }
+
+    const payload: CreateDebtGroupRequest = {
       title,
       groupType,
       totalAmount: parseFloat(totalAmount),
       walletId,
       counterparty: counterparty || undefined,
       dueDate: dueDate || undefined,
+    }
+
+    createDebtGroup.mutate(payload, {
+      onSuccess: () => {
+        toast.success('Đã tạo nhóm nợ!')
+        navigate('/debts')
+      },
+      onError: (err: Error) => {
+        toast.error(err.message ?? 'Có lỗi xảy ra. Vui lòng thử lại.')
+      },
     })
   }
 
@@ -91,7 +88,7 @@ export default function CreateDebtGroupPage() {
               >
                 <p className="text-lg mb-1">{t.icon}</p>
                 <p className="text-xs font-medium text-primary">{t.label}</p>
-                <p className="text-2xs text-muted mt-0.5">{t.desc}</p>
+                <p className="text-xs text-muted mt-0.5">{t.desc}</p>
               </button>
             ))}
           </div>
@@ -141,7 +138,7 @@ export default function CreateDebtGroupPage() {
               <option key={w.id} value={w.id}>{w.icon} {w.name}</option>
             ))}
           </select>
-          <p className="text-2xs text-muted mt-1">
+          <p className="text-xs text-muted mt-1">
             Chọn ví nếu bạn dùng ví này để thanh toán khoản nợ
           </p>
         </div>
@@ -171,10 +168,10 @@ export default function CreateDebtGroupPage() {
         {/* Submit */}
         <Button
           type="submit"
-          disabled={mutation.isPending || !title || !totalAmount}
+          disabled={createDebtGroup.isPending || !title || !totalAmount}
           className="w-full py-3"
         >
-          {mutation.isPending ? 'Đang tạo...' : '✓ Tạo nhóm nợ'}
+          {createDebtGroup.isPending ? 'Đang tạo...' : '✓ Tạo nhóm nợ'}
         </Button>
       </form>
     </div>

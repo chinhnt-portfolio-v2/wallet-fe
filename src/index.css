@@ -46,9 +46,17 @@
   @apply bg-dark-surface border-dark-border text-dark-primary;
 }
 
-.dark .btn-ghost, .dark .btn-outline {
+.dark .btn-ghost {
   @apply text-dark-secondary hover:bg-dark-surface-2;
 }
+
+.dark .btn-outline {
+  @apply border-dark-border text-dark-secondary hover:bg-dark-surface-2;
+}
+
+.dark .text-accent  { @apply text-dark-accent; }
+.dark .text-warning { @apply text-dark-warning; }
+.dark .bg-warning  { @apply bg-dark-warning; }
 
 .dark .skeleton {
   @apply bg-dark-surface-2;
@@ -80,4 +88,14 @@
   .skeleton { @apply animate-pulse bg-surface-2 rounded; }
 
   .tabular { font-variant-numeric: tabular-nums; }
+
+  /* Bottom sheet slide-up animation */
+  @keyframes slide-up {
+    from { transform: translateY(100%); opacity: 0; }
+    to   { transform: translateY(0);    opacity: 1; }
+  }
+
+  .animate-slide-up {
+    animation: slide-up 200ms ease-out;
+  }
 }

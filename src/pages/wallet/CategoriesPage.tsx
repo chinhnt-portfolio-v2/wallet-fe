@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { toast } from 'sonner'
 
 // Rich category icon palette
@@ -163,45 +164,39 @@ function EditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
-      <div className="bg-surface w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-primary">✏️ Sửa danh mục</p>
-          <button onClick={onClose} className="text-muted hover:text-primary text-lg">×</button>
-        </div>
-        <CategoryForm
-          initial={category}
-          onSubmit={handleUpdate}
-          onCancel={onClose}
-          isPending={update.isPending}
-        />
-        {/* Delete */}
-        <div className="border-t border-border pt-3">
-          {showDelete ? (
-            <div className="space-y-2">
-              <p className="text-xs text-negative text-center">Bạn chắc chắn muốn xóa "{category.name}"?</p>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
-                <Button
-                  onClick={handleDelete}
-                  disabled={del.isPending}
-                  className="flex-1 !bg-negative !text-white"
-                >
-                  {del.isPending ? 'Đang xóa...' : 'Xóa danh mục'}
-                </Button>
-              </div>
+    <BottomSheet open onClose={onClose} title="✏️ Sửa danh mục">
+      <CategoryForm
+        initial={category}
+        onSubmit={handleUpdate}
+        onCancel={onClose}
+        isPending={update.isPending}
+      />
+      {/* Delete */}
+      <div className="border-t border-border pt-3 mt-3">
+        {showDelete ? (
+          <div className="space-y-2">
+            <p className="text-xs text-negative text-center">Bạn chắc chắn muốn xóa "{category.name}"?</p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
+              <Button
+                onClick={handleDelete}
+                disabled={del.isPending}
+                className="flex-1 !bg-negative !text-white"
+              >
+                {del.isPending ? 'Đang xóa...' : 'Xóa danh mục'}
+              </Button>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowDelete(true)}
-              className="w-full text-center text-xs text-negative hover:underline py-1"
-            >
-              🗑️ Xóa danh mục
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowDelete(true)}
+            className="w-full text-center text-xs text-negative hover:underline py-1"
+          >
+            🗑️ Xóa danh mục
+          </button>
+        )}
       </div>
-    </div>
+    </BottomSheet>
   )
 }
 

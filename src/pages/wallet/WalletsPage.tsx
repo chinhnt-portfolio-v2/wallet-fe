@@ -5,10 +5,17 @@ import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { formatCurrency, WALLET_TYPE_LABEL } from '@/lib/utils'
-import { WALLET_ICONS, WALLET_COLORS } from '@/stores/walletStore'
 import { toast } from 'sonner'
-import type { Wallet, CreateWalletRequest } from '@/types'
+import type { Wallet } from '@/types'
+
+// WALLET_ICONS and WALLET_COLORS — moved from deleted walletStore
+const WALLET_ICONS = ['💰', '🏦', '💳', '📱', '🎁', '🏠', '🚗', '✈️']
+const WALLET_COLORS = [
+  '#0EA5E9', '#10B981', '#F97316', '#8B5CF6',
+  '#EC4899', '#F59E0B', '#06B6D4', '#64748B',
+]
 
 function WalletForm({
   initial,
@@ -116,7 +123,7 @@ function WalletForm({
             />
             <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₫</span>
           </div>
-          <p className="text-2xs text-muted mt-1">
+          <p className="text-xs text-muted mt-1">
             Bỏ trống nếu ví mới không có tiền.
           </p>
         </div>
@@ -132,7 +139,7 @@ function WalletForm({
         </div>
         <div>
           <p className="text-sm font-medium text-primary">{name || 'Xem trước'}</p>
-          <p className="text-2xs text-muted">{WALLET_TYPE_LABEL[type] ?? type}</p>
+          <p className="text-xs text-muted">{WALLET_TYPE_LABEL[type] ?? type}</p>
         </div>
       </div>
 
@@ -163,7 +170,7 @@ function WalletCard({
       </div>
       <div className="flex-1 min-w-0">
         <p className="text-sm font-medium text-primary">{wallet.name}</p>
-        <p className="text-2xs text-muted">{WALLET_TYPE_LABEL[wallet.type] ?? wallet.type}</p>
+        <p className="text-xs text-muted">{WALLET_TYPE_LABEL[wallet.type] ?? wallet.type}</p>
       </div>
       <div className="text-right">
         <p className={`text-sm font-semibold font-mono tabular-nums ${
@@ -171,11 +178,12 @@ function WalletCard({
         }`}>
           {formatCurrency(Number(wallet.balance))}
         </p>
-        <p className="text-2xs text-muted">₫</p>
+        <p className="text-xs text-muted">₫</p>
       </div>
       <button
         onClick={() => onEdit(wallet)}
         className="opacity-0 group-hover:opacity-100 text-muted hover:text-primary transition-all text-sm px-2 py-1 rounded border border-border hover:border-accent/50"
+        aria-label={`Sửa ví ${wallet.name}`}
       >
         ✏️
       </button>
@@ -195,7 +203,6 @@ function EditModal({
   const [showDelete, setShowDelete] = useState(false)
 
   const handleUpdate = (data: { name: string; icon: string; color: string; type: Wallet['type']; initialBalance?: number }) => {
-    // Preserve original balance on update (balance field not editable in edit form)
     update.mutate({ id: wallet.id, ...data, initialBalance: Number(wallet.balance) }, {
       onSuccess: () => { toast.success('Đã cập nhật ví!'); onClose() },
       onError: (e: Error) => toast.error(e.message),
@@ -210,46 +217,53 @@ function EditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
-      <div className="bg-surface w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-primary">✏️ Sửa ví</p>
-          <button onClick={onClose} className="text-muted hover:text-primary text-xl">×</button>
-        </div>
-        <WalletForm
-          initial={wallet}
-          onSubmit={handleUpdate}
-          onCancel={onClose}
-          isPending={update.isPending}
-        />
-        <div className="border-t border-border pt-3">
-          {showDelete ? (
-            <div className="space-y-2">
-              <p className="text-xs text-negative text-center">
-                Xóa ví "{wallet.name}"? Tất cả giao dịch liên quan sẽ bị ảnh hưởng.
+    <BottomSheet open onClose={onClose} title="✏️ Sửa ví">
+      <WalletForm
+        initial={wallet}
+        onSubmit={handleUpdate}
+        onCancel={onClose}
+        isPending={update.isPending}
+      />
+      <div className="border-t border-border pt-3 mt-3">
+        {showDelete ? (
+          <div className="space-y-3">
+            {/* Warning with balance info */}
+            <div className="p-3 rounded-md bg-negative/5 border border-negative/20 space-y-1">
+              <p className="text-xs font-medium text-negative flex items-center gap-1.5">
+                <span aria-hidden="true">⚠️</span> Cảnh báo khi xóa ví
               </p>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
-                <Button
-                  onClick={handleDelete}
-                  disabled={del.isPending}
-                  className="flex-1 !bg-negative !text-white"
-                >
-                  {del.isPending ? 'Đang xóa...' : '🗑️ Xóa ví'}
-                </Button>
-              </div>
+              <p className="text-xs text-muted">
+                Xóa ví <strong className="text-primary">"{wallet.name}"</strong> sẽ bỏ liên kết với tất cả giao dịch hiện có. Số dư hiện tại là{' '}
+                <strong className="text-primary">{formatCurrency(Number(wallet.balance))}</strong>.
+              </p>
+              <p className="text-xs text-muted">
+                Giao dịch sẽ <strong className="text-primary">không bị xóa</strong> nhưng sẽ không còn liên kết với ví này.
+              </p>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowDelete(true)}
-              className="w-full text-center text-xs text-negative hover:underline py-1"
-            >
-              🗑️ Xóa ví
-            </button>
-          )}
-        </div>
+            <p className="text-xs text-negative text-center font-medium">
+              Hành động này không thể hoàn tác.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
+              <Button
+                onClick={handleDelete}
+                disabled={del.isPending}
+                className="flex-1 !bg-negative !text-white"
+              >
+                {del.isPending ? 'Đang xóa...' : '🗑️ Xóa ví'}
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowDelete(true)}
+            className="w-full text-center text-xs text-negative hover:underline py-1"
+          >
+            🗑️ Xóa ví
+          </button>
+        )}
       </div>
-    </div>
+    </BottomSheet>
   )
 }
 

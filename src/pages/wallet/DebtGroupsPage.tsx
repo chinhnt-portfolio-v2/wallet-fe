@@ -3,6 +3,7 @@ import { useDebtGroups, useUpdateDebtGroup, useDeleteDebtGroup } from '@/hooks/u
 import { useWallets } from '@/hooks/useWallets'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { BottomSheet } from '@/components/ui/BottomSheet'
 import { Input } from '@/components/ui/Input'
 import { CardSkeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -138,53 +139,47 @@ function EditModal({
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40">
-      <div className="bg-surface w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 space-y-4">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-semibold text-primary">✏️ Sửa nhóm nợ</p>
-          <button onClick={onClose} className="text-muted hover:text-primary text-xl">×</button>
-        </div>
-        <GroupForm
-          initial={{
-            id: group.id,
-            title: group.title,
-            groupType: group.groupType,
-            totalAmount: Number(group.totalAmount),
-            dueDate: group.dueDate,
-            counterparty: group.counterparty,
-          }}
-          onSubmit={handleUpdate}
-          onCancel={onClose}
-          isPending={update.isPending}
-        />
-        <div className="border-t border-border pt-3">
-          {showDelete ? (
-            <div className="space-y-2">
-              <p className="text-xs text-negative text-center">
-                Xóa "{group.title}"? Hành động không thể hoàn tác.
-              </p>
-              <div className="flex gap-2">
-                <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
-                <Button
-                  onClick={handleDelete}
-                  disabled={del.isPending}
-                  className="flex-1 !bg-negative !text-white"
-                >
-                  {del.isPending ? 'Đang xóa...' : '🗑️ Xóa'}
-                </Button>
-              </div>
+    <BottomSheet open onClose={onClose} title="✏️ Sửa nhóm nợ">
+      <GroupForm
+        initial={{
+          id: group.id,
+          title: group.title,
+          groupType: group.groupType,
+          totalAmount: Number(group.totalAmount),
+          dueDate: group.dueDate,
+          counterparty: group.counterparty,
+        }}
+        onSubmit={handleUpdate}
+        onCancel={onClose}
+        isPending={update.isPending}
+      />
+      <div className="border-t border-border pt-3 mt-3">
+        {showDelete ? (
+          <div className="space-y-2">
+            <p className="text-xs text-negative text-center">
+              Xóa "{group.title}"? Hành động không thể hoàn tác.
+            </p>
+            <div className="flex gap-2">
+              <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
+              <Button
+                onClick={handleDelete}
+                disabled={del.isPending}
+                className="flex-1 !bg-negative !text-white"
+              >
+                {del.isPending ? 'Đang xóa...' : '🗑️ Xóa'}
+              </Button>
             </div>
-          ) : (
-            <button
-              onClick={() => setShowDelete(true)}
-              className="w-full text-center text-xs text-negative hover:underline py-1"
-            >
-              🗑️ Xóa nhóm nợ
-            </button>
-          )}
-        </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => setShowDelete(true)}
+            className="w-full text-center text-xs text-negative hover:underline py-1"
+          >
+            🗑️ Xóa nhóm nợ
+          </button>
+        )}
       </div>
-    </div>
+    </BottomSheet>
   )
 }
 
@@ -354,7 +349,7 @@ export default function DebtGroupsPage() {
         </div>
       )}
 
-      {/* Edit modal */}
+      {/* Edit modal — BottomSheet */}
       {editTarget && (
         <EditModal
           group={editTarget}

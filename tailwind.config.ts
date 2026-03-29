@@ -30,6 +30,9 @@ export default {
         'dark-negative': '#FB7185',
         'dark-warning': '#FBBF24',
       },
+      fontSize: {
+        '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
+      },
       fontFamily: {
         sans: ['Inter', 'sans-serif'],
         mono: ['JetBrains Mono', 'monospace'],
