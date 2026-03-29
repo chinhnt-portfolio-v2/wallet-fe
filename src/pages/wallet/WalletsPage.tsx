@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useNavigate } from 'react-router-dom'
 import { useWallets, useCreateWallet, useUpdateWallet, useDeleteWallet } from '@/hooks/useWallets'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -268,6 +269,7 @@ function EditModal({
 }
 
 export default function WalletsPage() {
+  const navigate = useNavigate()
   const [showAdd, setShowAdd] = useState(false)
   const [editTarget, setEditTarget] = useState<Wallet | null>(null)
 
@@ -300,13 +302,22 @@ export default function WalletsPage() {
           <h2 className="text-lg font-semibold text-primary">Ví của tôi</h2>
           <p className="text-xs text-muted">{active.length} ví</p>
         </div>
-        <Button
-          variant={showAdd ? 'outline' : 'accent'}
-          size="sm"
-          onClick={() => setShowAdd(!showAdd)}
-        >
-          {showAdd ? '− Đóng' : '+ Thêm ví'}
-        </Button>
+        <div className="flex gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate('/wallets/transfer')}
+          >
+            ↔ Chuyển
+          </Button>
+          <Button
+            variant={showAdd ? 'outline' : 'accent'}
+            size="sm"
+            onClick={() => setShowAdd(!showAdd)}
+          >
+            {showAdd ? '− Đóng' : '+ Thêm ví'}
+          </Button>
+        </div>
       </div>
 
       {/* Add form */}

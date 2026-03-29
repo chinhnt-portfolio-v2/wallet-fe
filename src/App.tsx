@@ -15,6 +15,9 @@ const CreateDebtGroupPage = lazy(() => import('@/pages/wallet/CreateDebtGroupPag
 const WalletsPage = lazy(() => import('@/pages/wallet/WalletsPage'))
 const CategoriesPage = lazy(() => import('@/pages/wallet/CategoriesPage'))
 const ProfilePage = lazy(() => import('@/pages/wallet/ProfilePage'))
+const TransferPage = lazy(() => import('@/pages/wallet/TransferPage'))
+const BudgetsPage = lazy(() => import('@/pages/wallet/BudgetsPage'))
+const RecurringPage = lazy(() => import('@/pages/wallet/RecurringPage'))
 const LoginPage = lazy(() => import('@/pages/wallet/LoginPage'))
 
 const queryClient = new QueryClient({
@@ -260,7 +263,10 @@ export default function App() {
           <Route path="/debts/:id" element={<ProtectedRoute><AppShell><DebtGroupDetailPage /></AppShell></ProtectedRoute>} />
           <Route path="/profile" element={<ProtectedRoute><AppShell><ProfilePage /></AppShell></ProtectedRoute>} />
           <Route path="/wallets" element={<ProtectedRoute><AppShell><WalletsPage /></AppShell></ProtectedRoute>} />
+          <Route path="/wallets/transfer" element={<ProtectedRoute><AppShell><TransferPage /></AppShell></ProtectedRoute>} />
           <Route path="/categories" element={<ProtectedRoute><AppShell><CategoriesPage /></AppShell></ProtectedRoute>} />
+          <Route path="/budgets" element={<ProtectedRoute><AppShell><BudgetsPage /></AppShell></ProtectedRoute>} />
+          <Route path="/recurring" element={<ProtectedRoute><AppShell><RecurringPage /></AppShell></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

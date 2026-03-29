@@ -144,3 +144,72 @@ export interface DebtSummary {
   walletIcon: string
   isOverdue: boolean
 }
+
+// ── Budget ──────────────────────────────────────────────────
+export type BudgetStatus = 'ok' | 'warning' | 'exceeded'
+
+export interface Budget {
+  id: number
+  userId: string
+  categoryId: number
+  monthlyLimit: number
+  alertThreshold: number // percentage: 80 | 90 | 100
+  period: string // YYYY-MM
+  category?: Category
+  // Frontend-computed:
+  currentSpent?: number
+  percentage?: number
+  status?: BudgetStatus
+}
+
+export interface CreateBudgetRequest {
+  categoryId: number
+  monthlyLimit: number
+  alertThreshold?: number // default 80
+  period: string // YYYY-MM
+}
+
+// ── Recurring ──────────────────────────────────────────────
+export type RecurringFrequency = 'DAILY' | 'WEEKLY' | 'MONTHLY' | 'YEARLY'
+export type RecurringStatus = 'ACTIVE' | 'PAUSED' | 'CANCELLED'
+
+export interface RecurringRule {
+  id: number
+  userId: string
+  walletId: number
+  categoryId: number
+  amount: number
+  type: TxnType
+  frequency: RecurringFrequency
+  startDate: string // YYYY-MM-DD
+  endDate: string | null
+  nextOccurrence: string | null // YYYY-MM-DD
+  status: RecurringStatus
+  note: string | null
+  wallet?: Wallet
+  category?: Category
+}
+
+export interface CreateRecurringRequest {
+  walletId: number
+  categoryId: number
+  amount: number
+  type: TxnType
+  frequency: RecurringFrequency
+  startDate: string
+  endDate?: string
+  note?: string
+}
+
+// ── Transfer ────────────────────────────────────────────────
+export interface TransferRequest {
+  fromWalletId: number
+  toWalletId: number
+  amount: number
+  note?: string
+}
+
+export interface TransferResult {
+  debitTx: Transaction
+  creditTx: Transaction
+}
