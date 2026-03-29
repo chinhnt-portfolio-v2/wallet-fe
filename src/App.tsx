@@ -187,33 +187,33 @@ function AppShell({ children }: { children: React.ReactNode }) {
 /**
  * OAuthCallbackHandler
  *
- * SECURITY FIX: Sử dụng Authorization Code flow thay vì Implicit flow.
+ * Supports TWO OAuth flows:
  *
- * Backend mới cần implement:
- * 1. GET  /api/v1/auth/oauth2/login/google?redirect_uri=FRONTEND_URL
- *    → redirect về FRONTEND_URL?code=AUTH_CODE
- * 2. POST /api/v1/auth/oauth2/callback  { code: AUTH_CODE }
- *    → server gọi Google token endpoint
- *    → set tokens vào httpOnly cookies
- *    → trả { success: true }
+ * 1. Authorization Code flow (NEW — recommended):
+ *    BE redirects to FRONTEND_URL?code=AUTH_CODE
+ *    → POST /api/v1/auth/oauth2/callback { code }
+ *    → BE sets httpOnly cookie, returns { accessToken }
  *
- * Nếu backend chưa support code flow, tạm thời dùng localStorage nhưng
- * KHÔNG gửi tokens qua URL query params nữa.
+ * 2. Implicit flow (CURRENT BE — backward compatible):
+ *    BE redirects to FRONTEND_URL?accessToken=...&refreshToken=...
+ *    → read tokens from URL, save to localStorage, clear URL
  */
 function OAuthCallbackHandler() {
   const navigate = useNavigate()
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search)
-    const code = params.get('code')
+    const code         = params.get('code')
+    const accessToken  = params.get('accessToken')
+    const refreshToken = params.get('refreshToken')
 
+    // ── New: Authorization Code flow ──────────────────────────────
     if (code) {
-      // Authorization Code flow: gửi code lên server, server set cookie
       fetch('/api/v1/auth/oauth2/callback', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ code }),
-        credentials: 'include', // Gửi nhận cookies
+        credentials: 'include',
       })
         .then((r) => r.json())
         .then((data) => {
@@ -228,6 +228,16 @@ function OAuthCallbackHandler() {
           window.history.replaceState(null, '', '/login')
           navigate('/login', { replace: true })
         })
+      return
+    }
+
+    // ── Old: Implicit flow (current BE — backward compatible) ───
+    if (accessToken && refreshToken) {
+      localStorage.setItem('wallet_token', accessToken)
+      localStorage.setItem('wallet_refresh_token', refreshToken)
+      window.history.replaceState(null, '', '/')
+      navigate('/', { replace: true })
+      return
     }
   }, [navigate])
 
