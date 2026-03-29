@@ -1,6 +1,7 @@
 import { useNavigate } from 'react-router-dom'
 import { useDashboardSummary, useOpenDebts, useMonthlyComparison } from '@/hooks/useDashboard'
 import { useRecentTransactions } from '@/hooks/useTransactions'
+import { useBudgetWithSpending } from '@/hooks/useBudgets'
 import { DashboardSkeleton } from '@/components/ui/Skeleton'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
@@ -180,6 +181,74 @@ function ZoneE() {
   )
 }
 
+// ── Zone E2: Budget Alerts ────────────────────────────────
+function ZoneBudgetAlerts() {
+  const navigate = useNavigate()
+  const now = new Date()
+  const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+  const { data: budgets } = useBudgetWithSpending(period)
+
+  const atRisk = [...(budgets ?? [])]
+    .filter((b) => b.status === 'exceeded' || b.status === 'warning')
+    .sort((a, b) => (b.percentage ?? 0) - (a.percentage ?? 0))
+    .slice(0, 3)
+
+  if (atRisk.length === 0) return null
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-center justify-between">
+        <p className="text-xs font-medium text-muted uppercase tracking-wide">⚠️ Ngân sách</p>
+        <button
+          onClick={() => navigate('/budgets')}
+          className="text-xs text-accent dark:text-dark-accent hover:underline"
+        >
+          Xem tất cả
+        </button>
+      </div>
+      <Card padding="sm">
+        <div className="space-y-3">
+          {atRisk.map((b) => {
+            const pct = Math.min(b.percentage ?? 0, 100)
+            const isExceeded = b.status === 'exceeded'
+            return (
+              <div key={b.id} className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <span className="text-sm">{b.category?.icon ?? '📊'}</span>
+                    <span className="text-xs font-medium text-primary dark:text-dark-primary truncate">
+                      {b.category?.name}
+                    </span>
+                  </div>
+                  <span className={`text-xs font-semibold shrink-0 ml-2 ${
+                    isExceeded ? 'text-negative dark:text-dark-negative' : 'text-warning dark:text-dark-warning'
+                  }`}>
+                    {Math.round(pct)}%
+                  </span>
+                </div>
+                <div className="h-1.5 bg-surface-2 dark:bg-dark-surface-2 rounded-full overflow-hidden">
+                  <div
+                    className={`h-full rounded-full transition-all ${
+                      isExceeded
+                        ? 'bg-negative dark:bg-dark-negative'
+                        : 'bg-warning dark:bg-dark-warning'
+                    }`}
+                    style={{ width: `${pct}%` }}
+                  />
+                </div>
+                <p className="text-2xs text-muted dark:text-dark-muted">
+                  {formatCurrency(b.currentSpent ?? 0)} / {formatCurrency(b.monthlyLimit)}₫
+                  {isExceeded ? ' · ⚠️ Vượt ngân sách' : ' · Gần đạt'}
+                </p>
+              </div>
+            )
+          })}
+        </div>
+      </Card>
+    </div>
+  )
+}
+
 // ── Zone F: Recent Transactions ────────────────────────────
 function ZoneF() {
   const { data: txs, isLoading } = useRecentTransactions(5)
@@ -242,6 +311,7 @@ export default function DashboardPage() {
         <ZoneA />
         <ZoneB />
         <ZoneE />
+        <ZoneBudgetAlerts />
         <ZoneF />
       </div>
       {/* Onboarding Wizard — shown on Dashboard mount when user has zero wallets */}

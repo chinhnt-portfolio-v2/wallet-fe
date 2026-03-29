@@ -18,6 +18,7 @@ const ProfilePage = lazy(() => import('@/pages/wallet/ProfilePage'))
 const TransferPage = lazy(() => import('@/pages/wallet/TransferPage'))
 const BudgetsPage = lazy(() => import('@/pages/wallet/BudgetsPage'))
 const RecurringPage = lazy(() => import('@/pages/wallet/RecurringPage'))
+const ExportPage = lazy(() => import('@/pages/wallet/ExportPage'))
 const LoginPage = lazy(() => import('@/pages/wallet/LoginPage'))
 
 const queryClient = new QueryClient({
@@ -267,6 +268,7 @@ export default function App() {
           <Route path="/categories" element={<ProtectedRoute><AppShell><CategoriesPage /></AppShell></ProtectedRoute>} />
           <Route path="/budgets" element={<ProtectedRoute><AppShell><BudgetsPage /></AppShell></ProtectedRoute>} />
           <Route path="/recurring" element={<ProtectedRoute><AppShell><RecurringPage /></AppShell></ProtectedRoute>} />
+          <Route path="/export" element={<ProtectedRoute><AppShell><ExportPage /></AppShell></ProtectedRoute>} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

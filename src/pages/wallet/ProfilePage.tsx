@@ -1,9 +1,11 @@
+import { useNavigate } from 'react-router-dom'
 import { useAuthStore } from '@/stores/authStore'
 import { useUser } from '@/hooks/useUser'
 import { Card } from '@/components/ui/Card'
 import { Skeleton } from '@/components/ui/Skeleton'
 
 export default function ProfilePage() {
+  const navigate = useNavigate()
   const clearToken = useAuthStore((s) => s.clearToken)
   const { data: user, isLoading } = useUser()
 
@@ -11,18 +13,25 @@ export default function ProfilePage() {
     clearToken()
     localStorage.removeItem('wallet_theme')
     localStorage.removeItem('wallet_refresh_token')
+    localStorage.removeItem('wallet_onboarding_done')
     window.location.href = '/login'
   }
+
+  const menuItems = [
+    { label: 'Xuất dữ liệu CSV', icon: '📥', href: '/export' },
+    { label: 'Giao dịch định kỳ', icon: '🔁', href: '/recurring' },
+    { label: 'Ngân sách', icon: '📊', href: '/budgets' },
+  ]
 
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-primary">Cài đặt</h2>
-        <p className="text-xs text-muted">Quản lý tài khoản</p>
+        <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Cài đặt</h2>
+        <p className="text-xs text-muted dark:text-dark-muted">Quản lý tài khoản</p>
       </div>
 
       {/* User card */}
-      <Card className="space-y-0 divide-y divide-border">
+      <Card className="divide-y divide-border dark:divide-dark-border">
         {isLoading ? (
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3">
@@ -40,35 +49,52 @@ export default function ProfilePage() {
                 <img
                   src={user.picture}
                   alt={user.name ?? 'Avatar'}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-border"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-border dark:border-dark-border"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-xl text-accent font-bold">
+                <div className="w-12 h-12 rounded-full bg-accent/20 dark:bg-dark-accent/20 flex items-center justify-center text-xl text-accent dark:text-dark-accent font-bold">
                   {(user.name ?? user.email ?? '?')[0].toUpperCase()}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-primary truncate">
+                <p className="text-sm font-semibold text-primary dark:text-dark-primary truncate">
                   {user.name ?? 'Chưa đặt tên'}
                 </p>
-                <p className="text-2xs text-muted truncate">{user.email}</p>
-                <span className="inline-block mt-1 text-2xs px-2 py-0.5 rounded-full bg-surface-2 text-muted">
+                <p className="text-xs text-muted dark:text-dark-muted truncate">{user.email}</p>
+                <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-surface-2 dark:bg-dark-surface-2 text-muted dark:text-dark-muted">
                   {user.provider === 'google' ? '🔵 Google' : user.provider}
                 </span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="p-4 text-center text-sm text-muted">
+          <div className="p-4 text-center text-sm text-muted dark:text-dark-muted">
             Không tải được thông tin người dùng
           </div>
         )}
 
-        {/* Settings */}
+        {/* Menu links */}
+        <div className="p-1 divide-y divide-border dark:divide-dark-border">
+          {menuItems.map((item) => (
+            <button
+              key={item.href}
+              onClick={() => navigate(item.href)}
+              className="w-full text-left px-3 py-3 text-sm text-primary dark:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2 transition-colors flex items-center justify-between"
+            >
+              <span className="flex items-center gap-3">
+                <span>{item.icon}</span>
+                <span>{item.label}</span>
+              </span>
+              <span className="text-muted dark:text-dark-muted">→</span>
+            </button>
+          ))}
+        </div>
+
+        {/* Logout */}
         <div className="p-1">
           <button
             onClick={handleLogout}
-            className="w-full text-left px-3 py-3 text-sm text-negative hover:bg-surface-2 rounded-md transition-colors flex items-center justify-between"
+            className="w-full text-left px-3 py-3 text-sm text-negative dark:text-dark-negative hover:bg-negative/5 dark:hover:bg-dark-negative/10 transition-colors flex items-center justify-between"
           >
             <span>Đăng xuất</span>
             <span>→</span>
@@ -79,8 +105,8 @@ export default function ProfilePage() {
       {/* App info */}
       <Card padding="sm">
         <div className="space-y-1 text-center">
-          <p className="text-xs font-medium text-primary">💰 Wallet App</p>
-          <p className="text-2xs text-muted">Phiên bản 0.2.0</p>
+          <p className="text-xs font-medium text-primary dark:text-dark-primary">💰 Wallet</p>
+          <p className="text-xs text-muted dark:text-dark-muted">Phiên bản 0.3.0</p>
         </div>
       </Card>
     </div>

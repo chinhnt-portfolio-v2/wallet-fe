@@ -86,9 +86,16 @@ export default function AddTransactionPage() {
       onSuccess: (res) => {
         toast.success('Đã thêm giao dịch!')
         if (res.group) {
-          toast.info('Đã tạo nhóm nợ trả sau — vào mục Nhóm nợ để thanh toán khi đến hạn.')
+          toast.success('Đã tạo nhóm nợ trả sau!', {
+            action: {
+              label: 'Xem ngay',
+              onClick: () => navigate(`/debts/${res.group.id}`),
+            },
+          })
+          navigate(`/debts/${res.group.id}`)
+        } else {
+          navigate('/')
         }
-        navigate('/')
       },
       onError: (err: Error) => toast.error(err.message),
     })
