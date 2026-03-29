@@ -48,6 +48,13 @@ export default function AddTransactionPage() {
   // When category is selected and wallet is POSTPAID, pre-fill debt title
   const selectedCategory = categories?.find((c) => c.id === categoryId)
 
+  // F3: BNPL Auto-Expand — when POSTPAID wallet is selected, auto-expand the advanced section
+  useEffect(() => {
+    if (isPostpaid) {
+      setShowAdvanced(true)
+    }
+  }, [isPostpaid])
+
   useEffect(() => {
     if (isExpenseOnPostpaid && selectedCategory && !debtTitle) {
       setDebtTitle(`Mua hàng: ${selectedCategory.name}`)
@@ -251,9 +258,9 @@ export default function AddTransactionPage() {
             <div className="border border-negative/30 bg-negative/5 rounded-md p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-negative">🛒 Ghi nhận nợ trả sau</p>
-                  <p className="text-2xs text-muted mt-0.5">
-                    Tạo nhóm nợ BNPL để theo dõi và thanh toán sau
+                  <p className="text-xs font-semibold text-negative dark:text-dark-negative">🛒 Ghi nhận nợ trả sau</p>
+                  <p className="text-xs text-muted dark:text-dark-muted mt-0.5">
+                    Tạo nhóm nợ để theo dõi khoản mua trả góp và thanh toán khi đến hạn
                   </p>
                 </div>
                 <button
@@ -262,7 +269,7 @@ export default function AddTransactionPage() {
                   aria-label="Ghi nhận nợ trả sau"
                   onClick={() => setCreateDebt(!createDebt)}
                   className={`w-10 h-6 rounded-full transition-all relative shrink-0 ${
-                    createDebt ? 'bg-negative' : 'bg-border'
+                    createDebt ? 'bg-negative dark:bg-dark-negative' : 'bg-border dark:bg-dark-border'
                   }`}
                 >
                   <span className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
@@ -299,16 +306,12 @@ export default function AddTransactionPage() {
         </div>
       )}
 
-      {/* BNPL notice when wallet is POSTPAID but not creating debt */}
-      {isExpenseOnPostpaid && !createDebt && (
-        <div className="flex items-start gap-2 p-3 border border-border rounded-md bg-surface-2">
-          <span className="text-negative text-sm">⚠️</span>
-          <p className="text-xs text-muted">
-            Ví trả sau. Nếu muốn theo dõi khoản nợ để thanh toán sau, bấm{' '}
-            <button onClick={() => setShowAdvanced(true)} className="text-accent hover:underline">
-              Thêm chi tiết
-            </button>{' '}
-            và bật <strong className="text-primary">"Ghi nhận nợ trả sau"</strong>.
+      {/* BNPL info — shown when wallet is POSTPAID (section auto-expanded) */}
+      {isExpenseOnPostpaid && (
+        <div className="flex items-start gap-2 p-3 border border-border dark:border-dark-border rounded-md bg-surface-2 dark:bg-dark-surface-2">
+          <span className="text-negative dark:text-dark-negative text-sm shrink-0">ℹ️</span>
+          <p className="text-xs text-muted dark:text-dark-muted">
+            Ví trả sau — bật <strong className="text-negative dark:text-dark-negative">"Ghi nhận nợ"</strong> bên dưới để tạo nhóm theo dõi và thanh toán đúng hạn.
           </p>
         </div>
       )}

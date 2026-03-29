@@ -4,6 +4,7 @@ import { useRecentTransactions } from '@/hooks/useTransactions'
 import { DashboardSkeleton } from '@/components/ui/Skeleton'
 import { Card } from '@/components/ui/Card'
 import { Badge } from '@/components/ui/Badge'
+import { OnboardingModal } from '@/components/onboarding/OnboardingModal'
 import { formatCurrency } from '@/lib/utils'
 import {
   BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell,
@@ -236,11 +237,15 @@ function ZoneF() {
 // ── Main ────────────────────────────────────────────────────
 export default function DashboardPage() {
   return (
-    <div className="space-y-4">
-      <ZoneA />
-      <ZoneB />
-      <ZoneE />
-      <ZoneF />
-    </div>
+    <>
+      <div className="space-y-4">
+        <ZoneA />
+        <ZoneB />
+        <ZoneE />
+        <ZoneF />
+      </div>
+      {/* Onboarding Wizard — shown on Dashboard mount when user has zero wallets */}
+      <OnboardingModal />
+    </>
   )
 }

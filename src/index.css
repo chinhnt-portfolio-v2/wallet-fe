@@ -10,83 +10,41 @@
   }
 
   body {
-    @apply bg-bg text-primary;
+    @apply bg-bg dark:bg-dark-bg text-primary dark:text-dark-primary;
     font-size: 14px;
     line-height: 1.5;
     transition: background-color 200ms ease, color 200ms ease;
   }
 
+  /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
-  ::-webkit-scrollbar-track { @apply bg-transparent; }
+  ::-webkit-scrollbar-track { background: transparent; }
   ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
+  .dark ::-webkit-scrollbar-thumb { background: #334155; }
 }
 
-/* Dark mode */
-.dark body {
-  @apply bg-dark-bg text-dark-primary;
-}
-.dark .bg-surface { @apply bg-dark-surface; }
-.dark .bg-surface-2 { @apply bg-dark-surface-2; }
-.dark .text-primary { @apply text-dark-primary; }
-.dark .text-secondary { @apply text-dark-secondary; }
-.dark .text-muted { @apply text-dark-muted; }
-.dark .border-border { @apply border-dark-border; }
-.dark .bg-primary { @apply bg-dark-primary text-dark-bg; }
-.dark .bg-accent { @apply bg-dark-accent text-dark-bg; }
-.dark .bg-positive { @apply bg-dark-positive; }
-.dark .bg-negative { @apply bg-dark-negative; }
-.dark .text-positive { @apply text-dark-positive; }
-.dark .text-negative { @apply text-dark-negative; }
-
-.dark .card {
-  @apply bg-dark-surface border-dark-border shadow-none;
-}
-
-.dark .input {
-  @apply bg-dark-surface border-dark-border text-dark-primary;
-}
-
-.dark .btn-ghost {
-  @apply text-dark-secondary hover:bg-dark-surface-2;
-}
-
-.dark .btn-outline {
-  @apply border-dark-border text-dark-secondary hover:bg-dark-surface-2;
-}
-
-.dark .text-accent  { @apply text-dark-accent; }
-.dark .text-warning { @apply text-dark-warning; }
-.dark .bg-warning  { @apply bg-dark-warning; }
-
-.dark .skeleton {
-  @apply bg-dark-surface-2;
-}
-
-@layer utilities {
+@layer components {
+  /* Card — light + dark */
   .card {
-    @apply bg-surface rounded-md border border-border shadow-sm;
+    @apply bg-surface dark:bg-dark-surface
+           rounded-md border border-border dark:border-dark-border
+           shadow-sm;
   }
 
-  .btn {
-    @apply inline-flex items-center justify-center gap-2 rounded-md px-4 py-2 text-sm font-medium transition-all duration-150;
-    @apply focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2;
-    @apply active:scale-95 disabled:opacity-50 disabled:pointer-events-none;
-  }
-
-  .btn-primary { @apply btn bg-primary text-white hover:bg-primary/90; }
-  .btn-accent  { @apply btn bg-accent text-white hover:bg-accent/90; }
-  .btn-ghost   { @apply btn bg-transparent text-secondary hover:bg-surface-2; }
-  .btn-outline { @apply btn border border-border bg-transparent text-secondary hover:bg-surface-2; }
-
+  /* Input — light + dark (focus handled inline in component) */
   .input {
-    @apply w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm text-primary;
-    @apply placeholder:text-muted;
-    @apply focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent;
-    @apply transition-all duration-150;
+    @apply w-full rounded-sm border border-border dark:border-dark-border
+           bg-surface dark:bg-dark-surface
+           text-primary dark:text-dark-primary
+           px-3 py-2 text-sm transition-all duration-150;
   }
 
-  .skeleton { @apply animate-pulse bg-surface-2 rounded; }
+  /* Skeleton */
+  .skeleton {
+    @apply animate-pulse bg-surface-2 dark:bg-dark-surface-2 rounded;
+  }
 
+  /* Numeric tabular figures */
   .tabular { font-variant-numeric: tabular-nums; }
 
   /* Bottom sheet slide-up animation */
@@ -94,8 +52,5 @@
     from { transform: translateY(100%); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
   }
-
-  .animate-slide-up {
-    animation: slide-up 200ms ease-out;
-  }
+  .animate-slide-up { animation: slide-up 200ms ease-out; }
 }

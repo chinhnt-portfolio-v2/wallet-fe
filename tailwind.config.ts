@@ -1,35 +1,81 @@
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ['./index.html', './src/**/*.{ts,tsx}'],
-  darkMode: 'class',
+  darkMode: 'class',  // activated by .dark class on <html>
   theme: {
     extend: {
       colors: {
         // Light mode
-        bg: '#F8FAFC',
-        surface: '#FFFFFF',
+        bg:           '#F8FAFC',
+        surface:      '#FFFFFF',
+        'surface-2':  '#F1F5F9',
+        primary:      '#0F172A',
+        secondary:    '#334155',
+        muted:        '#94A3B8',
+        border:       '#E2E8F0',
+        accent:       '#0EA5E9',
+        positive:     '#10B981',
+        negative:     '#F43F5E',
+        warning:      '#F59E0B',
+
+        // Dark mode — defined as Tailwind dark: variants
+        // Usage: dark:bg-surface, dark:text-primary, dark:border-border
+        // Activated when .dark class exists on <html>
+        darkBg:        '#0F172A',
+        darkSurface:   '#1E293B',
+        darkSurface2:  '#334155',
+        darkPrimary:   '#F8FAFC',
+        darkSecondary: '#CBD5E1',
+        darkMuted:     '#64748B',
+        darkBorder:    '#334155',
+        darkAccent:    '#38BDF8',
+        darkPositive:  '#34D399',
+        darkNegative:  '#FB7185',
+        darkWarning:   '#FBBF24',
+      },
+
+      backgroundColor: {
+        bg:          '#F8FAFC',
+        surface:     '#FFFFFF',
         'surface-2': '#F1F5F9',
-        primary: '#0F172A',
+        primary:     '#0F172A',
+        accent:      '#0EA5E9',
+        positive:    '#10B981',
+        negative:    '#F43F5E',
+        warning:     '#F59E0B',
+        // Dark
+        'dark-bg':         '#0F172A',
+        'dark-surface':    '#1E293B',
+        'dark-surface-2':  '#334155',
+      },
+
+      textColor: {
+        primary:   '#0F172A',
         secondary: '#334155',
-        muted: '#94A3B8',
-        border: '#E2E8F0',
-        accent: '#0EA5E9',
-        positive: '#10B981',
-        negative: '#F43F5E',
-        warning: '#F59E0B',
-        // Dark mode aliases (for direct class use)
-        'dark-bg': '#0F172A',
-        'dark-surface': '#1E293B',
-        'dark-surface-2': '#334155',
-        'dark-primary': '#F8FAFC',
+        muted:     '#94A3B8',
+        accent:    '#0EA5E9',
+        positive:  '#10B981',
+        negative:  '#F43F5E',
+        warning:   '#F59E0B',
+        // Dark
+        'dark-primary':   '#F8FAFC',
         'dark-secondary': '#CBD5E1',
-        'dark-muted': '#64748B',
-        'dark-border': '#334155',
-        'dark-accent': '#38BDF8',
+        'dark-muted':    '#64748B',
+        'dark-accent':   '#38BDF8',
         'dark-positive': '#34D399',
         'dark-negative': '#FB7185',
         'dark-warning': '#FBBF24',
       },
+
+      borderColor: {
+        border:        '#E2E8F0',
+        primary:       '#0F172A',
+        accent:        '#0EA5E9',
+        negative:      '#F43F5E',
+        // Dark
+        'dark-border': '#334155',
+      },
+
       fontSize: {
         '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
       },
