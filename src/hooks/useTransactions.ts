@@ -14,11 +14,13 @@ export interface TransactionFilters {
 
 export function useTransactions(params?: TransactionFilters) {
   const { page = 1, size = 20, ...rest } = params ?? {}
+  // BE pagination starts from 0, FE starts from 1
+  const pageParam = page - 1
   return useQuery<Transaction[]>({
-    queryKey: ['transactions', { page, size, ...rest }],
+    queryKey: ['transactions', { page: pageParam, size, ...rest }],
     queryFn: () => {
       const queryParams: Record<string, string | number> = {
-        page,
+        page: pageParam,
         size,
         ...(rest.type ? { type: rest.type } : {}),
         ...(rest.groupId ? { groupId: rest.groupId } : {}),

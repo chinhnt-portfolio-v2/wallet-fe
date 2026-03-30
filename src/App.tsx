@@ -97,10 +97,14 @@ function AppShell({ children }: { children: React.ReactNode }) {
   const { data: wallets } = useWallets()
   const hasNoWallets = !wallets || wallets.length === 0
 
+  // Apply .dark class to <html> on mount + every toggle
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDark)
+  }, [isDark])
+
   const toggleDark = () => {
     const next = !isDark
     setIsDark(next)
-    document.documentElement.classList.toggle('dark', next)
     localStorage.setItem('wallet_theme', next ? 'dark' : 'light')
   }
 
