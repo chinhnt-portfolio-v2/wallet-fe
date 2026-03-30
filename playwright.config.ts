@@ -17,12 +17,12 @@ export default defineConfig({
     video: 'retain-on-failure',
   },
   globalSetup: './e2e/setup/global-setup.ts',
-  webServer: process.env.CI ? undefined : {
+  webServer: process.env.CI ? {
     command: 'npm run dev',
     url: 'http://localhost:5173',
-    reuseExistingServer: true,
-    timeout: 30_000,
-  },
+    reuseExistingServer: !process.env.CI,
+    timeout: 60_000,  // 60s for first npm install + start
+  } : undefined,
   projects: [
     {
       name: 'chromium',
