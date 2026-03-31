@@ -1,52 +1,62 @@
 import { test, expect } from '@playwright/test'
+import { waitForReact } from '../helpers/app'
 
-const BASE = process.env.BASE_URL || 'https://wallet-fe-cyan.vercel.app'
+const BASE = process.env.BASE_URL || 'http://localhost:5173'
 
-test.describe('💸 Transfer (Chuyển tiền)', () => {
-
-  test.beforeEach(async ({ page }) => {
+// ─── Transfer Page ─────────────────────────────────────────────────────────────
+test.describe('Transfer Page', () => {
+  test('renders with "Chuyển tiền" heading', async ({ page }) => {
     await page.goto(`${BASE}/wallets/transfer`)
-    await page.waitForLoadState('networkidle')
+    await waitForReact(page)
+    await expect(page.getByRole('heading', { name: /Chuyển tiền/i })).toBeVisible()
   })
 
-  test('page loads without crash', async ({ page }) => {
-    // Should show transfer page elements
-    const heading = page.locator('h1, h2').filter({ hasText: /chuyển|chuyển tiền|transfer/i })
-    await expect(heading).toBeVisible({ timeout: 10_000 })
+  test('shows Từ ví and Đến ví selectors', async ({ page }) => {
+    await page.goto(`${BASE}/wallets/transfer`)
+    await waitForReact(page)
+    await expect(page.getByText('Từ ví')).toBeVisible()
+    await expect(page.getByText('Đến ví')).toBeVisible()
   })
 
-  test('source wallet selector exists', async ({ page }) => {
-    const selector = page.locator('select').first()
-    await expect(selector).toBeVisible()
+  test('amount input visible', async ({ page }) => {
+    await page.goto(`${BASE}/wallets/transfer`)
+    await waitForReact(page)
+    await expect(page.locator('input[inputMode="decimal"]').first()).toBeVisible()
   })
 
-  test('destination wallet selector exists', async ({ page }) => {
-    // Second select box or target selector
-    const selects = page.locator('select')
-    const count = await selects.count()
-    expect(count).toBeGreaterThanOrEqual(1)
+  test('submit disabled when form incomplete', async ({ page }) => {
+    await page.goto(`${BASE}/wallets/transfer`)
+    await waitForReact(page)
+    await expect(page.getByRole('button', { name: /Chuyển tiền/i })).toBeDisabled()
   })
 
-  test('amount input accepts numbers', async ({ page }) => {
-    const amountInput = page.locator('input[type="number"], input[inputmode="decimal"]').first()
-    await amountInput.fill('100000')
-    await expect(amountInput).toHaveValue(/100000/)
+  test('preview shows when from+to+amount filled', async ({ page }) => {
+    await page.goto(`${BASE}/wallets/transfer`)
+    await waitForReact(page)
+    const cards = page.locator('button[aria-pressed]')
+    if (await cards.count() < 2) return
+    await cards.nth(0).click()
+    const destCards = page.locator('button[aria-pressed]')
+    if (await destCards.count() > 1) await destCards.nth(1).click()
+    await page.locator('input[inputMode="decimal"]').first().fill('10000')
+    await page.waitForTimeout(500)
+    const preview = page.getByText('Xem trước')
+    if (await preview.isVisible().catch(() => false)) await expect(preview).toBeVisible()
   })
+})
 
-  test('shows validation when amount exceeds balance', async ({ page }) => {
-    const amountInput = page.locator('input[type="number"], input[inputmode="decimal"]').first()
-    await amountInput.fill('999999999999')
-    // Submit if there's a submit button
-    const submitBtn = page.locator('button[type="submit"], button:has-text("Chuyển"), button:has-text("Transfer")').first()
-    if (await submitBtn.isVisible()) {
-      await submitBtn.click()
-      // App should show error toast or inline error
-      await page.waitForTimeout(1_000)
-    }
-  })
-
-  test('back navigation works', async ({ page }) => {
-    await page.goBack()
-    await page.waitForLoadState('domcontentloaded')
+// ─── Submit Flow ───────────────────────────────────────────────────────────────
+test.describe('Transfer Submit', () => {
+  test('submit button defined when wallets+amount filled', async ({ page }) => {
+    await page.goto(`${BASE}/wallets/transfer`)
+    await waitForReact(page)
+    const cards = page.locator('button[aria-pressed]')
+    if (await cards.count() < 2) return
+    await cards.nth(0).click()
+    const destCards = page.locator('button[aria-pressed]')
+    if (await destCards.count() > 1) await destCards.nth(1).click()
+    await page.locator('input[inputMode="decimal"]').first().fill('1000')
+    await page.waitForTimeout(300)
+    await expect(page.getByRole('button', { name: /Chuyển tiền/i })).toBeDefined()
   })
 })

@@ -1,62 +1,90 @@
 import { chromium, FullConfig } from '@playwright/test'
+import * as path from 'path'
 
 /**
- * Global setup — runs once before all tests.
- * Handles Google OAuth login so tests are pre-authenticated.
+ * Global setup — runs once before all test files.
  *
- * Requires env vars:
- *   TEST_EMAIL     — Google account email
- *   TEST_PASSWORD  — Google account password
+ * Auth strategy:
+ *   1. If WALLET_TOKEN env var is set → inject it into browser localStorage,
+ *      then save browser context state to e2e/.auth/state.json
+ *      so all tests inherit the authenticated session automatically.
+ *   2. If not set → skip auth entirely; tests requiring auth will be skipped.
  *
- * In CI: set these as GitHub Secrets → workflow env vars
+ * Usage:
+ *   # Local dev with token
+ *   WALLET_TOKEN=eyJhbGci... npx playwright test
+ *
+ *   # Against Vercel deploy
+ *   BASE_URL=https://wallet-fe-your-vercel.app WALLET_TOKEN=eyJ... npx playwright test
+ *
+ *   # CI (GitHub Actions) — set WALLET_TOKEN and BASE_URL as secrets/env vars
  */
 async function globalSetup(config: FullConfig) {
-  const browser = await chromium.launch()
-  const storageStatePath = 'e2e/.auth/state.json'
+  const storageStatePath = path.join(process.cwd(), 'e2e/.auth/state.json')
+  const token = process.env.WALLET_TOKEN
 
-  // If already authenticated, skip login
-  const fs = await import('fs')
-  if (fs.existsSync(storageStatePath)) {
-    await browser.close()
+  if (!token) {
+    console.warn(
+      '\n⚠️  WALLET_TOKEN not set — auth setup skipped.\n' +
+      '   Tests that require authentication will be SKIPPED.\n' +
+      '   To enable auth tests, set WALLET_TOKEN env var with a valid JWT:\n' +
+      '   WALLET_TOKEN=your.jwt.token npx playwright test\n'
+    )
     return
   }
 
-  const { TEST_EMAIL, TEST_PASSWORD } = process.env
-  if (!TEST_EMAIL || !TEST_PASSWORD) {
+  const browser = await chromium.launch()
+  const context = await browser.newContext()
+  const page = await context.newPage()
+
+  console.log(`🔐 Injecting WALLET_TOKEN and saving auth state to ${storageStatePath}...`)
+
+  const baseURL = process.env.BASE_URL || 'http://localhost:5173'
+
+  try {
+    // Navigate to app root and inject token
+    await page.goto(baseURL)
+  } catch {
     console.warn(
-      '⚠️  TEST_EMAIL / TEST_PASSWORD not set — skipping auth setup.\n' +
-      'Tests that require auth will be skipped. Set these env vars to enable E2E tests.'
+      `⚠️  Could not reach ${baseURL} — is the dev server or Vercel deploy running?\n` +
+      `   global-setup skipped. Tests will run unauthenticated.\n` +
+      `   Start server and re-run: npx playwright test`
     )
     await browser.close()
     return
   }
 
-  const page = await browser.newPage()
+  try {
+    await page.evaluate(
+      (t) => {
+        localStorage.setItem('wallet_token', t)
+        localStorage.removeItem('wallet_onboarding_done')
+      },
+      token,
+    )
 
-  console.log(`🔐 Logging in as ${TEST_EMAIL}...`)
+    // Reload so React reads the token and renders authenticated UI
+    await page.reload()
+    await page.waitForLoadState('domcontentloaded')
 
-  await page.goto(process.env.BASE_URL || 'http://localhost:5173')
+    // Verify we are NOT on /login after reload (auth worked)
+    const currentURL = page.url()
+    if (currentURL.includes('/login')) {
+      console.warn(
+        `⚠️  Token was injected but app redirected to /login.\n` +
+        `   The token may be invalid or expired. Check WALLET_TOKEN.\n` +
+        `   Current URL: ${currentURL}`
+      )
+    } else {
+      console.log(`✅ Auth state verified — on: ${currentURL}`)
+    }
 
-  // Click "Sign in with Google"
-  const googleBtn = page.locator('button:has-text("Google"), [data-provider="google"]').first()
-  await googleBtn.click()
-
-  // Fill Google login form
-  await page.waitForURL('**accounts.google.com/**', { timeout: 10_000 })
-  await page.fill('input[type="email"]', TEST_EMAIL)
-  await page.click('button:has-text("Next")')
-  await page.waitForTimeout(1_000)
-  await page.fill('input[type="password"]', TEST_PASSWORD)
-  await page.click('button:has-text("Sign in"), button:has-text("Next")')
-
-  // Wait for OAuth callback + app redirect
-  await page.waitForURL(url => !url.toString().includes('accounts.google.com'), { timeout: 15_000 })
-
-  // Save auth state
-  await page.context().storageState({ path: storageStatePath as any })
-  console.log(`✅ Auth state saved to ${storageStatePath}`)
-
-  await browser.close()
+    // Save the authenticated browser context for all tests to reuse
+    await context.storageState({ path: storageStatePath })
+    console.log(`✅ Auth state saved to ${storageStatePath}`)
+  } finally {
+    await browser.close()
+  }
 }
 
 export default globalSetup

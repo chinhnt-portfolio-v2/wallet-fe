@@ -1,55 +1,29 @@
 import { test, expect } from '@playwright/test'
+import { waitForReact } from '../helpers/app'
 
-const BASE = process.env.BASE_URL || 'https://wallet-fe-cyan.vercel.app'
+const BASE = process.env.BASE_URL || 'http://localhost:5173'
 
-test.describe('🔔 Notifications', () => {
-
-  test.beforeEach(async ({ page }) => {
+// ─── Notifications Page ──────────────────────────────────────────────────────────
+test.describe('Notifications Page', () => {
+  test('renders with "Thông báo" heading', async ({ page }) => {
     await page.goto(`${BASE}/notifications`)
-    await page.waitForLoadState('networkidle')
-  })
-
-  test('page loads and shows heading', async ({ page }) => {
-    const heading = page.locator('h2').filter({ hasText: /thông báo|notification/i })
-    await expect(heading).toBeVisible({ timeout: 10_000 })
+    await waitForReact(page)
+    await expect(page.getByRole('heading', { name: /Thông báo/i })).toBeVisible()
   })
 
   test('push notification card visible', async ({ page }) => {
-    const pushCard = page.locator('text=Thông báo trình duyệt').first()
-    await expect(pushCard).toBeVisible({ timeout: 5_000 })
+    await page.goto(`${BASE}/notifications`)
+    await waitForReact(page)
+    await expect(page.getByText(/Thông báo trình duyệt/i)).toBeVisible()
   })
 
-  test('enable push button exists', async ({ page }) => {
-    const enableBtn = page.locator('button:has-text("Bật thông báo"), text=Bật thông báo').first()
-    const hasBtn = await enableBtn.isVisible().catch(() => false)
-    if (!hasBtn) {
-      // Already enabled — that's fine
-      console.log('Push notifications already enabled')
-    } else {
-      await expect(enableBtn).toBeVisible()
-    }
-  })
-
-  test('mark all read button exists when notifications exist', async ({ page }) => {
-    await page.waitForTimeout(2_000)
-    const markBtn = page.locator('button:has-text("Đánh dấu đã đọc"), text=Đánh dấu đã đọc').first()
-    const hasBtn = await markBtn.isVisible().catch(() => false)
-    if (!hasBtn) {
-      console.log('No unread notifications, skipping')
-      test.skip()
-    }
-    await expect(markBtn).toBeVisible()
-  })
-
-  test('empty state shows when no notifications', async ({ page }) => {
-    await page.waitForTimeout(2_000)
-    const emptyState = page.locator('text=Chưa có thông báo').first()
-    const hasEmpty = await emptyState.isVisible().catch(() => false)
-    if (hasEmpty) {
-      await expect(emptyState).toBeVisible()
-    } else {
-      // Has notifications — that's fine too
-      console.log('Notifications exist')
-    }
+  test('shows empty state or notification list', async ({ page }) => {
+    await page.goto(`${BASE}/notifications`)
+    await waitForReact(page)
+    const empty = page.getByText(/Chưa có thông báo/i)
+    const list = page.locator('[class*="border-l-2"]')
+    const hasEmpty = await empty.isVisible().catch(() => false)
+    const hasList = await list.count().then(n => n > 0).catch(() => false)
+    expect(hasEmpty || hasList).toBeTruthy()
   })
 })
