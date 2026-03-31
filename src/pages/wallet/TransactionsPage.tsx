@@ -32,7 +32,7 @@ function DateRangePicker({
         className="input text-xs flex-1"
         title="Từ ngày"
       />
-      <span className="text-muted self-center text-xs">–</span>
+      <span className="text-muted dark:text-dark-muted self-center text-xs">–</span>
       <input
         type="date"
         value={dateTo}
@@ -100,8 +100,8 @@ function TransactionForm({
 
   return (
     <Card className="space-y-4">
-      <p className="text-sm font-semibold text-primary">{title}</p>
-      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
+      <p className="text-sm font-semibold text-primary dark:text-dark-primary">{title}</p>
+      <div className="flex gap-1 bg-surface-2 dark:bg-dark-surface-2 rounded-md p-1">
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
@@ -109,9 +109,9 @@ function TransactionForm({
             onClick={() => { setTxType(t); setCategoryId(null) }}
             className={`flex-1 py-1.5 text-xs rounded-sm transition-colors ${
               txType === t
-                ? t === 'EXPENSE' ? 'bg-negative text-white font-medium shadow-sm'
-                  : 'bg-positive text-white font-medium shadow-sm'
-                : 'text-muted hover:text-primary'
+                ? t === 'EXPENSE' ? 'bg-negative dark:bg-dark-negative text-white font-medium shadow-sm'
+                  : 'bg-positive dark:bg-dark-positive text-white font-medium shadow-sm'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -127,13 +127,13 @@ function TransactionForm({
           className="input text-xl font-bold font-mono pr-12 py-3"
           placeholder="0"
         />
-        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">₫</span>
+        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted dark:text-dark-muted">₫</span>
       </div>
       {amount && (
-        <p className="text-xs text-muted -mt-2">= {formatCurrency(parseFloat(amount) || 0)}</p>
+        <p className="text-xs text-muted dark:text-dark-muted -mt-2">= {formatCurrency(parseFloat(amount) || 0)}</p>
       )}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1.5">Ví</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">Ví</label>
         <select
           value={walletId ?? ''}
           onChange={(e) => setWalletId(Number(e.target.value) || null)}
@@ -146,7 +146,7 @@ function TransactionForm({
         </select>
       </div>
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1.5">Danh mục</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">Danh mục</label>
         <div className="flex flex-wrap gap-1.5">
           {filteredCategories.map((c) => (
             <button
@@ -154,7 +154,7 @@ function TransactionForm({
               type="button"
               onClick={() => setCategoryId(categoryId === c.id ? null : c.id)}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition-all ${
-                categoryId === c.id ? 'ring-2 ring-primary/40' : 'hover:opacity-80'
+                categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-primary/40' : 'hover:opacity-80'
               }`}
               style={{
                 backgroundColor: `${c.color}20`,
@@ -174,7 +174,7 @@ function TransactionForm({
         placeholder="VD: Ăn trưa công ty"
       />
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1.5">Ngày</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">Ngày</label>
         <input
           type="date"
           value={date}
@@ -236,7 +236,7 @@ function EditModal({
         isPending={update.isPending}
         title="Chỉnh sửa"
       />
-      <div className="border-t border-border pt-3 mt-3">
+      <div className="border-t border-border dark:border-dark-border pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-2">
             <p className="text-xs text-negative text-center">
@@ -304,17 +304,17 @@ export default function TransactionsPage() {
     <div className="space-y-4">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-primary">Giao dịch</h2>
-        <p className="text-xs text-muted">
+        <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Giao dịch</h2>
+        <p className="text-xs text-muted dark:text-dark-muted">
           {isLoading ? '...' : `${visibleCount} giao dịch`}
-          {hasFilters && <span className="text-accent ml-1">(đang lọc)</span>}
+          {hasFilters && <span className="text-accent dark:text-dark-accent ml-1">(đang lọc)</span>}
         </p>
       </div>
 
       {/* Search bar */}
       <div className="flex gap-2">
         <div className="relative flex-1">
-          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted text-sm">🔍</span>
+          <span className="absolute left-3 top-1/2 -translate-y-1/2 text-muted dark:text-dark-muted text-sm">🔍</span>
           <input
             type="text"
             value={search}
@@ -327,8 +327,8 @@ export default function TransactionsPage() {
           onClick={() => setShowFilters(!showFilters)}
           className={`px-3 py-2 rounded-md border text-sm transition-colors ${
             hasFilters
-              ? 'border-accent text-accent bg-accent/10'
-              : 'border-border text-muted hover:text-primary hover:border-accent/50'
+              ? 'border-accent dark:border-dark-accent text-accent dark:text-dark-accent bg-accent/10 dark:bg-dark-accent/10'
+              : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:border-accent/50 dark:hover:border-dark-accent/50'
           }`}
         >
           ⚙️
@@ -338,16 +338,16 @@ export default function TransactionsPage() {
       {/* Filters panel */}
       {showFilters && (
         <Card className="space-y-3">
-          <p className="text-xs font-medium text-secondary">Bộ lọc</p>
-          <div className="flex gap-1 bg-surface-2 rounded-md p-1">
+          <p className="text-xs font-medium text-secondary dark:text-dark-secondary">Bộ lọc</p>
+          <div className="flex gap-1 bg-surface-2 dark:bg-dark-surface-2 rounded-md p-1">
             {['', 'INCOME', 'EXPENSE'].map((t) => (
               <button
                 key={t}
                 onClick={() => setTypeFilter(t)}
                 className={`flex-1 py-1.5 text-xs rounded-sm transition-colors ${
                   typeFilter === t
-                    ? 'bg-surface shadow-sm font-medium text-primary'
-                    : 'text-muted hover:text-primary'
+                    ? 'bg-surface dark:bg-dark-surface shadow-sm font-medium text-primary dark:text-dark-primary'
+                    : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
                 }`}
               >
                 {t === '' ? 'Tất cả' : t === 'INCOME' ? '📥 Thu' : '💸 Chi'}
@@ -355,7 +355,7 @@ export default function TransactionsPage() {
             ))}
           </div>
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1.5">Khoảng ngày</label>
+            <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">Khoảng ngày</label>
             <DateRangePicker
               dateFrom={dateFrom}
               dateTo={dateTo}
@@ -368,7 +368,7 @@ export default function TransactionsPage() {
                 setTypeFilter(''); setDateFrom(''); setDateTo('')
                 setSearch(''); setDebouncedSearch('')
               }}
-              className="text-xs text-accent hover:underline"
+              className="text-xs text-accent dark:text-dark-accent hover:underline"
             >
               ✕ Xóa bộ lọc
             </button>
@@ -383,7 +383,7 @@ export default function TransactionsPage() {
         <EmptyState icon="⚠️" title="Không tải được giao dịch" description="Hãy thử lại sau." />
       ) : Array.isArray(txs) && txs.length > 0 ? (
         <>
-          <div className="bg-surface rounded-md border border-border divide-y divide-border">
+          <div className="bg-surface dark:bg-dark-surface rounded-md border border-border dark:border-dark-border divide-y divide-border dark:divide-dark-border">
             {txs.map((tx) => (
               <button
                 key={tx.id}
@@ -391,7 +391,7 @@ export default function TransactionsPage() {
                   id: tx.id, walletId: tx.walletId, categoryId: tx.categoryId,
                   amount: tx.amount, type: tx.type, note: tx.note, date: tx.date,
                 })}
-                className="w-full flex items-center gap-3 p-4 text-left hover:bg-surface-2 transition-colors"
+                className="w-full flex items-center gap-3 p-4 text-left hover:bg-surface-2 dark:hover:bg-dark-surface-2 transition-colors"
               >
                 <div
                   className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
@@ -400,28 +400,28 @@ export default function TransactionsPage() {
                   {tx.category?.icon ?? '📦'}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-primary truncate">
+                  <p className="text-sm font-medium text-primary dark:text-dark-primary truncate">
                     {tx.category?.name ?? 'Giao dịch'}
                   </p>
-                  <p className="text-2xs text-muted truncate">
+                  <p className="text-2xs text-muted dark:text-dark-muted truncate">
                     {tx.wallet?.icon} {tx.wallet?.name}
                     {tx.note && ` · ${tx.note}`}
-                    {tx.groupId && <span className="ml-1 text-accent">📑 Nợ</span>}
+                    {tx.groupId && <span className="ml-1 text-accent dark:text-dark-accent">📑 Nợ</span>}
                   </p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className={`text-sm font-semibold font-mono tabular-nums ${
-                    tx.type === 'INCOME' ? 'text-positive' : 'text-negative'
+                    tx.type === 'INCOME' ? 'text-positive dark:text-dark-positive' : 'text-negative dark:text-dark-negative'
                   }`}>
                     {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(tx.amount)}
                   </p>
-                  <p className="text-2xs text-muted">{formatDate(tx.date)}</p>
+                  <p className="text-2xs text-muted dark:text-dark-muted">{formatDate(tx.date)}</p>
                 </div>
               </button>
             ))}
           </div>
           {visibleCount >= PAGE_SIZE && (
-            <p className="text-center text-xs text-muted py-2">
+            <p className="text-center text-xs text-muted dark:text-dark-muted py-2">
               Hiển thị {PAGE_SIZE} giao dịch mới nhất
             </p>
           )}
@@ -433,7 +433,7 @@ export default function TransactionsPage() {
           description={hasFilters ? 'Thử thay đổi bộ lọc.' : 'Bắt đầu thêm giao dịch đầu tiên.'}
           action={
             !hasFilters ? (
-              <a href="/add" className="bg-accent text-white text-xs px-4 py-2 rounded-md font-medium">
+              <a href="/add" className="bg-accent dark:bg-dark-accent text-white text-xs px-4 py-2 rounded-md font-medium">
                 Thêm giao dịch
               </a>
             ) : undefined

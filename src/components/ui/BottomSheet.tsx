@@ -62,22 +62,22 @@ export function BottomSheet({ open, onClose, title, children, className }: Botto
       <div
         ref={panelRef}
         className={cn(
-          'relative bg-surface w-full max-w-md rounded-t-2xl sm:rounded-2xl',
+          'relative bg-surface dark:bg-dark-surface w-full max-w-md rounded-t-2xl sm:rounded-2xl',
           'shadow-xl max-h-[90vh] flex flex-col overflow-hidden',
           'animate-slide-up',
           className
         )}
       >
         {/* Drag handle + Header */}
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border shrink-0">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border dark:border-dark-border shrink-0">
           {title && (
-            <p className="text-sm font-semibold text-primary">{title}</p>
+            <p className="text-sm font-semibold text-primary dark:text-dark-primary">{title}</p>
           )}
           <button
             ref={closeButtonRef}
             onClick={onClose}
             aria-label="Đóng"
-            className="text-muted hover:text-primary text-xl transition-colors ml-auto"
+            className="text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary text-xl transition-colors ml-auto"
           >
             ×
           </button>

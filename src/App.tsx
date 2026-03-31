@@ -77,12 +77,13 @@ function WalletLogo() {
       height="20"
       viewBox="0 0 24 24"
       fill="none"
+      stroke="currentColor"
       aria-hidden="true"
     >
-      <rect x="2" y="4" width="20" height="16" rx="3" fill="#0EA5E9" opacity="0.15"/>
-      <rect x="2" y="4" width="20" height="16" rx="3" stroke="#0EA5E9" strokeWidth="1.5"/>
-      <circle cx="16" cy="12" r="2" fill="#0EA5E9"/>
-      <line x1="2" y1="9" x2="22" y2="9" stroke="#0EA5E9" strokeWidth="1.5" opacity="0.5"/>
+      <rect x="2" y="4" width="20" height="16" rx="3" fill="currentColor" opacity="0.15" stroke="none"/>
+      <rect x="2" y="4" width="20" height="16" rx="3" strokeWidth="1.5"/>
+      <circle cx="16" cy="12" r="2" fill="currentColor" stroke="none"/>
+      <line x1="2" y1="9" x2="22" y2="9" strokeWidth="1.5" opacity="0.5"/>
     </svg>
   )
 }
@@ -109,12 +110,12 @@ function AppShell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <div className="min-h-screen bg-bg pb-20">
+    <div className="min-h-screen bg-bg dark:bg-[#0F172A] pb-20">
       {/* Header */}
-      <header className="sticky top-0 z-30 bg-surface/90 backdrop-blur-sm border-b border-border">
+      <header className="sticky top-0 z-30 bg-surface/90 dark:bg-dark-surface/90 backdrop-blur-sm border-b border-border dark:border-dark-border">
         <div className="max-w-lg mx-auto px-4 h-14 flex items-center justify-between">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2 text-base font-semibold text-primary">
+          <a href="/" className="flex items-center gap-2 text-base font-semibold text-primary dark:text-dark-primary">
             <WalletLogo />
             <span>Wallet</span>
           </a>
@@ -123,7 +124,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
             <a
               href="/notifications"
               aria-label="Thông báo"
-              className="w-8 h-8 flex items-center justify-center rounded-md text-sm text-muted hover:text-primary hover:bg-surface-2 transition-colors relative"
+              className="w-8 h-8 flex items-center justify-center rounded-md text-sm text-muted dark:text-dark-primary hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2 transition-colors relative"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
@@ -134,7 +135,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
             <a
               href="/profile"
               aria-label="Cài đặt"
-              className="w-8 h-8 flex items-center justify-center rounded-md text-sm text-muted hover:text-primary hover:bg-surface-2 transition-colors"
+              className="w-8 h-8 flex items-center justify-center rounded-md text-sm text-muted dark:text-dark-primary hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2 transition-colors"
             >
               <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
                 <circle cx="12" cy="8" r="4"/>
@@ -157,7 +158,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
         <button
           aria-label="Tạo ví trước khi thêm giao dịch"
           title="Tạo ví trước khi thêm giao dịch"
-          className="fixed bottom-20 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg
+          className="fixed bottom-20 right-6 w-14 h-14 bg-accent dark:bg-dark-accent text-white rounded-full shadow-lg
                      flex items-center justify-center text-2xl font-light
                      opacity-40 cursor-not-allowed transition-all duration-150 z-40
                      pb-[env(safe-area-inset-bottom)]"
@@ -169,9 +170,9 @@ function AppShell({ children }: { children: React.ReactNode }) {
         <a
           href="/add"
           aria-label="Thêm giao dịch"
-          className="fixed bottom-20 right-6 w-14 h-14 bg-primary text-white rounded-full shadow-lg
+          className="fixed bottom-20 right-6 w-14 h-14 bg-accent dark:bg-dark-accent text-white rounded-full shadow-lg
                      flex items-center justify-center text-2xl font-light
-                     hover:bg-primary/90 active:scale-95 transition-all duration-150 z-40
+                     hover:bg-accent/90 dark:hover:bg-dark-accent/90 active:scale-95 transition-all duration-150 z-40
                      pb-[env(safe-area-inset-bottom)]"
         >
           +
@@ -179,7 +180,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
       )}
 
       {/* Bottom nav */}
-      <nav aria-label="Điều hướng chính" className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-30">
+      <nav aria-label="Điều hướng chính" className="fixed bottom-0 left-0 right-0 bg-surface dark:bg-dark-surface border-t border-border dark:border-dark-border z-30">
         <div className="max-w-lg mx-auto flex pb-[env(safe-area-inset-bottom)]">
           {[
             { href: '/', label: 'Tổng quan', icon: '🏠' },
@@ -191,7 +192,7 @@ function AppShell({ children }: { children: React.ReactNode }) {
               key={href}
               href={href}
               aria-label={label}
-              className="flex-1 flex flex-col items-center py-2 text-xs text-muted hover:text-primary transition-colors"
+              className="flex-1 flex flex-col items-center py-2 text-xs text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary transition-colors"
             >
               <span aria-hidden="true">{icon}</span>
               <span className="mt-0.5">{label}</span>

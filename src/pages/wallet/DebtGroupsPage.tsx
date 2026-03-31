@@ -53,17 +53,17 @@ function GroupForm({
     <form onSubmit={handleSubmit} className="space-y-4">
       {/* Group type */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Loại</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Loại</label>
         <div className="grid grid-cols-2 gap-2">
           {GROUP_TYPES.map((t) => (
             <button
               key={t.value}
               type="button"
               onClick={() => setGroupType(t.value as DebtGroup['groupType'])}
-              className={`card p-3 text-left transition-all ${groupType === t.value ? 'border-accent ring-2 ring-accent/20' : 'hover:border-accent/50'}`}
+              className={`card p-3 text-left transition-all ${groupType === t.value ? 'border-accent dark:border-dark-accent ring-2 ring-accent/20 dark:ring-dark-accent/20' : 'hover:border-accent/50 dark:hover:border-dark-accent/50'}`}
             >
               <p className="text-lg mb-0.5">{t.icon}</p>
-              <p className="text-xs font-medium text-primary">{t.label}</p>
+              <p className="text-xs font-medium text-primary dark:text-dark-primary">{t.label}</p>
             </button>
           ))}
         </div>
@@ -153,7 +153,7 @@ function EditModal({
         onCancel={onClose}
         isPending={update.isPending}
       />
-      <div className="border-t border-border pt-3 mt-3">
+      <div className="border-t border-border dark:border-dark-border pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-2">
             <p className="text-xs text-negative text-center">
@@ -202,7 +202,7 @@ function DebtGroupCard({
       <div className="flex items-start justify-between gap-2">
         <div className="flex-1 min-w-0">
           <button onClick={() => onEdit(group)} className="text-left">
-            <p className="text-sm font-semibold text-primary hover:text-accent truncate transition-colors">
+            <p className="text-sm font-semibold text-primary dark:text-dark-primary hover:text-accent dark:hover:text-dark-accent truncate transition-colors">
               {group.title}
             </p>
           </button>
@@ -216,7 +216,7 @@ function DebtGroupCard({
         </div>
         <button
           onClick={() => onEdit(group)}
-          className="text-muted hover:text-primary transition-colors text-sm px-2 py-1 rounded border border-border hover:border-accent/50 shrink-0"
+          className="text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary transition-colors text-sm px-2 py-1 rounded border border-border dark:border-dark-border hover:border-accent/50 dark:hover:border-dark-accent/50 shrink-0"
         >
           ✏️
         </button>
@@ -224,38 +224,38 @@ function DebtGroupCard({
 
       {/* Progress */}
       <div>
-        <div className="flex justify-between text-2xs text-muted mb-1.5">
+        <div className="flex justify-between text-2xs text-muted dark:text-dark-muted mb-1.5">
           <span>Đã trả</span>
           <span>{progress.toFixed(0)}%</span>
         </div>
-        <div className="h-1.5 bg-surface-2 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-surface-2 dark:bg-dark-surface-2 rounded-full overflow-hidden">
           <div
-            className="h-full bg-positive rounded-full transition-all"
+            className="h-full bg-positive dark:bg-dark-positive rounded-full transition-all"
             style={{ width: `${progress}%` }}
           />
         </div>
-        <div className="flex justify-between text-2xs text-muted mt-1">
+        <div className="flex justify-between text-2xs text-muted dark:text-dark-muted mt-1">
           <span>{formatCurrency(Number(group.paidAmount))} đã trả</span>
           <span>{formatCurrency(Number(group.totalAmount))} tổng</span>
         </div>
       </div>
 
       {/* Footer */}
-      <div className="flex items-end justify-between pt-2 border-t border-border">
+      <div className="flex items-end justify-between pt-2 border-t border-border dark:border-dark-border">
         <div>
-          <p className="text-2xs text-muted">Còn lại</p>
-          <p className="text-base font-bold text-negative font-mono tabular-nums">
+          <p className="text-2xs text-muted dark:text-dark-muted">Còn lại</p>
+          <p className="text-base font-bold text-negative dark:text-dark-negative font-mono tabular-nums">
             {formatCurrency(remaining)}
           </p>
         </div>
         <div className="text-right">
           {group.dueDate && (
-            <p className={`text-2xs ${overdue ? 'text-negative' : 'text-muted'}`}>
+            <p className={`text-2xs ${overdue ? 'text-negative dark:text-dark-negative' : 'text-muted dark:text-dark-muted'}`}>
               ⏰ {formatDate(group.dueDate)}
             </p>
           )}
           {group.wallet && (
-            <p className="text-2xs text-muted mt-0.5">
+            <p className="text-2xs text-muted dark:text-dark-muted mt-0.5">
               {group.wallet.icon} {group.wallet.name}
             </p>
           )}
@@ -265,7 +265,7 @@ function DebtGroupCard({
       {/* Action */}
       <a
         href={`/debts/${group.id}`}
-        className="block w-full text-center py-2 text-xs font-medium bg-accent text-white rounded-sm hover:bg-accent/90 transition-colors"
+        className="block w-full text-center py-2 text-xs font-medium bg-accent dark:bg-dark-accent text-white rounded-sm hover:bg-accent/90 dark:hover:bg-dark-accent/90 transition-colors"
       >
         Thanh toán
       </a>
@@ -286,16 +286,16 @@ export default function DebtGroupsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Nhóm nợ</h2>
-          <p className="text-xs text-muted">{openGroups.length} nhóm đang mở</p>
+          <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Nhóm nợ</h2>
+          <p className="text-xs text-muted dark:text-dark-muted">{openGroups.length} nhóm đang mở</p>
         </div>
-        <a href="/debts/new" className="btn-accent text-xs px-3 py-1.5 rounded-sm">
+        <a href="/debts/new" className="bg-accent dark:bg-dark-accent text-white text-xs px-3 py-1.5 rounded-sm hover:bg-accent/90 dark:hover:bg-dark-accent/90 transition-colors">
           + Tạo nợ
         </a>
       </div>
 
       {/* Filter */}
-      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
+      <div className="flex gap-1 bg-surface-2 dark:bg-dark-surface-2 rounded-md p-1">
         {[
           { v: '',          l: 'Tất cả' },
           { v: 'OPEN,PARTIAL', l: 'Đang mở' },
@@ -306,8 +306,8 @@ export default function DebtGroupsPage() {
             onClick={() => setStatusFilter(v)}
             className={`flex-1 py-1.5 text-xs rounded-sm transition-colors ${
               statusFilter === v
-                ? 'bg-surface shadow-sm font-medium text-primary'
-                : 'text-muted hover:text-primary'
+                ? 'bg-surface dark:bg-dark-surface shadow-sm font-medium text-primary dark:text-dark-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
             }`}
           >
             {l}

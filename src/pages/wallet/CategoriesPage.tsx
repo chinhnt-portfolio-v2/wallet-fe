@@ -50,10 +50,10 @@ function CategoryForm({
 
   return (
     <Card className="space-y-4">
-      <p className="text-sm font-medium text-primary">{initial?.id ? '✏️ Sửa danh mục' : '+ Tạo danh mục mới'}</p>
+      <p className="text-sm font-medium text-primary dark:text-dark-primary">{initial?.id ? '✏️ Sửa danh mục' : '+ Tạo danh mục mới'}</p>
 
       {/* Type toggle */}
-      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
+      <div className="flex gap-1 bg-surface-2 dark:bg-dark-surface-2 rounded-md p-1">
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
@@ -64,7 +64,7 @@ function CategoryForm({
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white font-medium shadow-sm'
                   : 'bg-positive text-white font-medium shadow-sm'
-                : 'text-muted hover:text-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -82,7 +82,7 @@ function CategoryForm({
 
       {/* Icon picker */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Icon</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Icon</label>
         <div className="grid grid-cols-9 gap-1.5 max-h-36 overflow-y-auto pr-1">
           {CATEGORY_ICONS.map((i) => (
             <button
@@ -91,8 +91,8 @@ function CategoryForm({
               onClick={() => setIcon(i)}
               className={`w-8 h-8 text-base rounded-md border transition-all flex items-center justify-center ${
                 icon === i
-                  ? 'border-accent ring-2 ring-accent/30 bg-accent/10'
-                  : 'border-border hover:border-accent/50 hover:bg-surface-2'
+                  ? 'border-accent dark:border-dark-accent ring-2 ring-accent/30 dark:ring-dark-accent/30 bg-accent/10 dark:bg-dark-accent/10'
+                  : 'border-border dark:border-dark-border hover:border-accent/50 dark:hover:border-dark-accent/50 hover:bg-surface-2 dark:hover:bg-dark-surface-2'
               }`}
             >
               {i}
@@ -103,7 +103,7 @@ function CategoryForm({
 
       {/* Color picker */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Màu</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Màu</label>
         <div className="flex gap-2 flex-wrap">
           {CATEGORY_COLORS.map((c) => (
             <button
@@ -172,7 +172,7 @@ function EditModal({
         isPending={update.isPending}
       />
       {/* Delete */}
-      <div className="border-t border-border pt-3 mt-3">
+      <div className="border-t border-border dark:border-dark-border pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-2">
             <p className="text-xs text-negative text-center">Bạn chắc chắn muốn xóa "{category.name}"?</p>
@@ -221,8 +221,8 @@ export default function CategoriesPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Danh mục</h2>
-          <p className="text-xs text-muted">{Array.isArray(categories) ? categories.length : 0} danh mục</p>
+          <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Danh mục</h2>
+          <p className="text-xs text-muted dark:text-dark-muted">{Array.isArray(categories) ? categories.length : 0} danh mục</p>
         </div>
         <Button
           variant={showForm ? 'outline' : 'accent'}
@@ -243,7 +243,7 @@ export default function CategoriesPage() {
       )}
 
       {/* Tab */}
-      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
+      <div className="flex gap-1 bg-surface-2 dark:bg-dark-surface-2 rounded-md p-1">
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
@@ -253,7 +253,7 @@ export default function CategoriesPage() {
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white font-medium shadow-sm'
                   : 'bg-positive text-white font-medium shadow-sm'
-                : 'text-muted hover:text-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -284,7 +284,7 @@ export default function CategoriesPage() {
             <button
               key={cat.id}
               onClick={() => setEditTarget(cat as typeof editTarget)}
-              className="card p-3 flex flex-col items-center gap-2 text-center hover:border-accent/50 transition-all"
+              className="card p-3 flex flex-col items-center gap-2 text-center hover:border-accent/50 dark:hover:border-dark-accent/50 transition-all"
             >
               <div
                 className="w-11 h-11 rounded-full flex items-center justify-center text-xl"
@@ -293,7 +293,7 @@ export default function CategoriesPage() {
                 {cat.icon}
               </div>
               <div className="min-w-0 w-full">
-                <p className="text-xs font-medium text-primary truncate">{cat.name}</p>
+                <p className="text-xs font-medium text-primary dark:text-dark-primary truncate">{cat.name}</p>
                 {cat.isDefault && <Badge variant="neutral" className="mt-0.5 text-2xs px-1 py-0">Mặc định</Badge>}
               </div>
             </button>

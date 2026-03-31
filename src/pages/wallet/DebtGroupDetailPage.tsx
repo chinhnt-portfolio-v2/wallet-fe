@@ -77,7 +77,7 @@ export default function DebtGroupDetailPage() {
     <div className="space-y-4">
       <button
         onClick={() => navigate(-1)}
-        className="btn-ghost text-sm px-2"
+        className="bg-transparent text-secondary dark:text-dark-secondary hover:bg-surface-2 dark:hover:bg-dark-surface-2 text-sm px-2 py-1 rounded transition-colors"
       >
         ← Quay lại
       </button>
@@ -85,7 +85,7 @@ export default function DebtGroupDetailPage() {
       {/* Header card */}
       <Card padding="lg">
         <div className="mb-4">
-          <h2 className="text-base font-semibold text-primary">{group.title}</h2>
+          <h2 className="text-base font-semibold text-primary dark:text-dark-primary">{group.title}</h2>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             <Badge variant="neutral">{GROUP_TYPE_LABEL[group.groupType] ?? group.groupType}</Badge>
             {overdue && <Badge variant="negative">Quá hạn</Badge>}
@@ -95,36 +95,36 @@ export default function DebtGroupDetailPage() {
         {/* Progress */}
         <div className="mb-4">
           <div className="flex justify-between text-xs mb-2">
-            <span className="text-muted">Đã thanh toán</span>
-            <span className="font-medium text-positive">{progress.toFixed(0)}%</span>
+            <span className="text-muted dark:text-dark-muted">Đã thanh toán</span>
+            <span className="font-medium text-positive dark:text-dark-positive">{progress.toFixed(0)}%</span>
           </div>
-          <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
+          <div className="h-2 bg-surface-2 dark:bg-dark-surface-2 rounded-full overflow-hidden">
             <div
-              className="h-full bg-positive rounded-full transition-all"
+              className="h-full bg-positive dark:bg-dark-positive rounded-full transition-all"
               style={{ width: `${progress}%` }}
             />
           </div>
-          <div className="flex justify-between text-2xs text-muted mt-1.5">
+          <div className="flex justify-between text-2xs text-muted dark:text-dark-muted mt-1.5">
             <span>{formatCurrency(Number(group.paidAmount))} đã trả</span>
             <span>{formatCurrency(Number(group.totalAmount))} tổng</span>
           </div>
         </div>
 
         {/* Remaining */}
-        <div className="text-center p-4 bg-surface-2 rounded-md">
-          <p className="text-2xs text-muted uppercase tracking-wide">Còn phải trả</p>
-          <p className="text-2xl font-bold text-negative font-mono tabular-nums mt-1">
+        <div className="text-center p-4 bg-surface-2 dark:bg-dark-surface-2 rounded-md">
+          <p className="text-2xs text-muted dark:text-dark-muted uppercase tracking-wide">Còn phải trả</p>
+          <p className="text-2xl font-bold text-negative dark:text-dark-negative font-mono tabular-nums mt-1">
             {formatCurrency(remaining)}
           </p>
           {group.dueDate && (
-            <p className={`text-2xs mt-1.5 ${overdue ? 'text-negative' : 'text-muted'}`}>
+            <p className={`text-2xs mt-1.5 ${overdue ? 'text-negative dark:text-dark-negative' : 'text-muted dark:text-dark-muted'}`}>
               ⏰ Hết hạn: {formatDate(group.dueDate)}
             </p>
           )}
         </div>
 
         {group.counterparty && (
-          <p className="mt-3 text-center text-xs text-muted">
+          <p className="mt-3 text-center text-xs text-muted dark:text-dark-muted">
             👤 {group.counterparty}
           </p>
         )}
@@ -133,7 +133,7 @@ export default function DebtGroupDetailPage() {
       {/* Settle */}
       {showSettle ? (
         <Card className="space-y-3">
-          <p className="text-sm font-medium text-primary">💳 Thanh toán nợ</p>
+          <p className="text-sm font-medium text-primary dark:text-dark-primary">💳 Thanh toán nợ</p>
           <Input
             label="Số tiền thanh toán"
             type="number"
@@ -143,11 +143,11 @@ export default function DebtGroupDetailPage() {
             hint={`Tương đương ${formatCurrency(parseFloat(settleAmount) || 0)}`}
           />
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1">Thanh toán từ ví</label>
+            <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1">Thanh toán từ ví</label>
             <select
               value={settleWalletId ?? ''}
               onChange={(e) => setSettleWalletId(Number(e.target.value) || null)}
-              className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              className="w-full rounded-sm border border-border dark:border-dark-border bg-surface dark:bg-dark-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 dark:focus:ring-dark-accent/30 focus:border-accent dark:focus:border-dark-accent"
             >
               <option value="">Chọn ví...</option>
               {wallets?.map((w) => (
@@ -174,43 +174,43 @@ export default function DebtGroupDetailPage() {
         </Button>
       ) : (
         <Card className="text-center">
-          <p className="text-positive text-sm font-medium">✅ Đã thanh toán xong!</p>
+          <p className="text-positive dark:text-dark-positive text-sm font-medium">✅ Đã thanh toán xong!</p>
         </Card>
       )}
 
       {/* Transaction history */}
       <div className="space-y-2">
-        <p className="text-xs font-medium text-muted uppercase tracking-wide">
+        <p className="text-xs font-medium text-muted dark:text-dark-muted uppercase tracking-wide">
           Lịch sử ({txs?.length ?? 0})
         </p>
         <Card padding="none">
           {txs && txs.length > 0 ? txs.map((tx, i) => (
             <div
               key={tx.id}
-              className={`flex items-center gap-3 p-3 ${i < txs.length - 1 ? 'border-b border-border' : ''}`}
+              className={`flex items-center gap-3 p-3 ${i < txs.length - 1 ? 'border-b border-border dark:border-dark-border' : ''}`}
             >
               <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 ${
-                tx.txnType === 'PRINCIPAL' ? 'bg-negative/10 text-negative' : 'bg-positive/10 text-positive'
+                tx.txnType === 'PRINCIPAL' ? 'bg-negative/10 dark:bg-dark-negative/10 text-negative dark:text-dark-negative' : 'bg-positive/10 dark:bg-dark-positive/10 text-positive dark:text-dark-positive'
               }`}>
                 {tx.txnType === 'PRINCIPAL' ? '📋' : '✓'}
               </div>
               <div className="flex-1">
-                <p className="text-sm text-primary">
+                <p className="text-sm text-primary dark:text-dark-primary">
                   {tx.txnType === 'PRINCIPAL' ? 'Phát sinh nợ'
                     : tx.txnType === 'FINAL_PAYMENT' ? 'Thanh toán cuối'
                     : tx.txnType === 'INTEREST' ? 'Lãi suất'
                     : 'Thanh toán'}
                 </p>
-                <p className="text-2xs text-muted">{formatDate(tx.date)}</p>
+                <p className="text-2xs text-muted dark:text-dark-muted">{formatDate(tx.date)}</p>
               </div>
               <p className={`text-sm font-semibold font-mono tabular-nums ${
-                tx.type === 'INCOME' ? 'text-positive' : 'text-negative'
+                tx.type === 'INCOME' ? 'text-positive dark:text-dark-positive' : 'text-negative dark:text-dark-negative'
               }`}>
                 {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(Number(tx.amount))}
               </p>
             </div>
           )) : (
-            <div className="p-4 text-center text-xs text-muted">Chưa có giao dịch</div>
+            <div className="p-4 text-center text-xs text-muted dark:text-dark-muted">Chưa có giao dịch</div>
           )}
         </Card>
       </div>

@@ -44,7 +44,7 @@ function WalletForm({
 
   return (
     <Card className="space-y-4">
-      <p className="text-sm font-semibold text-primary">
+      <p className="text-sm font-semibold text-primary dark:text-dark-primary">
         {initial?.id ? '✏️ Sửa ví' : '+ Tạo ví mới'}
       </p>
 
@@ -57,11 +57,11 @@ function WalletForm({
       />
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Loại</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Loại</label>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as Wallet['type'])}
-          className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+          className="w-full rounded-sm border border-border dark:border-dark-border bg-surface dark:bg-dark-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 dark:focus:ring-dark-accent/30"
         >
           {Object.entries(WALLET_TYPE_LABEL).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
@@ -70,7 +70,7 @@ function WalletForm({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Icon</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Icon</label>
         <div className="flex gap-2 flex-wrap">
           {WALLET_ICONS.map((i) => (
             <button
@@ -79,8 +79,8 @@ function WalletForm({
               onClick={() => setIcon(i)}
               className={`w-9 h-9 text-lg rounded-md border transition-all flex items-center justify-center ${
                 icon === i
-                  ? 'border-accent ring-2 ring-accent/30'
-                  : 'border-border hover:border-accent/50'
+                  ? 'border-accent dark:border-dark-accent ring-2 ring-accent/30 dark:ring-dark-accent/30'
+                  : 'border-border dark:border-dark-border hover:border-accent/50 dark:hover:border-dark-accent/50'
               }`}
             >
               {i}
@@ -90,7 +90,7 @@ function WalletForm({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Màu</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Màu</label>
         <div className="flex gap-2">
           {WALLET_COLORS.map((c) => (
             <button
@@ -98,7 +98,7 @@ function WalletForm({
               type="button"
               onClick={() => setColor(c)}
               className={`w-7 h-7 rounded-full transition-all ${
-                color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-110'
+                color === c ? 'ring-2 ring-offset-2 ring-primary dark:ring-dark-primary scale-110' : 'hover:scale-110'
               }`}
               style={{ backgroundColor: c }}
             />
@@ -109,7 +109,7 @@ function WalletForm({
       {/* Initial balance — hidden for edit */}
       {!initial?.id && (
         <div>
-          <label className="block text-xs font-medium text-secondary mb-1.5">
+          <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">
             Số dư ban đầu
           </label>
           <div className="relative">
@@ -118,20 +118,20 @@ function WalletForm({
               inputMode="decimal"
               value={initialBalance}
               onChange={(e) => setInitialBalance(e.target.value)}
-              className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm font-mono pr-10 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              className="w-full rounded-sm border border-border dark:border-dark-border bg-surface dark:bg-dark-surface px-3 py-2 text-sm font-mono pr-10 focus:outline-none focus:ring-2 focus:ring-accent/30 dark:focus:ring-dark-accent/30 focus:border-accent dark:focus:border-dark-accent"
               placeholder="0"
               min="0"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₫</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted dark:text-dark-muted">₫</span>
           </div>
-          <p className="text-xs text-muted mt-1">
+          <p className="text-xs text-muted dark:text-dark-muted mt-1">
             Bỏ trống nếu ví mới không có tiền.
           </p>
         </div>
       )}
 
       {/* Preview */}
-      <div className="flex items-center gap-3 p-3 rounded-md border border-border">
+      <div className="flex items-center gap-3 p-3 rounded-md border border-border dark:border-dark-border">
         <div
           className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
           style={{ backgroundColor: `${color}20` }}
@@ -139,8 +139,8 @@ function WalletForm({
           {icon}
         </div>
         <div>
-          <p className="text-sm font-medium text-primary">{name || 'Xem trước'}</p>
-          <p className="text-xs text-muted">{WALLET_TYPE_LABEL[type] ?? type}</p>
+          <p className="text-sm font-medium text-primary dark:text-dark-primary">{name || 'Xem trước'}</p>
+          <p className="text-xs text-muted dark:text-dark-muted">{WALLET_TYPE_LABEL[type] ?? type}</p>
         </div>
       </div>
 
@@ -170,20 +170,20 @@ function WalletCard({
         {wallet.icon}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-primary">{wallet.name}</p>
-        <p className="text-xs text-muted">{WALLET_TYPE_LABEL[wallet.type] ?? wallet.type}</p>
+        <p className="text-sm font-medium text-primary dark:text-dark-primary">{wallet.name}</p>
+        <p className="text-xs text-muted dark:text-dark-muted">{WALLET_TYPE_LABEL[wallet.type] ?? wallet.type}</p>
       </div>
       <div className="text-right">
         <p className={`text-sm font-semibold font-mono tabular-nums ${
-          Number(wallet.balance) < 0 ? 'text-negative' : 'text-primary'
+          Number(wallet.balance) < 0 ? 'text-negative dark:text-dark-negative' : 'text-primary dark:text-dark-primary'
         }`}>
           {formatCurrency(Number(wallet.balance))}
         </p>
-        <p className="text-xs text-muted">₫</p>
+        <p className="text-xs text-muted dark:text-dark-muted">₫</p>
       </div>
       <button
         onClick={() => onEdit(wallet)}
-        className="opacity-0 group-hover:opacity-100 text-muted hover:text-primary transition-all text-sm px-2 py-1 rounded border border-border hover:border-accent/50"
+        className="opacity-0 group-hover:opacity-100 text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary transition-all text-sm px-2 py-1 rounded border border-border dark:border-dark-border hover:border-accent/50 dark:hover:border-dark-accent/50"
         aria-label={`Sửa ví ${wallet.name}`}
       >
         ✏️
@@ -225,20 +225,20 @@ function EditModal({
         onCancel={onClose}
         isPending={update.isPending}
       />
-      <div className="border-t border-border pt-3 mt-3">
+      <div className="border-t border-border dark:border-dark-border pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-3">
             {/* Warning with balance info */}
-            <div className="p-3 rounded-md bg-negative/5 border border-negative/20 space-y-1">
-              <p className="text-xs font-medium text-negative flex items-center gap-1.5">
+            <div className="p-3 rounded-md bg-negative/5 dark:bg-dark-negative/5 border border-negative/20 dark:border-dark-negative/20 space-y-1">
+              <p className="text-xs font-medium text-negative dark:text-dark-negative flex items-center gap-1.5">
                 <span aria-hidden="true">⚠️</span> Cảnh báo khi xóa ví
               </p>
-              <p className="text-xs text-muted">
-                Xóa ví <strong className="text-primary">"{wallet.name}"</strong> sẽ bỏ liên kết với tất cả giao dịch hiện có. Số dư hiện tại là{' '}
-                <strong className="text-primary">{formatCurrency(Number(wallet.balance))}</strong>.
+              <p className="text-xs text-muted dark:text-dark-muted">
+                Xóa ví <strong className="text-primary dark:text-dark-primary">"{wallet.name}"</strong> sẽ bỏ liên kết với tất cả giao dịch hiện có. Số dư hiện tại là{' '}
+                <strong className="text-primary dark:text-dark-primary">{formatCurrency(Number(wallet.balance))}</strong>.
               </p>
-              <p className="text-xs text-muted">
-                Giao dịch sẽ <strong className="text-primary">không bị xóa</strong> nhưng sẽ không còn liên kết với ví này.
+              <p className="text-xs text-muted dark:text-dark-muted">
+                Giao dịch sẽ <strong className="text-primary dark:text-dark-primary">không bị xóa</strong> nhưng sẽ không còn liên kết với ví này.
               </p>
             </div>
             <p className="text-xs text-negative text-center font-medium">
@@ -299,8 +299,8 @@ export default function WalletsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Ví của tôi</h2>
-          <p className="text-xs text-muted">{active.length} ví</p>
+          <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Ví của tôi</h2>
+          <p className="text-xs text-muted dark:text-dark-muted">{active.length} ví</p>
         </div>
         <div className="flex gap-2">
           <Button
@@ -349,7 +349,7 @@ export default function WalletsPage() {
             if (!items?.length) return null
             return (
               <div key={t}>
-                <p className="text-xs font-medium text-muted uppercase tracking-wide mb-2">
+                <p className="text-xs font-medium text-muted dark:text-dark-muted uppercase tracking-wide mb-2">
                   {WALLET_TYPE_LABEL[t]}
                 </p>
                 <div className="space-y-2">

@@ -106,14 +106,14 @@ export default function AddTransactionPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Thêm giao dịch</h2>
-          <p className="text-xs text-muted">Nhanh — số tiền + ví</p>
+          <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Thêm giao dịch</h2>
+          <p className="text-xs text-muted dark:text-dark-muted">Nhanh — số tiền + ví</p>
         </div>
         <button onClick={() => navigate(-1)} className="btn-ghost text-sm px-2">←</button>
       </div>
 
       {/* Type toggle */}
-      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
+      <div className="flex gap-1 bg-surface-2 dark:bg-dark-surface-2 rounded-md p-1">
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
@@ -127,7 +127,7 @@ export default function AddTransactionPage() {
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white shadow-sm font-medium'
                   : 'bg-positive text-white shadow-sm font-medium'
-                : 'text-muted hover:text-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -137,7 +137,7 @@ export default function AddTransactionPage() {
 
       {/* Amount */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1.5">Số tiền (VND)</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">Số tiền (VND)</label>
         <div className="relative">
           <input
             type="number"
@@ -148,10 +148,10 @@ export default function AddTransactionPage() {
             placeholder="0"
             autoFocus
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">₫</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted dark:text-dark-muted">₫</span>
         </div>
         {amount && (
-          <p className="text-2xs text-muted mt-1">
+          <p className="text-2xs text-muted dark:text-dark-muted mt-1">
             = {formatCurrency(parseFloat(amount) || 0)}
           </p>
         )}
@@ -159,16 +159,16 @@ export default function AddTransactionPage() {
 
       {/* Wallet */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Chọn ví</label>
+        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Chọn ví</label>
         {loadingWallets ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="card p-3 animate-pulse">
                 <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-full bg-surface-2" />
+                  <div className="w-9 h-9 rounded-full bg-surface-2 dark:bg-dark-surface-2" />
                   <div className="space-y-1">
-                    <div className="h-3 w-16 bg-surface-2 rounded" />
-                    <div className="h-2 w-10 bg-surface-2 rounded" />
+                    <div className="h-3 w-16 bg-surface-2 dark:bg-dark-surface-2 rounded" />
+                    <div className="h-2 w-10 bg-surface-2 dark:bg-dark-surface-2 rounded" />
                   </div>
                 </div>
               </div>
@@ -184,8 +184,8 @@ export default function AddTransactionPage() {
                 aria-label={`Chọn ví ${w.name}`}
                 className={`card p-3 text-left transition-all relative ${
                   walletId === w.id
-                    ? 'border-accent ring-2 ring-accent/20'
-                    : 'hover:border-accent/50'
+                    ? 'border-accent dark:border-dark-accent ring-2 ring-accent/20 dark:ring-dark-accent/20'
+                    : 'hover:border-accent/50 dark:hover:border-dark-accent/50'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -196,12 +196,12 @@ export default function AddTransactionPage() {
                     {w.icon}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-primary truncate">{w.name}</p>
-                    <p className="text-xs text-muted">{WALLET_TYPE_LABEL[w.type] ?? w.type}</p>
+                    <p className="text-sm font-medium text-primary dark:text-dark-primary truncate">{w.name}</p>
+                    <p className="text-xs text-muted dark:text-dark-muted">{WALLET_TYPE_LABEL[w.type] ?? w.type}</p>
                   </div>
                 </div>
                 {walletId === w.id && (
-                  <span className="absolute top-2 right-2 w-4 h-4 bg-accent rounded-full flex items-center justify-center" aria-hidden="true">
+                  <span className="absolute top-2 right-2 w-4 h-4 bg-accent dark:bg-dark-accent rounded-full flex items-center justify-center" aria-hidden="true">
                     <span className="text-white text-2xs">✓</span>
                   </span>
                 )}
@@ -210,8 +210,8 @@ export default function AddTransactionPage() {
           </div>
         ) : (
           <Card className="p-4 text-center">
-            <p className="text-sm text-muted">Chưa có ví nào.</p>
-            <a href="/wallets" className="text-xs text-accent hover:underline mt-1 block">
+            <p className="text-sm text-muted dark:text-dark-muted">Chưa có ví nào.</p>
+            <a href="/wallets" className="text-xs text-accent dark:text-dark-accent hover:underline mt-1 block">
               Tạo ví mới →
             </a>
           </Card>
@@ -221,16 +221,16 @@ export default function AddTransactionPage() {
       {/* Advanced toggle */}
       <button
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="text-xs text-accent hover:underline"
+        className="text-xs text-accent dark:text-dark-accent hover:underline"
       >
         {showAdvanced ? '▲ Thu gọn' : '▼ Thêm chi tiết'}
       </button>
 
       {showAdvanced && (
-        <div className="space-y-4 border-t border-border pt-4">
+        <div className="space-y-4 border-t border-border dark:border-dark-border pt-4">
           {/* Category */}
           <div>
-            <label className="block text-xs font-medium text-secondary mb-2">Danh mục</label>
+            <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Danh mục</label>
             <div className="flex flex-wrap gap-2">
               {filteredCategories.map((c) => (
                 <button

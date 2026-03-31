@@ -17,21 +17,6 @@ export default {
         positive:     '#10B981',
         negative:     '#F43F5E',
         warning:      '#F59E0B',
-
-        // Dark mode — defined as Tailwind dark: variants
-        // Usage: dark:bg-surface, dark:text-primary, dark:border-border
-        // Activated when .dark class exists on <html>
-        darkBg:        '#0F172A',
-        darkSurface:   '#1E293B',
-        darkSurface2:  '#334155',
-        darkPrimary:   '#F8FAFC',
-        darkSecondary: '#CBD5E1',
-        darkMuted:     '#64748B',
-        darkBorder:    '#334155',
-        darkAccent:    '#38BDF8',
-        darkPositive:  '#34D399',
-        darkNegative:  '#FB7185',
-        darkWarning:   '#FBBF24',
       },
 
       backgroundColor: {
