@@ -1,4 +1,4 @@
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useDashboardSummary, useOpenDebts, useMonthlyComparison } from '@/hooks/useDashboard'
 import { useRecentTransactions } from '@/hooks/useTransactions'
@@ -82,6 +82,15 @@ function ZoneA() {
 // ── Zone B: Monthly Bar Chart ───────────────────────────────
 function ZoneB() {
   const { data: months, isLoading } = useMonthlyComparison(4)
+  const [isDark, setIsDark] = useState(() => document.documentElement.classList.contains('dark'))
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => {
+      setIsDark(document.documentElement.classList.contains('dark'))
+    })
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+    return () => observer.disconnect()
+  }, [])
 
   if (isLoading || !months || months.length === 0) return null
 
@@ -99,24 +108,24 @@ function ZoneB() {
           <BarChart data={chartData} barGap={3} barSize={14}>
             <XAxis
               dataKey="label"
-              tick={{ fontSize: 10, fill: '#94A3B8' }}
+              tick={{ fontSize: 10, fill: isDark ? '#64748B' : '#94A3B8' }}
               axisLine={false}
               tickLine={false}
             />
             <YAxis hide />
             <Tooltip
               contentStyle={{
-                background: '#1E293B',
-                border: '1px solid #334155',
+                background: isDark ? '#1E293B' : '#FFFFFF',
+                border: isDark ? '1px solid #334155' : '1px solid #E2E8F0',
                 borderRadius: '6px',
                 fontSize: 12,
-                color: '#E2E8F0',
+                color: isDark ? '#E2E8F0' : '#0F172A',
               }}
               formatter={(value: number, name: string) => [
                 formatCurrency(value),
                 name === 'Thu' ? '📥 Thu' : '💸 Chi',
               ]}
-              labelStyle={{ color: '#94A3B8', marginBottom: 4 }}
+              labelStyle={{ color: isDark ? '#94A3B8' : '#94A3B8', marginBottom: 4 }}
             />
             <Bar dataKey="Thu" fill="#10B981" radius={[3, 3, 0, 0]} />
             <Bar dataKey="Chi" fill="#F43F5E" radius={[3, 3, 0, 0]} />
@@ -152,7 +161,7 @@ function ZoneE() {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted dark:text-dark-muted uppercase tracking-wide">📋 Nợ đang mở</p>
-        <button onClick={() => navigate('/debts')} className="text-xs text-accent dark:text-dark-accent hover:underline">Xem tất cả</button>
+        <button onClick={() => navigate('/debts')} className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline">Xem tất cả</button>
       </div>
       <Card padding="none">
         {visibleDebts.map((d, i) => (
@@ -210,7 +219,7 @@ function ZoneBudgetAlerts() {
         <p className="text-xs font-medium text-muted uppercase tracking-wide">⚠️ Ngân sách</p>
         <button
           onClick={() => navigate('/budgets')}
-          className="text-xs text-accent dark:text-dark-accent hover:underline"
+          className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline"
         >
           Xem tất cả
         </button>
@@ -267,7 +276,7 @@ function ZoneF() {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <p className="text-xs font-medium text-muted dark:text-dark-muted uppercase tracking-wide">Gần đây</p>
-        <button onClick={() => navigate('/transactions')} className="text-xs text-accent dark:text-dark-accent hover:underline">Xem tất cả</button>
+        <button onClick={() => navigate('/transactions')} className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline">Xem tất cả</button>
       </div>
       <Card padding="none">
         {isLoading ? (

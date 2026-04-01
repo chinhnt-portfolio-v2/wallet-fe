@@ -64,7 +64,7 @@ function BudgetCard({
         </div>
         <div className="flex items-center gap-1 shrink-0">
           <button onClick={onEdit} className="text-xs text-muted dark:text-dark-muted hover:text-accent dark:hover:text-dark-accent px-2 py-1">Sửa</button>
-          <button onClick={onDelete} className="text-xs text-negative dark:text-dark-negative hover:underline px-2 py-1">Xóa</button>
+          <button onClick={onDelete} className="text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline px-2 py-1">Xóa</button>
         </div>
       </div>
 
@@ -138,7 +138,7 @@ function BudgetForm({
               key={c.id}
               onClick={() => setCategoryId(c.id)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
-                categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-accent/40' : 'hover:opacity-80'
+                categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-accent/40' : 'hover:opacity-80 dark:hover:opacity-70'
               }`}
               style={{
                 backgroundColor: `${c.color}20`,
@@ -176,7 +176,7 @@ function BudgetForm({
               className={`flex-1 py-2 text-xs rounded-md border transition-all font-medium ${
                 threshold === t
                   ? 'border-accent dark:border-dark-accent bg-accent/10 dark:bg-dark-accent/10 text-accent dark:text-dark-accent'
-                  : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50'
+                  : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 dark:hover:border-dark-accent/50'
               }`}
             >
               {t}%

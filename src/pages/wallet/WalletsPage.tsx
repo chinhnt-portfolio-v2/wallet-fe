@@ -80,7 +80,7 @@ function WalletForm({
               className={`w-9 h-9 text-lg rounded-md border transition-all flex items-center justify-center ${
                 icon === i
                   ? 'border-accent dark:border-dark-accent ring-2 ring-accent/30 dark:ring-dark-accent/30'
-                  : 'border-border dark:border-dark-border hover:border-accent/50 dark:hover:border-dark-accent/50'
+                  : 'border-border dark:border-dark-border hover:border-accent/50 dark:hover:border-dark-accent/50 hover:bg-accent/10 dark:hover:bg-dark-accent/10'
               }`}
             >
               {i}
@@ -98,7 +98,7 @@ function WalletForm({
               type="button"
               onClick={() => setColor(c)}
               className={`w-7 h-7 rounded-full transition-all ${
-                color === c ? 'ring-2 ring-offset-2 ring-primary dark:ring-dark-primary scale-110' : 'hover:scale-110'
+                color === c ? 'ring-2 ring-offset-2 ring-primary dark:ring-dark-primary scale-110' : 'hover:scale-110 dark:hover:scale-110'
               }`}
               style={{ backgroundColor: c }}
             />
@@ -258,7 +258,7 @@ function EditModal({
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center text-xs text-negative hover:underline py-1"
+            className="w-full text-center text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline py-1"
           >
             🗑️ Xóa ví
           </button>

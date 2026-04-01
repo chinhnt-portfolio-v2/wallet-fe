@@ -185,7 +185,7 @@ export function OnboardingModal() {
             onClick={handleNext}
             disabled={createWallet.isPending}
             className="w-full py-3 rounded-full bg-accent dark:bg-dark-accent text-white font-semibold text-sm
-                       hover:bg-accent/90 active:scale-95 transition-all duration-150
+                       hover:bg-accent/90 dark:hover:bg-dark-accent/90 active:scale-95 transition-all duration-150
                        disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
             {createWallet.isPending ? 'Đang xử lý…' : step.cta}

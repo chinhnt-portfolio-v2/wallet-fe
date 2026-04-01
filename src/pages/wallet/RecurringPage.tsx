@@ -110,7 +110,7 @@ function RecurringCard({
         <button onClick={onEdit} className="flex-1 text-center text-xs text-muted dark:text-dark-muted hover:text-accent dark:hover:text-dark-accent py-1">
           ✏️ Sửa
         </button>
-        <button onClick={onDelete} className="flex-1 text-center text-xs text-negative dark:text-dark-negative hover:underline py-1">
+        <button onClick={onDelete} className="flex-1 text-center text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline py-1">
           🗑️ Xóa
         </button>
       </div>
@@ -181,7 +181,7 @@ function RecurringForm({
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white font-medium shadow-sm'
                   : 'bg-positive text-white font-medium shadow-sm'
-                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -223,7 +223,7 @@ function RecurringForm({
               key={c.id}
               onClick={() => setCategoryId(c.id)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
-                categoryId === c.id ? 'ring-2 ring-primary/40' : 'hover:opacity-80'
+                categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-primary/40' : 'hover:opacity-80 dark:hover:opacity-70'
               }`}
               style={{
                 backgroundColor: `${c.color}20`,
@@ -248,7 +248,7 @@ function RecurringForm({
               className={`py-2 text-xs rounded-md border transition-all font-medium ${
                 frequency === f
                   ? 'border-accent dark:border-dark-accent bg-accent/10 dark:bg-dark-accent/10 text-accent dark:text-dark-accent'
-                  : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50'
+                  : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 dark:hover:border-dark-accent/50'
               }`}
             >
               {FREQ_LABELS[f]}

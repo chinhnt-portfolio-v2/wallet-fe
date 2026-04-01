@@ -69,10 +69,10 @@ export default function NotificationsPage() {
         <div className="flex gap-2">
           {notifs.length > 0 && (
             <>
-              <button onClick={handleMarkAll} className="text-xs text-accent dark:text-dark-accent hover:underline">
+              <button onClick={handleMarkAll} className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline">
                 Đánh dấu đã đọc
               </button>
-              <button onClick={handleClear} className="text-xs text-negative dark:text-dark-negative hover:underline">
+              <button onClick={handleClear} className="text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline">
                 Xóa tất cả
               </button>
             </>
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
         {!pushEnabled && (
           <button
             onClick={handleEnablePush}
-            className="w-full text-center text-xs text-accent dark:text-dark-accent hover:underline py-1"
+            className="w-full text-center text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline py-1"
           >
             Bật thông báo
           </button>

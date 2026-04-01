@@ -64,7 +64,7 @@ function CategoryForm({
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white font-medium shadow-sm'
                   : 'bg-positive text-white font-medium shadow-sm'
-                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -111,7 +111,7 @@ function CategoryForm({
               type="button"
               onClick={() => setColor(c)}
               className={`w-7 h-7 rounded-full transition-all ${
-                color === c ? 'ring-2 ring-offset-2 scale-110' : 'hover:scale-110'
+                color === c ? 'ring-2 ring-offset-2 ring-primary dark:ring-dark-primary scale-110' : 'hover:scale-110 dark:hover:scale-110'
               }`}
               style={{ backgroundColor: c }}
             />
@@ -190,7 +190,7 @@ function EditModal({
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center text-xs text-negative hover:underline py-1"
+            className="w-full text-center text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline py-1"
           >
             🗑️ Xóa danh mục
           </button>
@@ -253,7 +253,7 @@ export default function CategoriesPage() {
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white font-medium shadow-sm'
                   : 'bg-positive text-white font-medium shadow-sm'
-                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}

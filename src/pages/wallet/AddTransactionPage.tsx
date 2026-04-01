@@ -127,7 +127,7 @@ export default function AddTransactionPage() {
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white shadow-sm font-medium'
                   : 'bg-positive text-white shadow-sm font-medium'
-                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -211,7 +211,7 @@ export default function AddTransactionPage() {
         ) : (
           <Card className="p-4 text-center">
             <p className="text-sm text-muted dark:text-dark-muted">Chưa có ví nào.</p>
-            <a href="/wallets" className="text-xs text-accent dark:text-dark-accent hover:underline mt-1 block">
+            <a href="/wallets" className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline mt-1 block">
               Tạo ví mới →
             </a>
           </Card>
@@ -221,7 +221,7 @@ export default function AddTransactionPage() {
       {/* Advanced toggle */}
       <button
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="text-xs text-accent dark:text-dark-accent hover:underline"
+        className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline"
       >
         {showAdvanced ? '▲ Thu gọn' : '▼ Thêm chi tiết'}
       </button>
@@ -237,7 +237,7 @@ export default function AddTransactionPage() {
                   key={c.id}
                   onClick={() => setCategoryId(categoryId === c.id ? null : c.id)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
-                    categoryId === c.id ? 'ring-2 ring-primary/40' : 'hover:opacity-80'
+                    categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-primary/40' : 'hover:opacity-80 dark:hover:opacity-70'
                   }`}
                   style={{
                     backgroundColor: `${c.color}20`,

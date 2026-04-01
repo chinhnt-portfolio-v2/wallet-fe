@@ -111,7 +111,7 @@ function TransactionForm({
               txType === t
                 ? t === 'EXPENSE' ? 'bg-negative dark:bg-dark-negative text-white font-medium shadow-sm'
                   : 'bg-positive dark:bg-dark-positive text-white font-medium shadow-sm'
-                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -154,7 +154,7 @@ function TransactionForm({
               type="button"
               onClick={() => setCategoryId(categoryId === c.id ? null : c.id)}
               className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs transition-all ${
-                categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-primary/40' : 'hover:opacity-80'
+                categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-primary/40' : 'hover:opacity-80 dark:hover:opacity-70'
               }`}
               style={{
                 backgroundColor: `${c.color}20`,
@@ -256,7 +256,7 @@ function EditModal({
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center text-xs text-negative hover:underline py-1"
+            className="w-full text-center text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline py-1"
           >
             🗑️ Xóa giao dịch
           </button>
@@ -347,7 +347,7 @@ export default function TransactionsPage() {
                 className={`flex-1 py-1.5 text-xs rounded-sm transition-colors ${
                   typeFilter === t
                     ? 'bg-surface dark:bg-dark-surface shadow-sm font-medium text-primary dark:text-dark-primary'
-                    : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
+                    : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
                 }`}
               >
                 {t === '' ? 'Tất cả' : t === 'INCOME' ? '📥 Thu' : '💸 Chi'}
@@ -368,7 +368,7 @@ export default function TransactionsPage() {
                 setTypeFilter(''); setDateFrom(''); setDateTo('')
                 setSearch(''); setDebouncedSearch('')
               }}
-              className="text-xs text-accent dark:text-dark-accent hover:underline"
+              className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline"
             >
               ✕ Xóa bộ lọc
             </button>

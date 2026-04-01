@@ -45,7 +45,7 @@ function DarkModeToggle({ isDark, onToggle }: { isDark: boolean; onToggle: () =>
     <button
       onClick={onToggle}
       aria-label={isDark ? 'Chuyển sang chế độ sáng' : 'Chuyển sang chế độ tối'}
-      className="w-8 h-8 flex items-center justify-center rounded-md text-sm hover:bg-surface-2 transition-colors"
+      className="w-8 h-8 flex items-center justify-center rounded-md text-sm text-muted dark:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2 transition-colors"
     >
       {isDark ? (
         /* Sun icon */

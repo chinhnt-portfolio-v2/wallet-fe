@@ -82,13 +82,13 @@ export default function CreateDebtGroupPage() {
                 onClick={() => setGroupType(t.value as CreateDebtGroupRequest['groupType'])}
                 className={`card p-3 text-left transition-all ${
                   groupType === t.value
-                    ? 'border-accent ring-2 ring-accent/20'
-                    : 'hover:border-accent/50'
+                    ? 'border-accent dark:border-dark-accent ring-2 ring-accent/20 dark:ring-dark-accent/20'
+                    : 'hover:border-accent/50 dark:hover:border-dark-accent/50'
                 }`}
               >
                 <p className="text-lg mb-1">{t.icon}</p>
-                <p className="text-xs font-medium text-primary">{t.label}</p>
-                <p className="text-xs text-muted mt-0.5">{t.desc}</p>
+                <p className="text-xs font-medium text-primary dark:text-dark-primary">{t.label}</p>
+                <p className="text-xs text-muted dark:text-dark-muted mt-0.5">{t.desc}</p>
               </button>
             ))}
           </div>

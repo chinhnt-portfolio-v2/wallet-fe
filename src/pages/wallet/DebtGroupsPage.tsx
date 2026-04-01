@@ -173,7 +173,7 @@ function EditModal({
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center text-xs text-negative hover:underline py-1"
+            className="w-full text-center text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline py-1"
           >
             🗑️ Xóa nhóm nợ
           </button>
@@ -307,7 +307,7 @@ export default function DebtGroupsPage() {
             className={`flex-1 py-1.5 text-xs rounded-sm transition-colors ${
               statusFilter === v
                 ? 'bg-surface dark:bg-dark-surface shadow-sm font-medium text-primary dark:text-dark-primary'
-                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary'
+                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
             }`}
           >
             {l}

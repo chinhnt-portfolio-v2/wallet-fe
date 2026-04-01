@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useQueryClient } from '@tanstack/react-query'
 import { useAuthStore } from '@/stores/authStore'
 import { useUser } from '@/hooks/useUser'
 import { Card } from '@/components/ui/Card'
@@ -6,8 +7,9 @@ import { Skeleton } from '@/components/ui/Skeleton'
 
 export default function ProfilePage() {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const clearToken = useAuthStore((s) => s.clearToken)
-  const { data: user, isLoading } = useUser()
+  const { data: user, isLoading, isError } = useUser()
 
   const handleLogout = () => {
     clearToken()
@@ -68,8 +70,20 @@ export default function ProfilePage() {
             </div>
           </div>
         ) : (
-          <div className="p-4 text-center text-sm text-muted dark:text-dark-muted">
-            Không tải được thông tin người dùng
+          <div className="p-4 text-center text-sm text-negative dark:text-dark-negative space-y-2">
+            {isError ? (
+              <>
+                <p>Đã xảy ra lỗi khi tải thông tin.</p>
+                <button
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['user-profile'] })}
+                  className="text-xs underline hover:no-underline dark:hover:no-underline"
+                >
+                  Thử lại
+                </button>
+              </>
+            ) : (
+              <p className="text-muted dark:text-dark-muted">Không tải được thông tin người dùng</p>
+            )}
           </div>
         )}
 
