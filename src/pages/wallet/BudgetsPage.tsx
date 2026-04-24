@@ -204,6 +204,8 @@ export default function BudgetsPage() {
   const { data: budgets, isLoading } = useBudgetWithSpending(period)
   const { data: categories } = useCategories()
   const deleteBudget = useDeleteBudget()
+  const createBudget = useCreateBudget()
+  const updateBudget = useUpdateBudget()
 
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<any>(null)
@@ -220,14 +222,12 @@ export default function BudgetsPage() {
   const handleSubmit = (data: { categoryId: number; monthlyLimit: number; alertThreshold: number }) => {
     const payload = { ...data, period }
     if (editTarget) {
-      const update = useUpdateBudget()
-      update.mutate({ id: editTarget.id, ...payload }, {
+      updateBudget.mutate({ id: editTarget.id, ...payload }, {
         onSuccess: () => { toast.success('Đã cập nhật!'); setShowForm(false); setEditTarget(null) },
         onError: (e: Error) => toast.error(e.message),
       })
     } else {
-      const create = useCreateBudget()
-      create.mutate(payload, {
+      createBudget.mutate(payload, {
         onSuccess: () => { toast.success('Đã tạo ngân sách!'); setShowForm(false) },
         onError: (e: Error) => toast.error(e.message),
       })

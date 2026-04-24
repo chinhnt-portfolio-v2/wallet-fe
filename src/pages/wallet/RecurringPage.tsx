@@ -282,6 +282,8 @@ export default function RecurringPage() {
   const { data: categories } = useCategories()
   const toggle = useToggleRecurring()
   const deleteR = useDeleteRecurring()
+  const createRecurring = useCreateRecurring()
+  const updateRecurring = useUpdateRecurring()
 
   const [showForm, setShowForm] = useState(false)
   const [editTarget, setEditTarget] = useState<RecurringRule | null>(null)
@@ -307,14 +309,12 @@ export default function RecurringPage() {
     frequency: RecurringFrequency; startDate: string; endDate?: string; note?: string
   }) => {
     if (editTarget) {
-      const update = useUpdateRecurring()
-      update.mutate({ id: editTarget.id, ...data } as any, {
+      updateRecurring.mutate({ id: editTarget.id, ...data } as any, {
         onSuccess: () => { toast.success('Đã cập nhật!'); setShowForm(false); setEditTarget(null) },
         onError: (e: Error) => toast.error(e.message),
       })
     } else {
-      const create = useCreateRecurring()
-      create.mutate(data as any, {
+      createRecurring.mutate(data as any, {
         onSuccess: () => { toast.success('Đã tạo giao dịch định kỳ!'); setShowForm(false) },
         onError: (e: Error) => toast.error(e.message),
       })
