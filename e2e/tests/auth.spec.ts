@@ -42,8 +42,8 @@ test.describe('Protected Routes (no auth)', () => {
 // ─── Protected Routes — Authenticated ──────────────────────────────────────────
 // chromium-auth project (has storageState) — these tests only run when authenticated.
 test.describe('Protected Routes (authenticated)', () => {
-  const TOKEN = process.env.WALLET_TOKEN
-  if (!TOKEN) test.skip()
+  const HAS_AUTH = !!(process.env.WALLET_TOKEN || (process.env.TEST_EMAIL && process.env.TEST_PASSWORD))
+  if (!HAS_AUTH) test.skip()
 
   for (const route of [
     '/', '/transactions', '/add', '/wallets', '/wallets/transfer',
@@ -60,8 +60,8 @@ test.describe('Protected Routes (authenticated)', () => {
 
 // ─── Authenticated user on /login ─────────────────────────────────────────────
 test.describe('Authenticated on /login', () => {
-  const TOKEN = process.env.WALLET_TOKEN
-  if (!TOKEN) test.skip()
+  const HAS_AUTH = !!(process.env.WALLET_TOKEN || (process.env.TEST_EMAIL && process.env.TEST_PASSWORD))
+  if (!HAS_AUTH) test.skip()
 
   test('redirected away from /login', async ({ page }) => {
     await page.goto(`${BASE}/login`)
@@ -88,8 +88,8 @@ test.describe('Invalid Token', () => {
 
 // ─── Logout ─────────────────────────────────────────────────────────────────
 test.describe('Logout', () => {
-  const TOKEN = process.env.WALLET_TOKEN
-  if (!TOKEN) test.skip()
+  const HAS_AUTH = !!(process.env.WALLET_TOKEN || (process.env.TEST_EMAIL && process.env.TEST_PASSWORD))
+  if (!HAS_AUTH) test.skip()
 
   test('logout from profile redirects to /login', async ({ page }) => {
     await page.goto(`${BASE}/profile`)

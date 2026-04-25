@@ -3,6 +3,8 @@ import { waitForReact } from '../helpers/app'
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173'
 
+test.use({ storageState: 'e2e/.auth/state.json' })
+
 // ─── Budgets Page ────────────────────────────────────────────────────────────────
 test.describe('Budgets Page', () => {
   test('renders with "Ngân sách" heading', async ({ page }) => {

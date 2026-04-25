@@ -3,6 +3,8 @@ import { waitForReact } from '../helpers/app'
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173'
 
+test.use({ storageState: 'e2e/.auth/state.json' })
+
 // ─── Wallets List ───────────────────────────────────────────────────────────────
 test.describe('Wallets Page', () => {
   test('renders with "Ví của tôi" heading', async ({ page }) => {

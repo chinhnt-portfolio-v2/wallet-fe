@@ -3,6 +3,8 @@ import { waitForReact } from '../helpers/app'
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173'
 
+test.use({ storageState: 'e2e/.auth/state.json' })
+
 test.describe('Categories Page', () => {
   test('page loads successfully', async ({ page }) => {
     await page.goto(`${BASE}/categories`)

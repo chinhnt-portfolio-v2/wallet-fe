@@ -2,6 +2,8 @@ import { test, expect, Page } from '@playwright/test'
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173'
 
+test.use({ storageState: 'e2e/.auth/state.json' })
+
 /** Wait for page load + React hydration — wait for a React-rendered button */
 async function waitForReact(page: Page) {
   await page.waitForLoadState('load')

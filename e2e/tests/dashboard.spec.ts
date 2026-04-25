@@ -2,6 +2,8 @@ import { test, expect, Page } from '@playwright/test'
 
 const BASE = process.env.BASE_URL || 'http://localhost:5173'
 
+test.use({ storageState: 'e2e/.auth/state.json' })
+
 async function waitForReact(page: Page) {
   await page.waitForLoadState('load')
   await page.locator('button').first().waitFor({ state: 'visible', timeout: 30_000 })
