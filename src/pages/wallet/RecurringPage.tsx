@@ -49,10 +49,10 @@ function RecurringCard({
             {rule.category?.icon ?? '🔁'}
           </div>
           <div className="min-w-0">
-            <p className="text-sm font-medium text-primary dark:text-dark-primary truncate">
+            <p className="text-sm font-medium text-primary truncate">
               {rule.category?.name ?? 'Danh mục'}
             </p>
-            <p className="text-xs text-muted dark:text-dark-muted truncate">
+            <p className="text-xs text-muted truncate">
               {rule.wallet?.name ?? '—'}
             </p>
           </div>
@@ -62,8 +62,8 @@ function RecurringCard({
         <div className="flex items-center gap-2 shrink-0">
           <span className={`text-2xs font-medium px-2 py-0.5 rounded-full ${
             isActive
-              ? 'bg-positive/10 text-positive dark:text-dark-positive'
-              : 'bg-warning/10 text-warning dark:text-dark-warning'
+              ? 'bg-positive/10 text-positive'
+              : 'bg-warning/10 text-warning'
           }`}>
             {isActive ? 'Đang hoạt động' : 'Tạm dừng'}
           </span>
@@ -73,7 +73,7 @@ function RecurringCard({
             aria-label={isActive ? 'Tạm dừng' : 'Kích hoạt'}
             onClick={onToggle}
             className={`w-9 h-5 rounded-full transition-all relative ${
-              isActive ? 'bg-positive dark:bg-dark-positive' : 'bg-border dark:bg-dark-border'
+              isActive ? 'bg-positive' : 'bg-border'
             }`}
           >
             <span className={`w-3.5 h-3.5 bg-white rounded-full absolute top-0.5 transition-all ${
@@ -86,31 +86,31 @@ function RecurringCard({
       {/* Amount + Frequency */}
       <div className="flex items-center justify-between">
         <p className={`text-base font-bold font-mono tabular-nums ${
-          rule.type === 'EXPENSE' ? 'text-negative dark:text-dark-negative' : 'text-positive dark:text-dark-positive'
+          rule.type === 'EXPENSE' ? 'text-negative' : 'text-positive'
         }`}>
-          {rule.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(rule.amount)}₫
+          {rule.type === 'EXPENSE' ? '-' : '+'}{formatCurrency(rule.amount)}
         </p>
-        <span className="text-xs text-muted dark:text-dark-muted bg-surface-2 dark:bg-dark-surface-2 px-2 py-1 rounded">
+        <span className="text-xs text-muted bg-surface-2 px-2 py-1 rounded">
           {FREQ_LABELS[rule.frequency]}
         </span>
       </div>
 
       {/* Next occurrence */}
       {rule.nextOccurrence && (
-        <p className="text-xs text-muted dark:text-dark-muted">
-          Lần tới: <span className="font-medium text-secondary dark:text-dark-secondary">{formatDate(rule.nextOccurrence)}</span>
+        <p className="text-xs text-muted">
+          Lần tới: <span className="font-medium text-secondary">{formatDate(rule.nextOccurrence)}</span>
         </p>
       )}
       {rule.note && (
-        <p className="text-xs text-muted dark:text-dark-muted italic">"{rule.note}"</p>
+        <p className="text-xs text-muted italic">"{rule.note}"</p>
       )}
 
       {/* Actions */}
-      <div className="flex gap-2 pt-1 border-t border-border dark:border-dark-border">
-        <button onClick={onEdit} className="flex-1 text-center text-xs text-muted dark:text-dark-muted hover:text-accent dark:hover:text-dark-accent py-1">
+      <div className="flex gap-2 pt-1 border-t border-border">
+        <button onClick={onEdit} className="flex-1 text-center text-xs text-muted hover:text-accent py-1">
           ✏️ Sửa
         </button>
-        <button onClick={onDelete} className="flex-1 text-center text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline py-1">
+        <button onClick={onDelete} className="flex-1 text-center text-xs text-negative hover:underline py-1">
           🗑️ Xóa
         </button>
       </div>
@@ -166,12 +166,12 @@ function RecurringForm({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm font-semibold text-primary dark:text-dark-primary">
+      <p className="text-sm font-semibold text-primary">
         {isEditing ? 'Sửa giao dịch định kỳ' : '+ Tạo giao dịch định kỳ'}
       </p>
 
       {/* Type */}
-      <div className="flex gap-1 bg-surface-2 dark:bg-dark-surface-2 rounded-md p-1">
+      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
@@ -181,7 +181,7 @@ function RecurringForm({
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white font-medium shadow-sm'
                   : 'bg-positive text-white font-medium shadow-sm'
-                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
+                : 'text-muted hover:text-primary hover:bg-surface-2'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -191,7 +191,7 @@ function RecurringForm({
 
       {/* Wallet */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">Ví</label>
+        <label className="block text-xs font-medium text-secondary mb-1.5">Ví</label>
         <select
           value={walletId}
           onChange={(e) => setWalletId(Number(e.target.value))}
@@ -216,14 +216,14 @@ function RecurringForm({
 
       {/* Category */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Danh mục</label>
+        <label className="block text-xs font-medium text-secondary mb-2">Danh mục</label>
         <div className="flex flex-wrap gap-2">
           {filteredCats.map((c) => (
             <button
               key={c.id}
               onClick={() => setCategoryId(c.id)}
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
-                categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-primary/40' : 'hover:opacity-80 dark:hover:opacity-70'
+                categoryId === c.id ? 'ring-2 ring-primary/40' : 'hover:opacity-8070'
               }`}
               style={{
                 backgroundColor: `${c.color}20`,
@@ -239,7 +239,7 @@ function RecurringForm({
 
       {/* Frequency */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Tần suất</label>
+        <label className="block text-xs font-medium text-secondary mb-2">Tần suất</label>
         <div className="grid grid-cols-2 gap-2">
           {FREQ_OPTIONS.map((f) => (
             <button
@@ -247,8 +247,8 @@ function RecurringForm({
               onClick={() => setFrequency(f)}
               className={`py-2 text-xs rounded-md border transition-all font-medium ${
                 frequency === f
-                  ? 'border-accent dark:border-dark-accent bg-accent/10 dark:bg-dark-accent/10 text-accent dark:text-dark-accent'
-                  : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 dark:hover:border-dark-accent/50'
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-border text-muted hover:border-accent/50'
               }`}
             >
               {FREQ_LABELS[f]}
@@ -329,8 +329,8 @@ export default function RecurringPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Giao dịch định kỳ</h2>
-          <p className="text-xs text-muted dark:text-dark-muted">
+          <h2 className="text-lg font-semibold text-primary">Giao dịch định kỳ</h2>
+          <p className="text-xs text-muted">
             {activeRules.length} đang hoạt động
           </p>
         </div>
@@ -350,8 +350,8 @@ export default function RecurringPage() {
       {!isLoading && rules?.length === 0 && (
         <div className="text-center py-12 space-y-3">
           <p className="text-4xl">🔁</p>
-          <p className="text-sm text-muted dark:text-dark-muted">Chưa có giao dịch định kỳ nào</p>
-          <p className="text-xs text-muted dark:text-dark-muted">Tiền nhà, thuê bao, gym — tự động ghi nhận mỗi kỳ</p>
+          <p className="text-sm text-muted">Chưa có giao dịch định kỳ nào</p>
+          <p className="text-xs text-muted">Tiền nhà, thuê bao, gym — tự động ghi nhận mỗi kỳ</p>
           <Button variant="accent" size="sm" onClick={() => { setEditTarget(null); setShowForm(true) }}>
             + Tạo giao dịch đầu tiên
           </Button>
@@ -361,7 +361,7 @@ export default function RecurringPage() {
       {/* Active rules */}
       {!isLoading && activeRules.length > 0 && (
         <div className="space-y-3">
-          <p className="text-xs font-medium text-muted dark:text-dark-muted uppercase tracking-wide">
+          <p className="text-xs font-medium text-muted uppercase tracking-wide">
             Đang hoạt động ({activeRules.length})
           </p>
           {activeRules.map((r) => (
@@ -379,7 +379,7 @@ export default function RecurringPage() {
       {/* Paused rules */}
       {!isLoading && pausedRules.length > 0 && (
         <div className="space-y-3">
-          <p className="text-xs font-medium text-muted dark:text-dark-muted uppercase tracking-wide">
+          <p className="text-xs font-medium text-muted uppercase tracking-wide">
             Tạm dừng ({pausedRules.length})
           </p>
           {pausedRules.map((r) => (

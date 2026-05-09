@@ -28,12 +28,12 @@ export default function ProfilePage() {
   return (
     <div className="space-y-4">
       <div>
-        <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Cài đặt</h2>
-        <p className="text-xs text-muted dark:text-dark-muted">Quản lý tài khoản</p>
+        <h2 className="text-lg font-semibold text-primary">Cài đặt</h2>
+        <p className="text-xs text-muted">Quản lý tài khoản</p>
       </div>
 
       {/* User card */}
-      <Card className="divide-y divide-border dark:divide-dark-border">
+      <Card className="divide-y divide-border">
         {isLoading ? (
           <div className="p-4 space-y-3">
             <div className="flex items-center gap-3">
@@ -51,55 +51,55 @@ export default function ProfilePage() {
                 <img
                   src={user.picture}
                   alt={user.name ?? 'Avatar'}
-                  className="w-12 h-12 rounded-full object-cover border-2 border-border dark:border-dark-border"
+                  className="w-12 h-12 rounded-full object-cover border-2 border-border"
                 />
               ) : (
-                <div className="w-12 h-12 rounded-full bg-accent/20 dark:bg-dark-accent/20 flex items-center justify-center text-xl text-accent dark:text-dark-accent font-bold">
+                <div className="w-12 h-12 rounded-full bg-accent/20 flex items-center justify-center text-xl text-accent font-bold">
                   {(user.name ?? user.email ?? '?')[0].toUpperCase()}
                 </div>
               )}
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-primary dark:text-dark-primary truncate">
+                <p className="text-sm font-semibold text-primary truncate">
                   {user.name ?? 'Chưa đặt tên'}
                 </p>
-                <p className="text-xs text-muted dark:text-dark-muted truncate">{user.email}</p>
-                <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-surface-2 dark:bg-dark-surface-2 text-muted dark:text-dark-muted">
+                <p className="text-xs text-muted truncate">{user.email}</p>
+                <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-surface-2 text-muted">
                   {user.provider === 'google' ? '🔵 Google' : user.provider}
                 </span>
               </div>
             </div>
           </div>
         ) : (
-          <div className="p-4 text-center text-sm text-negative dark:text-dark-negative space-y-2">
+          <div className="p-4 text-center text-sm text-negative space-y-2">
             {isError ? (
               <>
                 <p>Đã xảy ra lỗi khi tải thông tin.</p>
                 <button
                   onClick={() => queryClient.invalidateQueries({ queryKey: ['user-profile'] })}
-                  className="text-xs underline hover:no-underline dark:hover:no-underline"
+                  className="text-xs underline hover:no-underline"
                 >
                   Thử lại
                 </button>
               </>
             ) : (
-              <p className="text-muted dark:text-dark-muted">Không tải được thông tin người dùng</p>
+              <p className="text-muted">Không tải được thông tin người dùng</p>
             )}
           </div>
         )}
 
         {/* Menu links */}
-        <div className="p-1 divide-y divide-border dark:divide-dark-border">
+        <div className="p-1 divide-y divide-border">
           {menuItems.map((item) => (
             <button
               key={item.href}
               onClick={() => navigate(item.href)}
-              className="w-full text-left px-3 py-3 text-sm text-primary dark:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2 transition-colors flex items-center justify-between"
+              className="w-full text-left px-3 py-3 text-sm text-primary hover:bg-surface-2 transition-colors flex items-center justify-between"
             >
               <span className="flex items-center gap-3">
                 <span>{item.icon}</span>
                 <span>{item.label}</span>
               </span>
-              <span className="text-muted dark:text-dark-muted">→</span>
+              <span className="text-muted">→</span>
             </button>
           ))}
         </div>
@@ -108,7 +108,7 @@ export default function ProfilePage() {
         <div className="p-1">
           <button
             onClick={handleLogout}
-            className="w-full text-left px-3 py-3 text-sm text-negative dark:text-dark-negative hover:bg-negative/5 dark:hover:bg-dark-negative/10 transition-colors flex items-center justify-between"
+            className="w-full text-left px-3 py-3 text-sm text-negative hover:bg-negative/5 transition-colors flex items-center justify-between"
           >
             <span>Đăng xuất</span>
             <span>→</span>
@@ -119,8 +119,8 @@ export default function ProfilePage() {
       {/* App info */}
       <Card padding="sm">
         <div className="space-y-1 text-center">
-          <p className="text-xs font-medium text-primary dark:text-dark-primary">💰 Wallet</p>
-          <p className="text-xs text-muted dark:text-dark-muted">Phiên bản 0.3.0</p>
+          <p className="text-xs font-medium text-primary">💰 Wallet</p>
+          <p className="text-xs text-muted">Phiên bản 0.3.0</p>
         </div>
       </Card>
     </div>

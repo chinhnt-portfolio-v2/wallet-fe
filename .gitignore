@@ -9,3 +9,10 @@ dist
 coverage
 
 .vercel
+.env.vercel
+
+# Playwright + custom E2E artifacts (may contain JWTs / tokens)
+test-results
+e2e/.auth
+e2e/reports
+playwright-report

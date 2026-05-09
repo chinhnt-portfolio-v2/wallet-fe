@@ -2,7 +2,7 @@
 // WALLET APP — TypeScript Types
 // ============================================================
 
-export type WalletType = 'CASH' | 'BANK' | 'E_WALLET' | 'POSTPAID'
+export type WalletType = 'CASH' | 'BANK' | 'E_WALLET' | 'POSTPAID' | 'SAVINGS' | 'CREDIT'
 export type CategoryType = 'INCOME' | 'EXPENSE'
 export type GroupType = 'BNPL' | 'DEBT' | 'LOAN_GIVEN' | 'PURCHASE_CREDIT'
 export type GroupStatus = 'OPEN' | 'PARTIAL' | 'SETTLED'
@@ -212,4 +212,88 @@ export interface TransferRequest {
 export interface TransferResult {
   debitTx: Transaction
   creditTx: Transaction
+}
+
+// ── Wishlist ─────────────────────────────────────────────────
+export type WishlistPriority = 'HIGH' | 'MEDIUM' | 'LOW'
+export type WishlistStatus = 'SAVING' | 'PURCHASED' | 'CANCELLED'
+
+export interface WishlistItem {
+  id: number
+  name: string
+  estimatedPrice: number | null
+  currency: string
+  priority: WishlistPriority
+  status: WishlistStatus
+  targetDate: string | null  // YYYY-MM-DD
+  notes: string | null
+  url: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface CreateWishlistItemRequest {
+  name: string
+  estimatedPrice?: number
+  currency?: string
+  priority?: WishlistPriority
+  targetDate?: string
+  notes?: string
+  url?: string
+}
+
+// ── Budget Jar ───────────────────────────────────────────────
+export type JarStatus = 'ok' | 'exceeded'
+
+export interface JarCategory {
+  id: number
+  name: string
+  icon: string
+  color: string
+}
+
+export interface BudgetJar {
+  id: number
+  userId: string
+  name: string
+  percentage: number
+  icon: string
+  color: string
+  isPreset: boolean
+  sortOrder: number
+  categories: JarCategory[]
+  monthlyIncome: number
+  allocated: number
+  spent: number
+  remaining: number
+  status: JarStatus
+}
+
+export interface BudgetJarsResponse {
+  jars: BudgetJar[]
+  totalPercentage: number
+  monthlyIncome: number
+}
+
+export interface CreateBudgetJarRequest {
+  name: string
+  percentage: number
+  categoryIds?: number[]
+  icon?: string
+  color?: string
+}
+
+// ── NLP ─────────────────────────────────────────────────────
+
+export interface NlpParseResult {
+  walletId: number | null
+  walletName: string | null
+  categoryId: number | null
+  categoryName: string | null
+  amount: number | null
+  type: TxnType
+  date: string | null        // ISO date YYYY-MM-DD
+  note: string | null
+  confidence: number         // 0.0-1.0
+  unresolvedFields: string[] // e.g. ["walletId", "categoryId"]
 }

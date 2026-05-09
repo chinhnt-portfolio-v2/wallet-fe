@@ -50,15 +50,15 @@ export default function TransferPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Chuyển tiền</h2>
-          <p className="text-xs text-muted dark:text-dark-muted">Di chuyển giữa các ví của bạn</p>
+          <h2 className="text-lg font-semibold text-primary">Chuyển tiền</h2>
+          <p className="text-xs text-muted">Di chuyển giữa các ví của bạn</p>
         </div>
-        <button onClick={() => navigate(-1)} className="btn-ghost text-sm px-2 dark:text-dark-secondary">←</button>
+        <button onClick={() => navigate(-1)} className="btn-ghost text-sm px-2">←</button>
       </div>
 
       {/* From wallet */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">
+        <label className="block text-xs font-medium text-secondary mb-2">
           Từ ví
         </label>
         {isLoading ? (
@@ -74,23 +74,23 @@ export default function TransferPage() {
                 aria-pressed={fromId === w.id}
                 aria-label={`Chọn ví nguồn ${w.name}`}
                 className={`card p-3 w-full text-left transition-all flex items-center gap-3 ${
-                  fromId === w.id ? 'border-accent dark:border-dark-accent ring-2 ring-accent/20 dark:ring-dark-accent/20' : 'hover:border-accent/50 dark:hover:border-dark-accent/50'
+                  fromId === w.id ? 'border-accent ring-2 ring-accent/20' : 'hover:border-accent/50'
                 }`}
               >
                 <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${w.color}20` }}>
                   {w.icon}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-primary dark:text-dark-primary truncate">{w.name}</p>
-                  <p className="text-xs text-muted dark:text-dark-muted">{WALLET_TYPE_LABEL[w.type]}</p>
+                  <p className="text-sm font-medium text-primary truncate">{w.name}</p>
+                  <p className="text-xs text-muted">{WALLET_TYPE_LABEL[w.type]}</p>
                 </div>
                 <div className="text-right">
-                  <p className="text-sm font-semibold font-mono text-primary dark:text-dark-primary tabular-nums">
-                    {formatCurrency(Number(w.balance))}₫
+                  <p className="text-sm font-semibold font-mono text-primary tabular-nums">
+                    {formatCurrency(Number(w.balance))}
                   </p>
                 </div>
                 {fromId === w.id && (
-                  <span className="w-5 h-5 bg-accent dark:bg-dark-accent rounded-full flex items-center justify-center shrink-0">
+                  <span className="w-5 h-5 bg-accent rounded-full flex items-center justify-center shrink-0">
                     <span className="text-white text-xs">✓</span>
                   </span>
                 )}
@@ -102,14 +102,14 @@ export default function TransferPage() {
 
       {/* Arrow */}
       <div className="flex justify-center">
-        <div className="w-8 h-8 rounded-full bg-surface-2 dark:bg-dark-surface-2 flex items-center justify-center text-muted dark:text-dark-muted">
+        <div className="w-8 h-8 rounded-full bg-surface-2 flex items-center justify-center text-muted">
           ↓
         </div>
       </div>
 
       {/* To wallet */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">
+        <label className="block text-xs font-medium text-secondary mb-2">
           Đến ví
         </label>
         <div className="space-y-2">
@@ -120,18 +120,18 @@ export default function TransferPage() {
               aria-pressed={toId === w.id}
               aria-label={`Chọn ví đích ${w.name}`}
               className={`card p-3 w-full text-left transition-all flex items-center gap-3 ${
-                toId === w.id ? 'border-accent dark:border-dark-accent ring-2 ring-accent/20 dark:ring-dark-accent/20' : 'hover:border-accent/50 dark:hover:border-dark-accent/50'
+                toId === w.id ? 'border-accent ring-2 ring-accent/20' : 'hover:border-accent/50'
               }`}
             >
               <div className="w-10 h-10 rounded-full flex items-center justify-center text-lg" style={{ backgroundColor: `${w.color}20` }}>
                 {w.icon}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-primary dark:text-dark-primary truncate">{w.name}</p>
-                <p className="text-xs text-muted dark:text-dark-muted">{WALLET_TYPE_LABEL[w.type]}</p>
+                <p className="text-sm font-medium text-primary truncate">{w.name}</p>
+                <p className="text-xs text-muted">{WALLET_TYPE_LABEL[w.type]}</p>
               </div>
               {toId === w.id && (
-                <span className="w-5 h-5 bg-accent dark:bg-dark-accent rounded-full flex items-center justify-center shrink-0">
+                <span className="w-5 h-5 bg-accent rounded-full flex items-center justify-center shrink-0">
                   <span className="text-white text-xs">✓</span>
                 </span>
               )}
@@ -142,7 +142,7 @@ export default function TransferPage() {
 
       {/* Amount */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">
+        <label className="block text-xs font-medium text-secondary mb-1.5">
           Số tiền (VND)
         </label>
         <div className="relative">
@@ -154,20 +154,20 @@ export default function TransferPage() {
             className="input text-xl font-bold font-mono pr-12 py-3"
             placeholder="0"
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted dark:text-dark-muted">₫</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">₫</span>
         </div>
         {amount && (
-          <p className="text-xs text-muted dark:text-dark-muted mt-1">
+          <p className="text-xs text-muted mt-1">
             = {formatCurrency(parseFloat(amount) || 0)}
           </p>
         )}
         {fromWallet && amount && parseFloat(amount) > fromWallet.balance && (
-          <p className="text-xs text-negative dark:text-dark-negative mt-1 font-medium">
-            ⚠️ Số tiền vượt quá số dư ({formatCurrency(Number(fromWallet.balance))}₫)
+          <p className="text-xs text-negative mt-1 font-medium">
+            ⚠️ Số tiền vượt quá số dư ({formatCurrency(Number(fromWallet.balance))})
           </p>
         )}
         {fromWallet && amount && parseFloat(amount) === fromWallet.balance && (
-          <p className="text-xs text-muted dark:text-dark-muted mt-1">
+          <p className="text-xs text-muted mt-1">
             💡 Chuyển toàn bộ số dư — ví nguồn sẽ về 0₫
           </p>
         )}
@@ -184,21 +184,21 @@ export default function TransferPage() {
       {/* Preview */}
       {fromWallet && toWallet && amount && parseFloat(amount) > 0 && (
         <Card className="p-4 space-y-2">
-          <p className="text-xs font-medium text-muted dark:text-dark-muted uppercase tracking-wide">Xem trước</p>
+          <p className="text-xs font-medium text-muted uppercase tracking-wide">Xem trước</p>
           <div className="flex items-center gap-3">
             <div className="flex-1 text-center">
-              <p className="text-xs text-muted dark:text-dark-muted">Nguồn</p>
-              <p className="text-sm font-semibold text-primary dark:text-dark-primary truncate">{fromWallet.name}</p>
-              <p className="text-sm font-mono text-negative dark:text-dark-negative tabular-nums">
-                -{formatCurrency(parseFloat(amount))}₫
+              <p className="text-xs text-muted">Nguồn</p>
+              <p className="text-sm font-semibold text-primary truncate">{fromWallet.name}</p>
+              <p className="text-sm font-mono text-negative tabular-nums">
+                -{formatCurrency(parseFloat(amount))}
               </p>
             </div>
-            <span className="text-muted dark:text-dark-muted">→</span>
+            <span className="text-muted">→</span>
             <div className="flex-1 text-center">
-              <p className="text-xs text-muted dark:text-dark-muted">Đích</p>
-              <p className="text-sm font-semibold text-primary dark:text-dark-primary truncate">{toWallet.name}</p>
-              <p className="text-sm font-mono text-positive dark:text-dark-positive tabular-nums">
-                +{formatCurrency(parseFloat(amount))}₫
+              <p className="text-xs text-muted">Đích</p>
+              <p className="text-sm font-semibold text-primary truncate">{toWallet.name}</p>
+              <p className="text-sm font-mono text-positive tabular-nums">
+                +{formatCurrency(parseFloat(amount))}
               </p>
             </div>
           </div>

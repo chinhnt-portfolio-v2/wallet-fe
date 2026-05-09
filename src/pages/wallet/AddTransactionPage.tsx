@@ -10,7 +10,9 @@ import { useCategories } from '@/hooks/useCategories'
 import { useCreateTransaction } from '@/hooks/useTransactions'
 import { formatCurrency } from '@/lib/utils'
 import { WALLET_TYPE_LABEL } from '@/lib/utils'
-import type { TxnType, CreateTransactionRequest } from '@/types'
+import { NlpInputBar } from '@/components/nlp/nlp-input-bar'
+import { NlpConfirmationCard } from '@/components/nlp/nlp-confirmation-card'
+import type { TxnType, CreateTransactionRequest, NlpParseResult } from '@/types'
 
 // Helper: today's date + N days as YYYY-MM-DD
 function addDays(days: number): string {
@@ -33,6 +35,8 @@ export default function AddTransactionPage() {
   const [debtTitle, setDebtTitle] = useState('')
   const [debtDueDate, setDebtDueDate] = useState(addDays(30))
   const [debtCounterparty, setDebtCounterparty] = useState('')
+
+  const [nlpResult, setNlpResult] = useState<NlpParseResult | null>(null)
 
   const { data: wallets, isLoading: loadingWallets } = useWallets()
   const { data: categories } = useCategories()
@@ -106,14 +110,58 @@ export default function AddTransactionPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Thêm giao dịch</h2>
-          <p className="text-xs text-muted dark:text-dark-muted">Nhanh — số tiền + ví</p>
+          <h2 className="text-lg font-semibold text-primary">Thêm giao dịch</h2>
+          <p className="text-xs text-muted">Nhanh — số tiền + ví</p>
         </div>
         <button onClick={() => navigate(-1)} className="btn-ghost text-sm px-2">←</button>
       </div>
 
+      {/* NLP Input */}
+      {!nlpResult ? (
+        <NlpInputBar onResult={setNlpResult} />
+      ) : (
+        <NlpConfirmationCard
+          result={nlpResult}
+          wallets={wallets ?? []}
+          categories={(categories ?? []).map((c) => ({ id: c.id, name: c.name, icon: c.icon, type: c.type }))}
+          onConfirm={(req) => {
+            createTx.mutate(req, {
+              onSuccess: (res) => {
+                toast.success('Đã thêm giao dịch!')
+                setNlpResult(null)
+                if (res.group) {
+                  navigate(`/debts/${res.group.id}`)
+                } else {
+                  navigate('/')
+                }
+              },
+              onError: (err: Error) => toast.error(err.message),
+            })
+          }}
+          onEdit={(prefill) => {
+            if (prefill.walletId != null) setWalletId(prefill.walletId)
+            if (prefill.categoryId != null) setCategoryId(prefill.categoryId)
+            if (prefill.amount != null) setAmount(String(prefill.amount))
+            if (prefill.type) setTxType(prefill.type)
+            if (prefill.note) setNote(prefill.note)
+            setNlpResult(null)
+            setShowAdvanced(true)
+          }}
+          onDismiss={() => setNlpResult(null)}
+        />
+      )}
+
+      <div className="relative">
+        <div className="absolute inset-0 flex items-center" aria-hidden="true">
+          <div className="w-full border-t border-border" />
+        </div>
+        <div className="relative flex justify-center">
+          <span className="bg-background px-2 text-xs text-muted">hoặc nhập thủ công</span>
+        </div>
+      </div>
+
       {/* Type toggle */}
-      <div className="flex gap-1 bg-surface-2 dark:bg-dark-surface-2 rounded-md p-1">
+      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
@@ -127,7 +175,7 @@ export default function AddTransactionPage() {
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white shadow-sm font-medium'
                   : 'bg-positive text-white shadow-sm font-medium'
-                : 'text-muted dark:text-dark-muted hover:text-primary dark:hover:text-dark-primary hover:bg-surface-2 dark:hover:bg-dark-surface-2'
+                : 'text-muted hover:text-primary hover:bg-surface-2'
             }`}
           >
             {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
@@ -137,7 +185,7 @@ export default function AddTransactionPage() {
 
       {/* Amount */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-1.5">Số tiền (VND)</label>
+        <label className="block text-xs font-medium text-secondary mb-1.5">Số tiền (VND)</label>
         <div className="relative">
           <input
             type="number"
@@ -148,10 +196,10 @@ export default function AddTransactionPage() {
             placeholder="0"
             autoFocus
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted dark:text-dark-muted">₫</span>
+          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">₫</span>
         </div>
         {amount && (
-          <p className="text-2xs text-muted dark:text-dark-muted mt-1">
+          <p className="text-2xs text-muted mt-1">
             = {formatCurrency(parseFloat(amount) || 0)}
           </p>
         )}
@@ -159,16 +207,16 @@ export default function AddTransactionPage() {
 
       {/* Wallet */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Chọn ví</label>
+        <label className="block text-xs font-medium text-secondary mb-2">Chọn ví</label>
         {loadingWallets ? (
           <div className="grid grid-cols-2 gap-2">
             {[1, 2, 3, 4].map((i) => (
               <div key={i} className="card p-3 animate-pulse">
                 <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-full bg-surface-2 dark:bg-dark-surface-2" />
+                  <div className="w-9 h-9 rounded-full bg-surface-2" />
                   <div className="space-y-1">
-                    <div className="h-3 w-16 bg-surface-2 dark:bg-dark-surface-2 rounded" />
-                    <div className="h-2 w-10 bg-surface-2 dark:bg-dark-surface-2 rounded" />
+                    <div className="h-3 w-16 bg-surface-2 rounded" />
+                    <div className="h-2 w-10 bg-surface-2 rounded" />
                   </div>
                 </div>
               </div>
@@ -184,8 +232,8 @@ export default function AddTransactionPage() {
                 aria-label={`Chọn ví ${w.name}`}
                 className={`card p-3 text-left transition-all relative ${
                   walletId === w.id
-                    ? 'border-accent dark:border-dark-accent ring-2 ring-accent/20 dark:ring-dark-accent/20'
-                    : 'hover:border-accent/50 dark:hover:border-dark-accent/50'
+                    ? 'border-accent ring-2 ring-accent/20'
+                    : 'hover:border-accent/50'
                 }`}
               >
                 <div className="flex items-center gap-2">
@@ -196,12 +244,12 @@ export default function AddTransactionPage() {
                     {w.icon}
                   </div>
                   <div className="min-w-0">
-                    <p className="text-sm font-medium text-primary dark:text-dark-primary truncate">{w.name}</p>
-                    <p className="text-xs text-muted dark:text-dark-muted">{WALLET_TYPE_LABEL[w.type] ?? w.type}</p>
+                    <p className="text-sm font-medium text-primary truncate">{w.name}</p>
+                    <p className="text-xs text-muted">{WALLET_TYPE_LABEL[w.type] ?? w.type}</p>
                   </div>
                 </div>
                 {walletId === w.id && (
-                  <span className="absolute top-2 right-2 w-4 h-4 bg-accent dark:bg-dark-accent rounded-full flex items-center justify-center" aria-hidden="true">
+                  <span className="absolute top-2 right-2 w-4 h-4 bg-accent rounded-full flex items-center justify-center" aria-hidden="true">
                     <span className="text-white text-2xs">✓</span>
                   </span>
                 )}
@@ -210,8 +258,8 @@ export default function AddTransactionPage() {
           </div>
         ) : (
           <Card className="p-4 text-center">
-            <p className="text-sm text-muted dark:text-dark-muted">Chưa có ví nào.</p>
-            <a href="/wallets" className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline mt-1 block">
+            <p className="text-sm text-muted">Chưa có ví nào.</p>
+            <a href="/wallets" className="text-xs text-accent hover:underline mt-1 block">
               Tạo ví mới →
             </a>
           </Card>
@@ -221,23 +269,23 @@ export default function AddTransactionPage() {
       {/* Advanced toggle */}
       <button
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline"
+        className="text-xs text-accent hover:underline"
       >
         {showAdvanced ? '▲ Thu gọn' : '▼ Thêm chi tiết'}
       </button>
 
       {showAdvanced && (
-        <div className="space-y-4 border-t border-border dark:border-dark-border pt-4">
+        <div className="space-y-4 border-t border-border pt-4">
           {/* Category */}
           <div>
-            <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">Danh mục</label>
+            <label className="block text-xs font-medium text-secondary mb-2">Danh mục</label>
             <div className="flex flex-wrap gap-2">
               {filteredCategories.map((c) => (
                 <button
                   key={c.id}
                   onClick={() => setCategoryId(categoryId === c.id ? null : c.id)}
                   className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
-                    categoryId === c.id ? 'ring-2 ring-primary/40 dark:ring-dark-primary/40' : 'hover:opacity-80 dark:hover:opacity-70'
+                    categoryId === c.id ? 'ring-2 ring-primary/40' : 'hover:opacity-8070'
                   }`}
                   style={{
                     backgroundColor: `${c.color}20`,
@@ -265,8 +313,8 @@ export default function AddTransactionPage() {
             <div className="border border-negative/30 bg-negative/5 rounded-md p-3 space-y-3">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-xs font-semibold text-negative dark:text-dark-negative">🛒 Ghi nhận nợ trả sau</p>
-                  <p className="text-xs text-muted dark:text-dark-muted mt-0.5">
+                  <p className="text-xs font-semibold text-negative">🛒 Ghi nhận nợ trả sau</p>
+                  <p className="text-xs text-muted mt-0.5">
                     Tạo nhóm nợ để theo dõi khoản mua trả góp và thanh toán khi đến hạn
                   </p>
                 </div>
@@ -276,7 +324,7 @@ export default function AddTransactionPage() {
                   aria-label="Ghi nhận nợ trả sau"
                   onClick={() => setCreateDebt(!createDebt)}
                   className={`w-10 h-6 rounded-full transition-all relative shrink-0 ${
-                    createDebt ? 'bg-negative dark:bg-dark-negative' : 'bg-border dark:bg-dark-border'
+                    createDebt ? 'bg-negative' : 'bg-border'
                   }`}
                 >
                   <span className={`w-4 h-4 bg-white rounded-full absolute top-1 transition-all ${
@@ -315,10 +363,10 @@ export default function AddTransactionPage() {
 
       {/* BNPL info — shown when wallet is POSTPAID (section auto-expanded) */}
       {isExpenseOnPostpaid && (
-        <div className="flex items-start gap-2 p-3 border border-border dark:border-dark-border rounded-md bg-surface-2 dark:bg-dark-surface-2">
-          <span className="text-negative dark:text-dark-negative text-sm shrink-0">ℹ️</span>
-          <p className="text-xs text-muted dark:text-dark-muted">
-            Ví trả sau — bật <strong className="text-negative dark:text-dark-negative">"Ghi nhận nợ"</strong> bên dưới để tạo nhóm theo dõi và thanh toán đúng hạn.
+        <div className="flex items-start gap-2 p-3 border border-border rounded-md bg-surface-2">
+          <span className="text-negative text-sm shrink-0">ℹ️</span>
+          <p className="text-xs text-muted">
+            Ví trả sau — bật <strong className="text-negative">"Ghi nhận nợ"</strong> bên dưới để tạo nhóm theo dõi và thanh toán đúng hạn.
           </p>
         </div>
       )}

@@ -1,34 +1,68 @@
-import { chromium, FullConfig } from '@playwright/test'
+import { chromium, FullConfig, request } from '@playwright/test'
 import * as path from 'path'
+import * as fs from 'fs'
 
 /**
  * Global setup — runs once before all test files.
  *
- * Auth strategy:
- *   1. If WALLET_TOKEN env var is set → inject it into browser localStorage,
- *      then save browser context state to e2e/.auth/state.json
- *      so all tests inherit the authenticated session automatically.
- *   2. If not set → skip auth entirely; tests requiring auth will be skipped.
+ * Auth strategy (priority order):
+ *   1. TEST_EMAIL + TEST_PASSWORD → login via POST /api/v1/auth/login, inject token
+ *   2. WALLET_TOKEN env var → inject pre-existing JWT directly into localStorage
+ *   3. Neither set → skip auth; tests requiring auth will skip
+ *
+ * Hardcoded dev credentials (seeded by DevDataSeeder on local profile):
+ *   TEST_EMAIL=test@example.com  TEST_PASSWORD=Test1234!
  *
  * Usage:
- *   # Local dev with token
+ *   # Local dev (email/password — recommended)
+ *   TEST_EMAIL=test@example.com TEST_PASSWORD=Test1234! npx playwright test
+ *
+ *   # Pre-existing JWT token
  *   WALLET_TOKEN=eyJhbGci... npx playwright test
  *
  *   # Against Vercel deploy
- *   BASE_URL=https://wallet-fe-your-vercel.app WALLET_TOKEN=eyJ... npx playwright test
- *
- *   # CI (GitHub Actions) — set WALLET_TOKEN and BASE_URL as secrets/env vars
+ *   BASE_URL=https://wallet-fe-two.vercel.app TEST_EMAIL=... TEST_PASSWORD=... npx playwright test
  */
-async function globalSetup(config: FullConfig) {
+async function globalSetup(_config: FullConfig) {
   const storageStatePath = path.join(process.cwd(), 'e2e/.auth/state.json')
-  const token = process.env.WALLET_TOKEN
+  fs.mkdirSync(path.dirname(storageStatePath), { recursive: true })
+
+  const baseURL = process.env.BASE_URL || 'http://localhost:5173'
+  const apiBase = process.env.VITE_API_BASE_URL || baseURL
+
+  const email = process.env.TEST_EMAIL
+  const password = process.env.TEST_PASSWORD
+  let token = process.env.WALLET_TOKEN
+
+  // Strategy 1: email/password login via API
+  if (email && password) {
+    console.log(`🔐 Logging in as ${email} via API...`)
+    const api = await request.newContext()
+    try {
+      const resp = await api.post(`${apiBase}/api/v1/auth/login`, {
+        data: { email, password },
+      })
+      if (!resp.ok()) {
+        console.warn(`⚠️  Login failed (${resp.status()}) — auth tests will skip.`)
+        await api.dispose()
+        return
+      }
+      const data = await resp.json()
+      token = data.accessToken
+      console.log(`✅ Login successful, got access token`)
+    } catch (err) {
+      console.warn(`⚠️  API login error: ${err} — auth tests will skip.`)
+      await api.dispose()
+      return
+    }
+    await api.dispose()
+  }
 
   if (!token) {
     console.warn(
-      '\n⚠️  WALLET_TOKEN not set — auth setup skipped.\n' +
-      '   Tests that require authentication will be SKIPPED.\n' +
-      '   To enable auth tests, set WALLET_TOKEN env var with a valid JWT:\n' +
-      '   WALLET_TOKEN=your.jwt.token npx playwright test\n'
+      '\n⚠️  No auth credentials — auth setup skipped.\n' +
+      '   Set TEST_EMAIL + TEST_PASSWORD (or WALLET_TOKEN) to enable auth tests.\n' +
+      '   Hardcoded dev user: test@example.com / Test1234!\n'
     )
     return
   }
@@ -37,18 +71,12 @@ async function globalSetup(config: FullConfig) {
   const context = await browser.newContext()
   const page = await context.newPage()
 
-  console.log(`🔐 Injecting WALLET_TOKEN and saving auth state to ${storageStatePath}...`)
-
-  const baseURL = process.env.BASE_URL || 'http://localhost:5173'
-
   try {
-    // Navigate to app root and inject token
     await page.goto(baseURL)
   } catch {
     console.warn(
-      `⚠️  Could not reach ${baseURL} — is the dev server or Vercel deploy running?\n` +
-      `   global-setup skipped. Tests will run unauthenticated.\n` +
-      `   Start server and re-run: npx playwright test`
+      `⚠️  Could not reach ${baseURL} — is the dev server running?\n` +
+      `   global-setup skipped. Tests will run unauthenticated.`
     )
     await browser.close()
     return
@@ -63,23 +91,19 @@ async function globalSetup(config: FullConfig) {
       token,
     )
 
-    // Reload so React reads the token and renders authenticated UI
     await page.reload()
     await page.waitForLoadState('domcontentloaded')
 
-    // Verify we are NOT on /login after reload (auth worked)
     const currentURL = page.url()
     if (currentURL.includes('/login')) {
       console.warn(
-        `⚠️  Token was injected but app redirected to /login.\n` +
-        `   The token may be invalid or expired. Check WALLET_TOKEN.\n` +
+        `⚠️  Token injected but app redirected to /login — token may be invalid.\n` +
         `   Current URL: ${currentURL}`
       )
     } else {
       console.log(`✅ Auth state verified — on: ${currentURL}`)
     }
 
-    // Save the authenticated browser context for all tests to reuse
     await context.storageState({ path: storageStatePath })
     console.log(`✅ Auth state saved to ${storageStatePath}`)
   } finally {

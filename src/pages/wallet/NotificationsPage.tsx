@@ -61,18 +61,18 @@ export default function NotificationsPage() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Thông báo</h2>
-          <p className="text-xs text-muted dark:text-dark-muted">
+          <h2 className="text-lg font-semibold text-primary">Thông báo</h2>
+          <p className="text-xs text-muted">
             {unread > 0 ? `${unread} chưa đọc` : 'Tất cả đã đọc'}
           </p>
         </div>
         <div className="flex gap-2">
           {notifs.length > 0 && (
             <>
-              <button onClick={handleMarkAll} className="text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline">
+              <button onClick={handleMarkAll} className="text-xs text-accent hover:underline">
                 Đánh dấu đã đọc
               </button>
-              <button onClick={handleClear} className="text-xs text-negative dark:text-dark-negative hover:underline dark:hover:underline">
+              <button onClick={handleClear} className="text-xs text-negative hover:underline">
                 Xóa tất cả
               </button>
             </>
@@ -89,10 +89,10 @@ export default function NotificationsPage() {
             <span className="text-lg">{pushEnabled ? '🔔' : '🔕'}</span>
           </div>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-primary dark:text-dark-primary">
+            <p className="text-sm font-medium text-primary">
               Thông báo trình duyệt
             </p>
-            <p className="text-xs text-muted dark:text-dark-muted mt-0.5">
+            <p className="text-xs text-muted mt-0.5">
               {pushEnabled
                 ? 'Đã bật — bạn sẽ nhận thông báo khi có nợ quá hạn hoặc đến hạn.'
                 : 'Bật để nhận thông báo khi có nợ quá hạn hoặc đến hạn thanh toán.'}
@@ -102,7 +102,7 @@ export default function NotificationsPage() {
         {!pushEnabled && (
           <button
             onClick={handleEnablePush}
-            className="w-full text-center text-xs text-accent dark:text-dark-accent hover:underline dark:hover:underline py-1"
+            className="w-full text-center text-xs text-accent hover:underline py-1"
           >
             Bật thông báo
           </button>
@@ -113,8 +113,8 @@ export default function NotificationsPage() {
       {notifs.length === 0 ? (
         <div className="text-center py-16 space-y-2">
           <p className="text-4xl">🔔</p>
-          <p className="text-sm text-muted dark:text-dark-muted">Chưa có thông báo nào</p>
-          <p className="text-xs text-muted dark:text-dark-muted">
+          <p className="text-sm text-muted">Chưa có thông báo nào</p>
+          <p className="text-xs text-muted">
             Thông báo sẽ xuất hiện khi có nợ quá hạn hoặc đến hạn thanh toán.
           </p>
         </div>
@@ -123,8 +123,8 @@ export default function NotificationsPage() {
           {notifs.map((n) => (
             <div
               key={n.id}
-              className={`p-4 rounded-md border border-border dark:border-dark-border bg-surface dark:bg-dark-surface cursor-pointer hover:bg-surface-2 dark:hover:bg-dark-surface-2 transition-colors ${
-                !n.read ? 'border-l-2 border-l-accent dark:border-l-dark-accent' : 'opacity-70'
+              className={`p-4 rounded-md border border-border bg-surface cursor-pointer hover:bg-surface-2 transition-colors ${
+                !n.read ? 'border-l-2 border-l-accent' : 'opacity-70'
               }`}
               onClick={() => {
                 if (n.link) navigate(n.link)
@@ -134,19 +134,19 @@ export default function NotificationsPage() {
                 <span className="text-xl shrink-0">{ICONS[n.type]}</span>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start justify-between gap-2">
-                    <p className="text-sm font-medium text-primary dark:text-dark-primary leading-tight">
+                    <p className="text-sm font-medium text-primary leading-tight">
                       {n.title}
                     </p>
-                    <p className="text-xs text-muted dark:text-dark-muted shrink-0 ml-2">
+                    <p className="text-xs text-muted shrink-0 ml-2">
                       {formatTime(n.createdAt)}
                     </p>
                   </div>
-                  <p className="text-xs text-muted dark:text-dark-muted mt-1 leading-relaxed">
+                  <p className="text-xs text-muted mt-1 leading-relaxed">
                     {n.body}
                   </p>
                 </div>
                 {!n.read && (
-                  <span className="w-2 h-2 bg-accent dark:bg-dark-accent rounded-full shrink-0 mt-1.5" />
+                  <span className="w-2 h-2 bg-accent rounded-full shrink-0 mt-1.5" />
                 )}
               </div>
             </div>

@@ -127,7 +127,7 @@ export function OnboardingModal() {
         <div className="flex justify-end mb-1 shrink-0">
           <button
             onClick={handleSkip}
-            className="text-xs text-muted dark:text-dark-muted hover:text-accent dark:hover:text-dark-accent transition-colors px-1 py-0.5"
+            className="text-xs text-muted hover:text-accent transition-colors px-1 py-0.5"
           >
             Bỏ qua
           </button>
@@ -137,21 +137,21 @@ export function OnboardingModal() {
         <div className="flex-1 flex flex-col items-center justify-center gap-5 py-4 min-h-0">
           {/* Large emoji icon with accent ring */}
           <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-accent/10 dark:bg-dark-surface-2 flex items-center justify-center text-5xl select-none">
+            <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center text-5xl select-none">
               {step.emoji}
             </div>
             {/* Step badge */}
-            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent dark:bg-dark-accent flex items-center justify-center">
+            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
               <span className="text-white text-2xs font-bold">{step.step}</span>
             </div>
           </div>
 
           {/* Text */}
           <div className="text-center space-y-2 max-w-[260px]">
-            <h2 className="text-lg font-bold text-primary dark:text-dark-primary leading-snug">
+            <h2 className="text-lg font-bold text-primary leading-snug">
               {step.title}
             </h2>
-            <p className="text-sm text-muted dark:text-dark-muted leading-relaxed">
+            <p className="text-sm text-muted leading-relaxed">
               {step.description}
             </p>
           </div>
@@ -166,17 +166,17 @@ export function OnboardingModal() {
                 key={s.step}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
                   i === current
-                    ? 'w-6 bg-accent dark:bg-dark-accent'
+                    ? 'w-6 bg-accent'
                     : i < current
-                    ? 'w-1.5 bg-accent/40 dark:bg-dark-accent/40'
-                    : 'w-1.5 bg-border dark:bg-dark-border'
+                    ? 'w-1.5 bg-accent/40'
+                    : 'w-1.5 bg-border'
                 }`}
               />
             ))}
           </div>
 
           {/* Progress label */}
-          <p className="text-center text-xs text-muted dark:text-dark-muted">
+          <p className="text-center text-xs text-muted">
             Bước {step.step} / {step.total}
           </p>
 
@@ -184,8 +184,8 @@ export function OnboardingModal() {
           <button
             onClick={handleNext}
             disabled={createWallet.isPending}
-            className="w-full py-3 rounded-full bg-accent dark:bg-dark-accent text-white font-semibold text-sm
-                       hover:bg-accent/90 dark:hover:bg-dark-accent/90 active:scale-95 transition-all duration-150
+            className="w-full py-3 rounded-full bg-accent text-white font-semibold text-sm
+                       hover:bg-accent/90 active:scale-95 transition-all duration-150
                        disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
             {createWallet.isPending ? 'Đang xử lý…' : step.cta}
@@ -224,7 +224,7 @@ function OnboardingOverlay({ open, onClose, children }: OnboardingOverlayProps) 
     >
       {/* Blurred backdrop */}
       <div
-        className="absolute inset-0 bg-dark-bg/95 backdrop-blur-sm"
+        className="absolute inset-0 bg-bg/95 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
@@ -232,10 +232,10 @@ function OnboardingOverlay({ open, onClose, children }: OnboardingOverlayProps) 
       {/* Sheet */}
       <div
         className="relative flex-1 flex flex-col justify-end mx-4 mb-6 mt-20 rounded-2xl overflow-hidden
-                    bg-dark-surface border border-dark-border shadow-2xl animate-slide-up"
+                    bg-surface border border-border shadow-2xl animate-slide-up"
       >
         {/* Gradient accent bar at top */}
-        <div className="h-1 w-full bg-gradient-to-r from-accent via-dark-accent to-accent shrink-0" />
+        <div className="h-1 w-full bg-gradient-to-r from-accent via-accent/60 to-accent shrink-0" />
 
         <div className="flex-1 px-5 py-5 overflow-hidden">
           {children}

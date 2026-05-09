@@ -90,19 +90,19 @@ export default function ExportPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-primary dark:text-dark-primary">Xuất dữ liệu</h2>
-        <p className="text-xs text-muted dark:text-dark-muted">Tải về file CSV cho Excel, Google Sheets</p>
+        <h2 className="text-lg font-semibold text-primary">Xuất dữ liệu</h2>
+        <p className="text-xs text-muted">Tải về file CSV cho Excel, Google Sheets</p>
       </div>
 
       {/* Info card */}
       <Card className="p-4 space-y-3">
         <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-accent/10 dark:bg-dark-accent/20 flex items-center justify-center shrink-0">
-            <span className="text-accent dark:text-dark-accent text-lg">📊</span>
+          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
+            <span className="text-accent text-lg">📊</span>
           </div>
           <div>
-            <p className="text-sm font-medium text-primary dark:text-dark-primary">Xuất CSV</p>
-            <p className="text-xs text-muted dark:text-dark-muted mt-0.5">
+            <p className="text-sm font-medium text-primary">Xuất CSV</p>
+            <p className="text-xs text-muted mt-0.5">
               File CSV chứa: ngày, loại (chi/thu), số tiền, ví, danh mục, ghi chú.
               Mở được trên Excel, Google Sheets, Numbers.
             </p>
@@ -110,18 +110,18 @@ export default function ExportPage() {
         </div>
 
         {data && (
-          <div className="flex gap-4 pt-2 border-t border-border dark:border-dark-border">
+          <div className="flex gap-4 pt-2 border-t border-border">
             <div className="text-center flex-1">
-              <p className="text-xl font-bold font-mono text-primary dark:text-dark-primary">{totalCount}</p>
-              <p className="text-xs text-muted dark:text-dark-muted">Tổng giao dịch</p>
+              <p className="text-xl font-bold font-mono text-primary">{totalCount}</p>
+              <p className="text-xs text-muted">Tổng giao dịch</p>
             </div>
-            <div className="text-center flex-1 border-x border-border dark:border-dark-border">
-              <p className="text-xl font-bold font-mono text-primary dark:text-dark-primary">{data.wallets.length}</p>
-              <p className="text-xs text-muted dark:text-dark-muted">Ví</p>
+            <div className="text-center flex-1 border-x border-border">
+              <p className="text-xl font-bold font-mono text-primary">{data.wallets.length}</p>
+              <p className="text-xs text-muted">Ví</p>
             </div>
             <div className="text-center flex-1">
-              <p className="text-xl font-bold font-mono text-primary dark:text-dark-primary">{data.categories.length}</p>
-              <p className="text-xs text-muted dark:text-dark-muted">Danh mục</p>
+              <p className="text-xl font-bold font-mono text-primary">{data.categories.length}</p>
+              <p className="text-xs text-muted">Danh mục</p>
             </div>
           </div>
         )}
@@ -129,7 +129,7 @@ export default function ExportPage() {
 
       {/* Date range selector */}
       <div>
-        <label className="block text-xs font-medium text-secondary dark:text-dark-secondary mb-2">
+        <label className="block text-xs font-medium text-secondary mb-2">
           Khoảng thời gian
         </label>
         <div className="grid grid-cols-3 gap-2">
@@ -139,8 +139,8 @@ export default function ExportPage() {
               onClick={() => setSelectedPreset(p.key)}
               className={`py-2.5 text-xs rounded-md border transition-all font-medium ${
                 selectedPreset === p.key
-                  ? 'border-accent dark:border-dark-accent bg-accent/10 dark:bg-dark-accent/10 text-accent dark:text-dark-accent'
-                  : 'border-border dark:border-dark-border text-muted dark:text-dark-muted hover:border-accent/50 dark:hover:border-dark-accent/50'
+                  ? 'border-accent bg-accent/10 text-accent'
+                  : 'border-border text-muted hover:border-accent/50'
               }`}
             >
               {p.label}
@@ -148,7 +148,7 @@ export default function ExportPage() {
           ))}
         </div>
         {data && (
-          <p className="text-xs text-muted dark:text-dark-muted mt-2">
+          <p className="text-xs text-muted mt-2">
             {range
               ? `${filteredCount} giao dịch (${range.from} → ${range.to})`
               : `${totalCount} giao dịch (tất cả)`}
@@ -168,7 +168,7 @@ export default function ExportPage() {
       </Button>
 
       {/* Note */}
-      <p className="text-xs text-muted dark:text-dark-muted text-center">
+      <p className="text-xs text-muted text-center">
         File có định dạng UTF-8, tương thích với Excel tiếng Việt.
       </p>
     </div>

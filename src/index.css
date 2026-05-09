@@ -1,53 +1,49 @@
+@import './design-system/tokens.css';
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   html {
-    font-family: 'Inter', sans-serif;
+    font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
   }
 
-  /* Dark mode handled by Tailwind's dark: variant classes.
-     All dark colors defined in tailwind.config.ts's backgroundColor / textColor sections. */
-  html.dark body {
-    background-color: #0F172A;
-    color: #F8FAFC;
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text-primary);
   }
 
-  /* Scrollbar */
   ::-webkit-scrollbar { width: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { @apply bg-border rounded-full; }
-  .dark ::-webkit-scrollbar-thumb { background: #334155; }
+  ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 9999px; }
 }
 
 @layer components {
-  /* Card — light + dark */
   .card {
-    @apply bg-surface dark:bg-dark-surface
-           rounded-md border border-border dark:border-dark-border
-           shadow-sm;
+    background-color: var(--color-surface);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-sm);
   }
 
-  /* Input — light + dark (focus handled inline in component) */
   .input {
-    @apply w-full rounded-sm border border-border dark:border-dark-border
-           bg-surface dark:bg-dark-surface
-           text-primary dark:text-dark-primary
-           px-3 py-2 text-sm transition-all duration-150;
+    @apply w-full px-3 py-2 text-sm transition-all duration-150;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-sm);
+    color: var(--color-text-primary);
   }
 
-  /* Skeleton */
   .skeleton {
-    @apply animate-pulse bg-surface-2 dark:bg-dark-surface-2 rounded;
+    @apply animate-pulse rounded;
+    background-color: var(--color-surface-2);
   }
 
-  /* Numeric tabular figures */
   .tabular { font-variant-numeric: tabular-nums; }
 
-  /* Bottom sheet slide-up animation */
   @keyframes slide-up {
     from { transform: translateY(100%); opacity: 0; }
     to   { transform: translateY(0);    opacity: 1; }
