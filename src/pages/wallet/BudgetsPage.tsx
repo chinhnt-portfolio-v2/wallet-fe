@@ -201,7 +201,7 @@ function BudgetForm({
 // ── Jars tab ─────────────────────────────────────────────────────────────────
 
 function JarsTab({ period }: { period: string }) {
-  const { data, isLoading } = useBudgetJars(period)
+  const { data, isLoading, isError, error, refetch } = useBudgetJars(period)
   const createPreset = useCreatePresetJars()
   const deleteJar = useDeleteBudgetJar()
 
@@ -231,6 +231,16 @@ function JarsTab({ period }: { period: string }) {
     return (
       <div className="space-y-3">
         {[1, 2, 3].map((i) => <div key={i} className="card p-4 h-28 animate-pulse" />)}
+      </div>
+    )
+  }
+
+  if (isError) {
+    return (
+      <div className="p-4 rounded-lg bg-negative/10 border border-negative/20 space-y-2 text-center">
+        <p className="text-sm font-medium text-negative">Có lỗi tải hũ ngân sách</p>
+        <p className="text-xs text-muted">{error instanceof Error ? error.message : 'Lỗi máy chủ'}</p>
+        <Button variant="outline" size="sm" onClick={() => refetch()}>Thử lại</Button>
       </div>
     )
   }
@@ -312,7 +322,7 @@ export default function BudgetsPage() {
   const [tab, setTab] = useState<Tab>('categories')
   const period = getPeriod(year, month)
 
-  const { data: budgets, isLoading } = useBudgetWithSpending(period)
+  const { data: budgets, isLoading, isError, error, refetch } = useBudgetWithSpending(period)
   const { data: categories } = useCategories()
   const deleteBudget = useDeleteBudget()
   const createBudget = useCreateBudget()
@@ -427,6 +437,12 @@ export default function BudgetsPage() {
           {isLoading ? (
             <div className="space-y-3">
               {[1, 2, 3].map(i => <div key={i} className="card p-4 h-24 animate-pulse" />)}
+            </div>
+          ) : isError ? (
+            <div className="p-4 rounded-lg bg-negative/10 border border-negative/20 space-y-2 text-center">
+              <p className="text-sm font-medium text-negative">Có lỗi tải dữ liệu ngân sách</p>
+              <p className="text-xs text-muted">{error instanceof Error ? error.message : 'Lỗi máy chủ'}</p>
+              <Button variant="outline" size="sm" onClick={() => refetch()}>Thử lại</Button>
             </div>
           ) : sortedBudgets.length === 0 ? (
             <div className="text-center py-12 space-y-3">
