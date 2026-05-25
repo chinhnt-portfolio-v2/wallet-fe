@@ -1,23 +1,40 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useWallets, useCreateWallet, useUpdateWallet, useDeleteWallet } from '@/hooks/useWallets'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { BottomSheet } from '@/components/ui/BottomSheet'
-import { formatCurrency, WALLET_TYPE_LABEL } from '@/lib/utils'
+import { Amount, SectionLabel, ProgressBar, Pill } from '@/design-system'
+import { WALLET_TYPE_LABEL, formatCurrency } from '@/lib/utils'
 import { toast } from 'sonner'
 import type { Wallet } from '@/types'
 
-// WALLET_ICONS and WALLET_COLORS — moved from deleted walletStore
 const WALLET_ICONS = ['💰', '🏦', '💳', '📱', '🎁', '🏠', '🚗', '✈️']
 const WALLET_COLORS = [
   '#0EA5E9', '#10B981', '#F97316', '#8B5CF6',
   '#EC4899', '#F59E0B', '#06B6D4', '#64748B',
 ]
 
+// Group label map with Vietnamese names
+const GROUP_LABEL: Record<string, string> = {
+  CASH: 'Tiền mặt',
+  BANK: 'Ngân hàng',
+  E_WALLET: 'Ví điện tử',
+  POSTPAID: 'Trả sau',
+}
+
+// Wallet type → color tint for gradient stripe
+function walletAccentColor(wallet: Wallet): string {
+  if (wallet.color) return wallet.color
+  const fallbacks: Record<string, string> = {
+    CASH: '#c8f53a', BANK: '#0EA5E9', E_WALLET: '#8B5CF6', POSTPAID: '#F97316',
+  }
+  return fallbacks[wallet.type] ?? '#64748B'
+}
+
+// ── Wallet Form ──────────────────────────────────────────────
 function WalletForm({
   initial,
   onSubmit,
@@ -43,9 +60,9 @@ function WalletForm({
   }
 
   return (
-    <Card className="space-y-4">
-      <p className="text-sm font-semibold text-primary">
-        {initial?.id ? '✏️ Sửa ví' : '+ Tạo ví mới'}
+    <div className="space-y-4 p-4 bg-surface border border-border rounded-lg">
+      <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
+        {initial?.id ? 'Sửa ví' : 'Tạo ví mới'}
       </p>
 
       <Input
@@ -57,11 +74,11 @@ function WalletForm({
       />
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Loại</label>
+        <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-2">Loại</label>
         <select
           value={type}
           onChange={(e) => setType(e.target.value as Wallet['type'])}
-          className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30"
+          className="w-full rounded border border-border bg-bg-2 px-3 py-2 font-mono text-[13px] text-primary focus:outline-none focus:ring-1 focus:ring-accent/40"
         >
           {Object.entries(WALLET_TYPE_LABEL).map(([k, v]) => (
             <option key={k} value={k}>{v}</option>
@@ -70,17 +87,17 @@ function WalletForm({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Icon</label>
+        <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-2">Icon</label>
         <div className="flex gap-2 flex-wrap">
           {WALLET_ICONS.map((i) => (
             <button
               key={i}
               type="button"
               onClick={() => setIcon(i)}
-              className={`w-9 h-9 text-lg rounded-md border transition-all flex items-center justify-center ${
+              className={`w-9 h-9 text-lg rounded border transition-all flex items-center justify-center ${
                 icon === i
-                  ? 'border-accent ring-2 ring-accent/30'
-                  : 'border-border hover:border-accent/50 hover:bg-accent/10'
+                  ? 'border-accent ring-1 ring-accent/30 bg-accent/10'
+                  : 'border-border hover:border-accent/50'
               }`}
             >
               {i}
@@ -90,7 +107,7 @@ function WalletForm({
       </div>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Màu</label>
+        <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-2">Màu</label>
         <div className="flex gap-2">
           {WALLET_COLORS.map((c) => (
             <button
@@ -98,7 +115,7 @@ function WalletForm({
               type="button"
               onClick={() => setColor(c)}
               className={`w-7 h-7 rounded-full transition-all ${
-                color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-110110'
+                color === c ? 'ring-2 ring-offset-2 ring-border-hi scale-110' : 'hover:scale-110'
               }`}
               style={{ backgroundColor: c }}
             />
@@ -106,10 +123,9 @@ function WalletForm({
         </div>
       </div>
 
-      {/* Initial balance — hidden for edit */}
       {!initial?.id && (
         <div>
-          <label className="block text-xs font-medium text-secondary mb-1.5">
+          <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-1.5">
             Số dư ban đầu
           </label>
           <div className="relative">
@@ -118,29 +134,29 @@ function WalletForm({
               inputMode="decimal"
               value={initialBalance}
               onChange={(e) => setInitialBalance(e.target.value)}
-              className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm font-mono pr-10 focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              className="w-full rounded border border-border bg-bg-2 px-3 py-2 font-mono text-[13px] text-primary pr-10 focus:outline-none focus:ring-1 focus:ring-accent/40"
               placeholder="0"
               min="0"
             />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted">₫</span>
+            <span className="absolute right-3 top-1/2 -translate-y-1/2 font-mono text-[11px] text-muted">₫</span>
           </div>
-          <p className="text-xs text-muted mt-1">
+          <p className="font-mono text-[10px] text-muted mt-1">
             Bỏ trống nếu ví mới không có tiền.
           </p>
         </div>
       )}
 
       {/* Preview */}
-      <div className="flex items-center gap-3 p-3 rounded-md border border-border">
+      <div className="flex items-center gap-3 p-3 rounded border border-border-hi bg-surface-2">
         <div
-          className="w-10 h-10 rounded-full flex items-center justify-center text-lg"
-          style={{ backgroundColor: `${color}20` }}
+          className="w-10 h-10 rounded flex items-center justify-center text-lg shrink-0"
+          style={{ backgroundColor: `${color}22` }}
         >
           {icon}
         </div>
         <div>
-          <p className="text-sm font-medium text-primary">{name || 'Xem trước'}</p>
-          <p className="text-xs text-muted">{WALLET_TYPE_LABEL[type] ?? type}</p>
+          <p className="font-sans text-[13px] font-medium text-primary">{name || 'Xem trước'}</p>
+          <p className="font-mono text-[10px] text-muted uppercase tracking-wide">{WALLET_TYPE_LABEL[type] ?? type}</p>
         </div>
       </div>
 
@@ -150,10 +166,11 @@ function WalletForm({
           {isPending ? 'Đang lưu...' : initial?.id ? 'Lưu thay đổi' : 'Tạo ví'}
         </Button>
       </div>
-    </Card>
+    </div>
   )
 }
 
+// ── Wallet Card ──────────────────────────────────────────────
 function WalletCard({
   wallet,
   onEdit,
@@ -161,37 +178,71 @@ function WalletCard({
   wallet: Wallet
   onEdit: (w: Wallet) => void
 }) {
+  const accent = walletAccentColor(wallet)
+  const isPostpaid = wallet.type === 'POSTPAID'
+  // For POSTPAID: treat negative balance as spent, assume a limit from wallet name or default
+  // balance is negative for debts — spend = |balance|, limit not stored on wallet, show utilization as pct of e.g. 10M
+  const spent = isPostpaid ? Math.abs(Math.min(0, Number(wallet.balance))) : 0
+  // No real limit on wallet model — use a placeholder of 10_000_000 for display
+  const limit = 10_000_000
+  const utilPct = isPostpaid ? spent / limit : 0
+
   return (
-    <div className="card p-4 flex items-center gap-3 group">
-      <div
-        className="w-11 h-11 rounded-full flex items-center justify-center text-xl shrink-0"
-        style={{ backgroundColor: `${wallet.color}20` }}
-      >
-        {wallet.icon}
+    <div
+      className="relative overflow-hidden rounded-lg border border-border bg-surface group cursor-pointer hover:border-border-hi transition-colors"
+      style={{
+        backgroundImage: `linear-gradient(135deg, ${accent}12 0%, transparent 55%)`,
+      }}
+    >
+      {/* color stripe top */}
+      <div className="absolute top-0 left-0 right-0 h-[2px]" style={{ backgroundColor: accent }} />
+
+      <div className="p-4 flex items-start gap-3">
+        <div
+          className="w-10 h-10 rounded flex items-center justify-center text-xl shrink-0"
+          style={{ backgroundColor: `${accent}22` }}
+        >
+          {wallet.icon}
+        </div>
+
+        <div className="flex-1 min-w-0">
+          <p className="font-sans text-[13px] font-medium text-primary truncate">{wallet.name}</p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted mt-0.5">
+            {WALLET_TYPE_LABEL[wallet.type] ?? wallet.type}
+          </p>
+
+          {isPostpaid && (
+            <div className="mt-2 space-y-1">
+              <ProgressBar pct={utilPct} height={3} over={utilPct > 0.9} />
+              <p className="font-mono text-[10px] text-muted">
+                {Math.round(utilPct * 100)}% dư nợ
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="text-right shrink-0">
+          <Amount
+            value={Number(wallet.balance)}
+            size={16}
+            weight={500}
+            className={Number(wallet.balance) < 0 ? 'text-negative' : 'text-primary'}
+          />
+        </div>
       </div>
-      <div className="flex-1 min-w-0">
-        <p className="text-sm font-medium text-primary">{wallet.name}</p>
-        <p className="text-xs text-muted">{WALLET_TYPE_LABEL[wallet.type] ?? wallet.type}</p>
-      </div>
-      <div className="text-right">
-        <p className={`text-sm font-semibold font-mono tabular-nums ${
-          Number(wallet.balance) < 0 ? 'text-negative' : 'text-primary'
-        }`}>
-          {formatCurrency(Number(wallet.balance))}
-        </p>
-        <p className="text-xs text-muted">₫</p>
-      </div>
+
       <button
         onClick={() => onEdit(wallet)}
-        className="opacity-0 group-hover:opacity-100 text-muted hover:text-primary transition-all text-sm px-2 py-1 rounded border border-border hover:border-accent/50"
+        className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 font-mono text-[10px] uppercase tracking-[0.08em] px-2 py-1 rounded border border-border-hi text-muted hover:text-primary hover:border-accent/50 transition-all"
         aria-label={`Sửa ví ${wallet.name}`}
       >
-        ✏️
+        edit
       </button>
     </div>
   )
 }
 
+// ── Edit Modal ───────────────────────────────────────────────
 function EditModal({
   wallet,
   onClose,
@@ -218,7 +269,7 @@ function EditModal({
   }
 
   return (
-    <BottomSheet open onClose={onClose} title="✏️ Sửa ví">
+    <BottomSheet open onClose={onClose} title="Sửa ví">
       <WalletForm
         initial={wallet}
         onSubmit={handleUpdate}
@@ -228,21 +279,18 @@ function EditModal({
       <div className="border-t border-border pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-3">
-            {/* Warning with balance info */}
-            <div className="p-3 rounded-md bg-negative/5 border border-negative/20 space-y-1">
-              <p className="text-xs font-medium text-negative flex items-center gap-1.5">
-                <span aria-hidden="true">⚠️</span> Cảnh báo khi xóa ví
+            <div className="p-3 rounded border border-negative/20 bg-negative/5 space-y-1">
+              <p className="font-mono text-[11px] uppercase tracking-widest text-negative">
+                Cảnh báo khi xóa ví
               </p>
-              <p className="text-xs text-muted">
-                Xóa ví <strong className="text-primary">"{wallet.name}"</strong> sẽ bỏ liên kết với tất cả giao dịch hiện có. Số dư hiện tại là{' '}
-                <strong className="text-primary">{formatCurrency(Number(wallet.balance))}</strong>.
-              </p>
-              <p className="text-xs text-muted">
-                Giao dịch sẽ <strong className="text-primary">không bị xóa</strong> nhưng sẽ không còn liên kết với ví này.
+              <p className="font-mono text-[11px] text-muted">
+                Xóa <span className="text-primary">"{wallet.name}"</span> sẽ bỏ liên kết giao dịch.
+                Số dư hiện tại:{' '}
+                <span className="text-primary">{formatCurrency(Number(wallet.balance))}</span>.
               </p>
             </div>
-            <p className="text-xs text-negative text-center font-medium">
-              Hành động này không thể hoàn tác.
+            <p className="font-mono text-[10px] text-negative text-center uppercase tracking-widest">
+              Không thể hoàn tác
             </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
@@ -251,16 +299,16 @@ function EditModal({
                 disabled={del.isPending}
                 className="flex-1 !bg-negative !text-white"
               >
-                {del.isPending ? 'Đang xóa...' : '🗑️ Xóa ví'}
+                {del.isPending ? 'Đang xóa...' : 'Xóa ví'}
               </Button>
             </div>
           </div>
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center text-xs text-negative hover:underline py-1"
+            className="w-full text-center font-mono text-[10px] uppercase tracking-widest text-negative hover:underline py-1"
           >
-            🗑️ Xóa ví
+            Xóa ví
           </button>
         )}
       </div>
@@ -268,6 +316,7 @@ function EditModal({
   )
 }
 
+// ── Page ─────────────────────────────────────────────────────
 export default function WalletsPage() {
   const navigate = useNavigate()
   const [showAdd, setShowAdd] = useState(false)
@@ -295,28 +344,20 @@ export default function WalletsPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Ví của tôi</h2>
-          <p className="text-xs text-muted">{active.length} ví</p>
+          <h2 className="font-display italic text-[28px] leading-none text-primary">Ví của tôi</h2>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted mt-1">
+            {active.length} tài khoản
+          </p>
         </div>
-        <div className="flex gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate('/wallets/transfer')}
-          >
-            ↔ Chuyển
-          </Button>
-          <Button
-            variant={showAdd ? 'outline' : 'accent'}
-            size="sm"
-            onClick={() => setShowAdd(!showAdd)}
-          >
-            {showAdd ? '− Đóng' : '+ Thêm ví'}
-          </Button>
+        <div className="flex items-center gap-2">
+          <Pill ghost onClick={() => navigate('/wallets/transfer')}>↔ Chuyển</Pill>
+          <Pill accent onClick={() => setShowAdd(!showAdd)}>
+            {showAdd ? '− Đóng' : '+ New wallet'}
+          </Pill>
         </div>
       </div>
 
@@ -331,8 +372,8 @@ export default function WalletsPage() {
 
       {/* Loading */}
       {isLoading && (
-        <div className="space-y-3">
-          {[1, 2, 3].map((i) => <Skeleton key={i} className="h-20 w-full rounded-md" />)}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-24 w-full rounded-lg" />)}
         </div>
       )}
 
@@ -341,18 +382,18 @@ export default function WalletsPage() {
         <EmptyState icon="⚠️" title="Không tải được ví" description="Hãy thử lại sau." />
       )}
 
-      {/* Wallet list */}
+      {/* Wallet groups */}
       {!isLoading && !error && (
         <div className="space-y-6">
           {(['CASH', 'BANK', 'E_WALLET', 'POSTPAID'] as const).map((t) => {
             const items = byType[t]
             if (!items?.length) return null
             return (
-              <div key={t}>
-                <p className="text-xs font-medium text-muted uppercase tracking-wide mb-2">
-                  {WALLET_TYPE_LABEL[t]}
-                </p>
-                <div className="space-y-2">
+              <div key={t} className="space-y-2">
+                <SectionLabel right={`${items.length} accounts`}>
+                  {GROUP_LABEL[t]}
+                </SectionLabel>
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                   {items.map((w) => (
                     <WalletCard
                       key={w.id}
@@ -371,9 +412,9 @@ export default function WalletsPage() {
               title="Chưa có ví nào"
               description="Tạo ví đầu tiên để bắt đầu theo dõi tài chính."
               action={
-                <Button variant="accent" size="sm" onClick={() => setShowAdd(true)}>
+                <Pill accent onClick={() => setShowAdd(true)}>
                   + Tạo ví
-                </Button>
+                </Pill>
               }
             />
           )}

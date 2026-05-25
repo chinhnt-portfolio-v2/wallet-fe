@@ -3,13 +3,22 @@ import { toast } from 'sonner'
 import { useBudgetWithSpending, useCreateBudget, useUpdateBudget, useDeleteBudget } from '@/hooks/useBudgets'
 import { useCategories } from '@/hooks/useCategories'
 import { useBudgetJars, useCreatePresetJars, useDeleteBudgetJar } from '@/hooks/use-budget-jars'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { JarCard } from '@/components/budgets/jar-card'
 import { JarPresetModal } from '@/components/budgets/jar-preset-modal'
 import { formatCurrency } from '@/lib/utils'
+import {
+  Amount,
+  DisplayAmount,
+  SectionLabel,
+  CategoryChip,
+  ProgressBar,
+  Pill,
+} from '@/design-system'
+
+// ── Helpers ───────────────────────────────────────────────────────────────────
 
 const MONTHS = [
   'Tháng 1', 'Tháng 2', 'Tháng 3', 'Tháng 4',
@@ -26,9 +35,9 @@ function formatPeriod(period: string) {
   return `${MONTHS[parseInt(month) - 1]} ${year}`
 }
 
-// ── Category-budget card ─────────────────────────────────────────────────────
+// ── Budget row (editorial terminal style) ─────────────────────────────────────
 
-function BudgetCard({
+function BudgetRow({
   budget,
   onEdit,
   onDelete,
@@ -37,62 +46,115 @@ function BudgetCard({
   onEdit: () => void
   onDelete: () => void
 }) {
-  const pct = Math.min(budget.percentage ?? 0, 100)
-  const status = budget.status ?? 'ok'
-  const color =
-    status === 'exceeded' ? '#F43F5E' :
-    status === 'warning' ? '#F59E0B' :
-    '#10B981'
-  const barClass =
-    status === 'exceeded' ? 'bg-negative' :
-    status === 'warning' ? 'bg-warning' :
-    'bg-positive'
+  const pct = (budget.percentage ?? 0) / 100
+  const isOver = (budget.status ?? 'ok') === 'exceeded'
+  const isWarn = (budget.status ?? 'ok') === 'warning'
+
+  const statusLabel = isOver
+    ? 'over budget'
+    : isWarn
+      ? 'near limit'
+      : 'on track'
+
+  const statusClass = isOver
+    ? 'text-negative'
+    : isWarn
+      ? 'text-warning'
+      : 'text-positive'
+
+  // Inline-editable limit
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(budget.monthlyLimit)
+  const update = useUpdateBudget()
+
+  const commitLimit = () => {
+    const value = Math.max(0, Math.round(draft / 1000) * 1000)
+    if (value !== budget.monthlyLimit) {
+      update.mutate(
+        { id: budget.id, monthlyLimit: value, period: '', categoryId: budget.categoryId, alertThreshold: budget.alertThreshold ?? 80 },
+        {
+          onSuccess: () => toast.success('Đã cập nhật hạn mức'),
+          onError: (e: Error) => toast.error(e.message),
+        }
+      )
+    }
+    setEditing(false)
+  }
+
+  // Derive hue from category color for CategoryChip
+  const catName = budget.category?.name ?? 'Other'
+  const catId = (budget.category?.name ?? 'other').toLowerCase()
 
   return (
-    <Card className="p-4 space-y-3">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-2 min-w-0">
-          <div
-            className="w-9 h-9 rounded-full flex items-center justify-center text-base shrink-0"
-            style={{ backgroundColor: `${budget.category?.color ?? '#94A3B8'}20` }}
-          >
-            {budget.category?.icon ?? '📊'}
-          </div>
-          <div className="min-w-0">
-            <p className="text-sm font-medium text-primary truncate">
-              {budget.category?.name ?? 'Danh mục'}
-            </p>
-            <p className="text-xs text-muted">
-              {formatCurrency(budget.currentSpent ?? 0)} / {formatCurrency(budget.monthlyLimit)}
-            </p>
-          </div>
-        </div>
-        <div className="flex items-center gap-1 shrink-0">
-          <button onClick={onEdit} className="text-xs text-muted hover:text-accent px-2 py-1">Sửa</button>
-          <button onClick={onDelete} className="text-xs text-negative hover:underline px-2 py-1">Xóa</button>
-        </div>
+    <div className="flex items-center gap-3 px-4 py-3 border-t border-border hover:bg-surface-2/40 transition-colors group">
+      {/* Drag handle */}
+      <span className="font-mono text-[12px] text-faint cursor-grab select-none shrink-0">⋮⋮</span>
+
+      {/* Category chip */}
+      <CategoryChip cat={catId} name={catName} size={28} className="shrink-0" />
+
+      {/* Name + status */}
+      <div className="min-w-0 w-28 shrink-0">
+        <p className="font-sans text-[13px] text-primary font-medium truncate">{catName}</p>
+        <p className={`font-mono text-[10px] ${statusClass}`}>{statusLabel}</p>
       </div>
 
-      <div>
-        <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
-          <div
-            className={`h-full rounded-full transition-all ${barClass}`}
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        <div className="flex items-center justify-between mt-1">
-          <p className="text-xs font-semibold" style={{ color }}>
-            {Math.round(pct)}%
-          </p>
-          {status === 'exceeded' && (
-            <p className="text-xs text-negative font-medium">⚠️ Vượt ngân sách!</p>
-          )}
-          {status === 'warning' && (
-            <p className="text-xs text-warning font-medium">⚠️ Gần đạt</p>
-          )}
-        </div>
+      {/* Spent */}
+      <div className="w-28 shrink-0">
+        <p className="font-mono text-[10px] text-faint uppercase tracking-[0.1em] mb-0.5">Spent</p>
+        <Amount value={budget.currentSpent ?? 0} size={13} weight={500}
+          style={{ color: isOver ? 'var(--color-negative)' : 'var(--color-text)' }} />
       </div>
-    </Card>
+
+      {/* Progress bar + pct */}
+      <div className="flex-1 min-w-0">
+        <ProgressBar
+          pct={pct}
+          over={isOver}
+          color={isWarn ? 'var(--color-warning)' : 'var(--color-positive)'}
+          height={4}
+        />
+        <p className="font-mono text-[10px] text-muted mt-1">
+          {Math.round((budget.percentage ?? 0))}%
+        </p>
+      </div>
+
+      {/* Limit (inline-editable) */}
+      <div className="w-32 shrink-0 text-right">
+        <p className="font-mono text-[10px] text-faint uppercase tracking-[0.1em] mb-0.5">Limit</p>
+        {editing ? (
+          <input
+            autoFocus
+            type="number"
+            value={draft}
+            onChange={(e) => setDraft(Number(e.target.value))}
+            onBlur={commitLimit}
+            onKeyDown={(e) => e.key === 'Enter' && commitLimit()}
+            className="w-full text-right font-mono text-[13px] text-primary bg-surface-2 border border-accent rounded px-1.5 py-0.5 outline-none"
+          />
+        ) : (
+          <button
+            onClick={() => { setDraft(budget.monthlyLimit); setEditing(true) }}
+            className="font-mono text-[13px] text-secondary hover:text-accent transition-colors tabular-nums w-full text-right"
+            title="Click to edit"
+          >
+            {formatCurrency(budget.monthlyLimit)}
+          </button>
+        )}
+      </div>
+
+      {/* Actions */}
+      <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
+        <button onClick={onEdit}
+          className="font-mono text-[10px] text-muted hover:text-accent px-2 py-1 uppercase tracking-wide">
+          Edit
+        </button>
+        <button onClick={onDelete}
+          className="font-mono text-[10px] text-negative/60 hover:text-negative px-2 py-1 uppercase tracking-wide">
+          ✕
+        </button>
+      </div>
+    </div>
   )
 }
 
@@ -131,27 +193,32 @@ function BudgetForm({
 
   return (
     <div className="space-y-4">
-      <p className="text-sm font-semibold text-primary">
-        {isEditing ? 'Sửa ngân sách' : '+ Tạo ngân sách'}
+      <p className="font-mono text-[11px] text-muted uppercase tracking-widest">
+        {isEditing ? 'Edit budget' : 'New budget'}
       </p>
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Danh mục</label>
+        <label className="block font-mono text-[10px] text-faint uppercase tracking-[0.12em] mb-2">
+          Category
+        </label>
         <div className="flex flex-wrap gap-2">
           {expenseCategories.map((c) => (
             <button
               key={c.id}
               onClick={() => setCategoryId(c.id)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
-                categoryId === c.id ? 'ring-2 ring-primary/40' : 'hover:opacity-8070'
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs transition-all font-mono ${
+                categoryId === c.id
+                  ? 'ring-2 ring-accent/60'
+                  : 'opacity-70 hover:opacity-100'
               }`}
               style={{
-                backgroundColor: `${c.color}20`,
-                border: `1.5px solid ${c.color}`,
+                backgroundColor: `${c.color}18`,
+                border: `1px solid ${c.color}55`,
                 color: c.color,
               }}
             >
-              <span>{c.icon}</span><span>{c.name}</span>
+              <span>{c.icon}</span>
+              <span>{c.name}</span>
             </button>
           ))}
         </div>
@@ -165,10 +232,14 @@ function BudgetForm({
         onChange={(e) => setLimit(e.target.value)}
         placeholder="VD: 5,000,000"
       />
-      {limit && <p className="text-xs text-muted -mt-2">= {formatCurrency(parseFloat(limit) || 0)}</p>}
+      {limit && (
+        <p className="font-mono text-[11px] text-muted -mt-2">
+          = {formatCurrency(parseFloat(limit) || 0)}
+        </p>
+      )}
 
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">
+        <label className="block font-mono text-[10px] text-faint uppercase tracking-[0.12em] mb-2">
           Cảnh báo khi đạt
         </label>
         <div className="flex gap-2">
@@ -176,7 +247,7 @@ function BudgetForm({
             <button
               key={t}
               onClick={() => setThreshold(t)}
-              className={`flex-1 py-2 text-xs rounded-md border transition-all font-medium ${
+              className={`flex-1 py-2 font-mono text-[11px] rounded-md border transition-all uppercase tracking-wide ${
                 threshold === t
                   ? 'border-accent bg-accent/10 text-accent'
                   : 'border-border text-muted hover:border-accent/50'
@@ -247,45 +318,38 @@ function JarsTab({ period }: { period: string }) {
 
   return (
     <div className="space-y-4">
-      {/* Income summary */}
       {monthlyIncome > 0 && (
         <div className="p-3 rounded-lg bg-surface-2 flex items-center justify-between">
-          <p className="text-xs text-muted">Thu nhập tháng này</p>
-          <p className="text-sm font-semibold text-positive">{formatCurrency(monthlyIncome)}</p>
+          <p className="font-mono text-[10px] text-faint uppercase tracking-[0.1em]">Thu nhập tháng này</p>
+          <Amount value={monthlyIncome} size={13} weight={500} style={{ color: 'var(--color-positive)' }} />
         </div>
       )}
 
-      {/* Percentage usage bar */}
       {jars.length > 0 && (
         <div className="p-3 rounded-lg bg-surface-2 space-y-1.5">
           <div className="flex items-center justify-between">
-            <p className="text-xs text-muted">Tổng phân bổ</p>
-            <p className={`text-xs font-semibold ${totalPct > 100 ? 'text-negative' : 'text-primary'}`}>
+            <p className="font-mono text-[10px] text-faint uppercase tracking-[0.1em]">Tổng phân bổ</p>
+            <p className={`font-mono text-[11px] font-semibold ${Number(totalPct) > 100 ? 'text-negative' : 'text-primary'}`}>
               {totalPct}%
             </p>
           </div>
-          <div className="h-1.5 bg-border rounded-full overflow-hidden">
-            <div
-              className="h-full rounded-full transition-all"
-              style={{
-                width: `${Math.min(Number(totalPct), 100)}%`,
-                backgroundColor: Number(totalPct) > 100 ? '#F43F5E' : '#10B981',
-              }}
-            />
-          </div>
+          <ProgressBar
+            pct={Math.min(Number(totalPct), 100) / 100}
+            over={Number(totalPct) > 100}
+            height={4}
+          />
         </div>
       )}
 
-      {/* Jar list */}
       {jars.length === 0 ? (
         <div className="text-center py-12 space-y-3">
           <p className="text-4xl">🏺</p>
-          <p className="text-sm text-muted">Chưa có hũ ngân sách</p>
-          <p className="text-xs text-muted">Dùng phương pháp 6 hũ để phân bổ thu nhập</p>
+          <p className="font-sans text-sm text-muted">Chưa có hũ ngân sách</p>
+          <p className="font-mono text-[11px] text-faint">Dùng phương pháp 6 hũ để phân bổ thu nhập</p>
           {!hasPreset && (
-            <Button variant="accent" size="sm" onClick={() => setShowPresetModal(true)}>
+            <Pill accent onClick={() => setShowPresetModal(true)}>
               Thiết lập 6 hũ ngay
-            </Button>
+            </Pill>
           )}
         </div>
       ) : (
@@ -367,76 +431,148 @@ export default function BudgetsPage() {
     (b.percentage ?? 0) - (a.percentage ?? 0)
   )
 
+  // Totals for hero
+  const totalLimit = sortedBudgets.reduce((acc, b) => acc + b.monthlyLimit, 0)
+  const totalSpent = sortedBudgets.reduce((acc, b) => acc + (b.currentSpent ?? 0), 0)
+  const isOverAll = totalSpent > totalLimit
+  const exceeded = sortedBudgets.filter(b => b.status === 'exceeded').length
+  const warning = sortedBudgets.filter(b => b.status === 'warning').length
+  const active = sortedBudgets.filter(b => (b.currentSpent ?? 0) > 0)
+  const inactive = sortedBudgets.filter(b => (b.currentSpent ?? 0) === 0)
+
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-5">
+      {/* ── Page header ─────────────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Ngân sách</h2>
-          <p className="text-xs text-muted">Theo dõi chi tiêu theo danh mục</p>
+          <p className="font-mono text-[10px] text-faint uppercase tracking-[0.14em] mb-1">
+            Money / Budgets
+          </p>
+          <h2 className="font-display text-[28px] italic text-primary leading-none">
+            Budgets · {formatPeriod(period)}
+          </h2>
+          <p className="font-mono text-[11px] text-muted mt-1.5">
+            {sortedBudgets.length} categories ·{' '}
+            <Amount value={totalSpent} size={11} bare /> of{' '}
+            <Amount value={totalLimit} size={11} />
+          </p>
         </div>
-        {tab === 'categories' && (
-          <Button variant="accent" size="sm" onClick={() => { setEditTarget(null); setShowForm(true) }}>
-            + Tạo ngân sách
-          </Button>
-        )}
+        <div className="flex items-center gap-2">
+          {tab === 'categories' && (
+            <Pill accent onClick={() => { setEditTarget(null); setShowForm(true) }}>
+              + Add category
+            </Pill>
+          )}
+        </div>
       </div>
 
-      {/* Tab bar */}
-      <div className="flex gap-1 bg-surface-2 p-1 rounded-lg">
-        <button
-          onClick={() => setTab('categories')}
-          className={`flex-1 py-2 text-xs font-medium rounded-md transition-all ${
-            tab === 'categories'
-              ? 'bg-surface text-primary shadow-sm'
-              : 'text-muted hover:text-secondary'
-          }`}
-        >
-          Theo danh mục
-        </button>
-        <button
-          onClick={() => setTab('jars')}
-          className={`flex-1 py-2 text-xs font-medium rounded-md transition-all ${
-            tab === 'jars'
-              ? 'bg-surface text-primary shadow-sm'
-              : 'text-muted hover:text-secondary'
-          }`}
-        >
-          Hũ ngân sách
-        </button>
+      {/* ── Tab bar ─────────────────────────────────────────────────────────── */}
+      <div className="flex gap-1 bg-surface p-0.5 rounded-lg border border-border w-fit">
+        {(['categories', 'jars'] as const).map((t) => (
+          <button
+            key={t}
+            onClick={() => setTab(t)}
+            className={`px-4 py-1.5 font-mono text-[10px] uppercase tracking-[0.08em] rounded-md transition-all ${
+              tab === t
+                ? 'bg-surface-2 text-primary shadow-sm'
+                : 'text-muted hover:text-secondary'
+            }`}
+          >
+            {t === 'categories' ? 'Theo danh mục' : 'Hũ ngân sách'}
+          </button>
+        ))}
       </div>
 
-      {/* Month selector */}
-      <div className="flex items-center justify-between bg-surface-2 rounded-lg px-4 py-3">
-        <button onClick={prevMonth} className="text-xl text-muted hover:text-primary transition-colors px-2">←</button>
-        <p className="text-sm font-semibold text-primary">{formatPeriod(period)}</p>
-        <button onClick={nextMonth} className="text-xl text-muted hover:text-primary transition-colors px-2">→</button>
+      {/* ── Month selector ───────────────────────────────────────────────────── */}
+      <div className="flex items-center justify-between bg-surface border border-border rounded-lg px-4 py-2.5">
+        <button onClick={prevMonth}
+          className="font-mono text-[18px] text-muted hover:text-primary transition-colors px-1">←</button>
+        <p className="font-mono text-[12px] text-primary tracking-[0.06em] uppercase">
+          {formatPeriod(period)}
+        </p>
+        <button onClick={nextMonth}
+          className="font-mono text-[18px] text-muted hover:text-primary transition-colors px-1">→</button>
       </div>
 
-      {/* Tab content */}
+      {/* ── Tab: categories ─────────────────────────────────────────────────── */}
       {tab === 'categories' ? (
         <>
-          {/* Summary banner */}
-          {sortedBudgets.length > 0 && (() => {
-            const exceeded = sortedBudgets.filter(b => b.status === 'exceeded').length
-            const warning = sortedBudgets.filter(b => b.status === 'warning').length
-            if (!exceeded && !warning) return (
-              <div className="p-3 rounded-lg bg-positive/10 border border-positive/20">
-                <p className="text-xs font-medium text-positive">✅ Tất cả ngân sách trong tầm kiểm soát</p>
-              </div>
-            )
-            return (
-              <div className="p-3 rounded-lg bg-negative/10 border border-negative/20 space-y-1">
-                {exceeded > 0 && <p className="text-xs font-medium text-negative">⚠️ {exceeded} ngân sách đã vượt</p>}
-                {warning > 0 && <p className="text-xs font-medium text-warning">⚠️ {warning} ngân sách gần đạt</p>}
-              </div>
-            )
-          })()}
+          {/* Hero total card */}
+          {sortedBudgets.length > 0 && (
+            <div className="rounded-xl border border-border bg-surface p-5">
+              <div className="grid grid-cols-3 gap-6 items-center">
+                {/* DisplayAmount hero */}
+                <div>
+                  <p className="font-mono text-[10px] text-faint uppercase tracking-[0.14em] mb-2">
+                    Total budget
+                  </p>
+                  <DisplayAmount
+                    value={totalLimit}
+                    size={38}
+                    sub={`spent ${((totalSpent / totalLimit) * 100 || 0).toFixed(0)}%`}
+                  />
+                  <p className="font-mono text-[11px] text-muted mt-2">
+                    <Amount
+                      value={totalSpent}
+                      size={11}
+                      style={{ color: isOverAll ? 'var(--color-negative)' : 'var(--color-muted)' }}
+                    />{' '}
+                    spent so far
+                  </p>
+                </div>
 
-          {/* Budget list */}
+                {/* Remaining / over */}
+                <div>
+                  <p className="font-mono text-[10px] text-faint uppercase tracking-[0.14em] mb-2">
+                    {isOverAll ? 'Over by' : 'Remaining'}
+                  </p>
+                  <Amount
+                    value={Math.abs(totalLimit - totalSpent)}
+                    size={22}
+                    weight={500}
+                    style={{ color: isOverAll ? 'var(--color-negative)' : 'var(--color-accent)' }}
+                  />
+                </div>
+
+                {/* Total progress bar */}
+                <div>
+                  <p className="font-mono text-[10px] text-faint uppercase tracking-[0.12em] mb-2">
+                    Used {totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0}%
+                  </p>
+                  <ProgressBar
+                    pct={totalLimit > 0 ? totalSpent / totalLimit : 0}
+                    over={isOverAll}
+                    height={6}
+                  />
+                  {/* Status badges row */}
+                  <div className="flex gap-2 mt-3">
+                    {exceeded > 0 && (
+                      <span className="font-mono text-[10px] text-negative">
+                        ⚠ {exceeded} over
+                      </span>
+                    )}
+                    {warning > 0 && (
+                      <span className="font-mono text-[10px] text-warning">
+                        ⚠ {warning} near
+                      </span>
+                    )}
+                    {!exceeded && !warning && (
+                      <span className="font-mono text-[10px] text-positive">
+                        ✓ all on track
+                      </span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Budget table */}
           {isLoading ? (
-            <div className="space-y-3">
-              {[1, 2, 3].map(i => <div key={i} className="card p-4 h-24 animate-pulse" />)}
+            <div className="space-y-2">
+              {[1, 2, 3].map(i => (
+                <div key={i} className="h-14 bg-surface-2 rounded-lg animate-pulse" />
+              ))}
             </div>
           ) : isError ? (
             <div className="p-4 rounded-lg bg-negative/10 border border-negative/20 space-y-2 text-center">
@@ -445,24 +581,72 @@ export default function BudgetsPage() {
               <Button variant="outline" size="sm" onClick={() => refetch()}>Thử lại</Button>
             </div>
           ) : sortedBudgets.length === 0 ? (
-            <div className="text-center py-12 space-y-3">
-              <p className="text-4xl">📊</p>
-              <p className="text-sm text-muted">Chưa có ngân sách nào</p>
-              <p className="text-xs text-muted">Tạo ngân sách để theo dõi chi tiêu</p>
-              <Button variant="accent" size="sm" onClick={() => { setEditTarget(null); setShowForm(true) }}>
-                + Tạo ngân sách đầu tiên
-              </Button>
+            <div className="text-center py-16 space-y-3 border border-dashed border-border-hi rounded-xl">
+              <p className="font-mono text-[11px] text-faint uppercase tracking-widest">
+                No budgets set
+              </p>
+              <p className="font-sans text-sm text-muted">Create a budget to track spending by category</p>
+              <Pill accent onClick={() => { setEditTarget(null); setShowForm(true) }}>
+                + Add first category
+              </Pill>
             </div>
           ) : (
-            <div className="space-y-3">
-              {sortedBudgets.map((b) => (
-                <BudgetCard
-                  key={b.id}
-                  budget={b}
-                  onEdit={() => { setEditTarget(b); setShowForm(true) }}
-                  onDelete={() => handleDelete(b)}
-                />
-              ))}
+            <div className="rounded-xl border border-border bg-surface overflow-hidden">
+              {/* Table column header */}
+              <div className="grid items-center gap-3 px-4 py-2 bg-bg border-b border-border"
+                style={{ gridTemplateColumns: '16px 28px 112px 112px 1fr 128px 96px' }}>
+                <span />
+                <span />
+                <span className="font-mono text-[10px] text-faint uppercase tracking-[0.12em]">Category</span>
+                <span className="font-mono text-[10px] text-faint uppercase tracking-[0.12em]">Spent</span>
+                <span className="font-mono text-[10px] text-faint uppercase tracking-[0.12em]">Progress</span>
+                <span className="font-mono text-[10px] text-faint uppercase tracking-[0.12em] text-right">Limit</span>
+                <span className="font-mono text-[10px] text-faint uppercase tracking-[0.12em] text-right">Actions</span>
+              </div>
+
+              {/* Active budgets */}
+              {active.length > 0 && (
+                <>
+                  <div className="px-4 py-2">
+                    <SectionLabel>Active · {active.length}</SectionLabel>
+                  </div>
+                  {active.map((b) => (
+                    <BudgetRow
+                      key={b.id}
+                      budget={b}
+                      onEdit={() => { setEditTarget(b); setShowForm(true) }}
+                      onDelete={() => handleDelete(b)}
+                    />
+                  ))}
+                </>
+              )}
+
+              {/* Inactive budgets */}
+              {inactive.length > 0 && (
+                <>
+                  <div className="px-4 py-2 mt-1">
+                    <SectionLabel>Inactive · {inactive.length}</SectionLabel>
+                  </div>
+                  {inactive.map((b) => (
+                    <BudgetRow
+                      key={b.id}
+                      budget={b}
+                      onEdit={() => { setEditTarget(b); setShowForm(true) }}
+                      onDelete={() => handleDelete(b)}
+                    />
+                  ))}
+                </>
+              )}
+
+              {/* Add category row */}
+              <div className="px-4 py-3 border-t border-border/50">
+                <Pill
+                  accent
+                  onClick={() => { setEditTarget(null); setShowForm(true) }}
+                >
+                  + Add category
+                </Pill>
+              </div>
             </div>
           )}
 
@@ -470,7 +654,7 @@ export default function BudgetsPage() {
           <BottomSheet
             open={showForm}
             onClose={() => { setShowForm(false); setEditTarget(null) }}
-            title={editTarget ? 'Sửa ngân sách' : '+ Tạo ngân sách'}
+            title={editTarget ? 'Edit budget' : 'New budget'}
           >
             <BudgetForm
               editBudget={editTarget}

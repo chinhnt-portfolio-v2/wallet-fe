@@ -4,12 +4,21 @@ import { toast } from 'sonner'
 import { useDebtGroup, useSettleDebt } from '@/hooks/useDebtGroups'
 import { useWallets } from '@/hooks/useWallets'
 import { useTransactions } from '@/hooks/useTransactions'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
-import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
-import { formatCurrency, formatDate, isOverdue, GROUP_TYPE_LABEL } from '@/lib/utils'
+import { DisplayAmount, Amount, SectionLabel, ProgressBar, Pill } from '@/design-system'
+import { formatDate, isOverdue, GROUP_TYPE_LABEL } from '@/lib/utils'
+
+function relDue(dateStr: string | null | undefined): string {
+  if (!dateStr) return '—'
+  const diff = Math.round((new Date(dateStr).getTime() - Date.now()) / 86_400_000)
+  if (diff < 0)  return `${Math.abs(diff)}d overdue`
+  if (diff === 0) return 'Due today'
+  if (diff < 7)  return `Due in ${diff}d`
+  if (diff < 30) return `Due in ${Math.round(diff / 7)}w`
+  return `Due in ${Math.round(diff / 30)}mo`
+}
 
 export default function DebtGroupDetailPage() {
   const { id } = useParams<{ id: string }>()
@@ -27,27 +36,24 @@ export default function DebtGroupDetailPage() {
   if (loadingGroup) {
     return (
       <div className="space-y-4">
-        <Skeleton className="h-8 w-24" />
-        <Card padding="lg" className="space-y-4">
-          <Skeleton className="h-5 w-48" />
-          <Skeleton className="h-20 w-full" />
-          <Skeleton className="h-10 w-full" />
-        </Card>
+        <Skeleton className="h-5 w-20" />
+        <Skeleton className="h-24 w-full" />
+        <Skeleton className="h-40 w-full" />
       </div>
     )
   }
 
   if (!group) {
     return (
-      <div className="text-center py-12 text-muted text-sm">
+      <div className="text-center py-16 font-mono text-[12px] text-muted">
         Không tìm thấy nhóm nợ
       </div>
     )
   }
 
   const remaining = Number(group.totalAmount) - Number(group.paidAmount)
-  const progress = Number(group.totalAmount) > 0
-    ? (Number(group.paidAmount) / Number(group.totalAmount)) * 100
+  const progress  = Number(group.totalAmount) > 0
+    ? Number(group.paidAmount) / Number(group.totalAmount)
     : 0
   const overdue = isOverdue(group.dueDate)
 
@@ -74,80 +80,128 @@ export default function DebtGroupDetailPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
+      {/* ── back breadcrumb ── */}
       <button
         onClick={() => navigate(-1)}
-        className="bg-transparent text-secondary hover:bg-surface-2 text-sm px-2 py-1 rounded transition-colors"
+        className="font-mono text-[11px] text-muted hover:text-primary transition-colors uppercase tracking-[0.08em]"
       >
-        ← Quay lại
+        ← Debts
       </button>
 
-      {/* Header card */}
-      <Card padding="lg">
-        <div className="mb-4">
-          <h2 className="text-base font-semibold text-primary">{group.title}</h2>
-          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
-            <Badge variant="neutral">{GROUP_TYPE_LABEL[group.groupType] ?? group.groupType}</Badge>
-            {overdue && <Badge variant="negative">Quá hạn</Badge>}
-          </div>
-        </div>
-
-        {/* Progress */}
-        <div className="mb-4">
-          <div className="flex justify-between text-xs mb-2">
-            <span className="text-muted">Đã thanh toán</span>
-            <span className="font-medium text-positive">{progress.toFixed(0)}%</span>
-          </div>
-          <div className="h-2 bg-surface-2 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-positive rounded-full transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <div className="flex justify-between text-2xs text-muted mt-1.5">
-            <span>{formatCurrency(Number(group.paidAmount))} đã trả</span>
-            <span>{formatCurrency(Number(group.totalAmount))} tổng</span>
-          </div>
-        </div>
-
-        {/* Remaining */}
-        <div className="text-center p-4 bg-surface-2 rounded-md">
-          <p className="text-2xs text-muted uppercase tracking-wide">Còn phải trả</p>
-          <p className="text-2xl font-bold text-negative font-mono tabular-nums mt-1">
-            {formatCurrency(remaining)}
+      {/* ── hero card ── */}
+      <div
+        className="rounded-sm border px-6 py-5"
+        style={{
+          background: `linear-gradient(135deg, var(--color-negative)11, transparent)`,
+          borderColor: `color-mix(in srgb, var(--color-negative) 25%, transparent)`,
+        }}
+      >
+        {/* eyebrow */}
+        <div className="flex items-center gap-2 mb-4">
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted">
+            {GROUP_TYPE_LABEL[group.groupType] ?? group.groupType}
           </p>
-          {group.dueDate && (
-            <p className={`text-2xs mt-1.5 ${overdue ? 'text-negative' : 'text-muted'}`}>
-              ⏰ Hết hạn: {formatDate(group.dueDate)}
-            </p>
+          {overdue && (
+            <span className="font-mono text-[10px] text-negative uppercase tracking-[0.08em]">
+              · Overdue
+            </span>
           )}
         </div>
 
+        {/* title */}
+        <h2 className="font-sans text-base font-semibold text-primary mb-4">{group.title}</h2>
+
+        {/* hero amount row */}
+        <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-4 items-start">
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted mb-2">
+              Outstanding
+            </p>
+            <DisplayAmount value={remaining} size={40} />
+          </div>
+
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted mb-1.5">
+              Total
+            </p>
+            <Amount value={Number(group.totalAmount)} size={14} weight={500} />
+          </div>
+
+          <div>
+            <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted mb-1.5">
+              Due
+            </p>
+            <p className={`font-mono text-[13px] ${overdue ? 'text-negative' : 'text-primary'}`}>
+              {relDue(group.dueDate)}
+            </p>
+            {group.dueDate && (
+              <p className="font-mono text-[10px] text-faint mt-0.5">{formatDate(group.dueDate)}</p>
+            )}
+          </div>
+        </div>
+
+        {/* progress */}
+        <div className="mt-5">
+          <ProgressBar
+            pct={progress}
+            height={4}
+            color="var(--color-positive)"
+            background="var(--color-border)"
+          />
+          <div className="flex justify-between mt-1.5 font-mono text-[10px] text-muted">
+            <span>Paid {Math.round(progress * 100)}%</span>
+            <span><Amount value={Number(group.paidAmount)} size={10} bare /> / <Amount value={Number(group.totalAmount)} size={10} bare />₫</span>
+          </div>
+        </div>
+
+        {/* counterparty */}
         {group.counterparty && (
-          <p className="mt-3 text-center text-xs text-muted">
-            👤 {group.counterparty}
+          <p className="mt-4 font-mono text-[11px] text-muted">
+            Counterparty · <span className="text-primary">{group.counterparty}</span>
           </p>
         )}
-      </Card>
+      </div>
 
-      {/* Settle */}
-      {showSettle ? (
-        <Card className="space-y-3">
-          <p className="text-sm font-medium text-primary">💳 Thanh toán nợ</p>
-          <Input
-            label="Số tiền thanh toán"
-            type="number"
-            value={settleAmount}
-            onChange={(e) => setSettleAmount(e.target.value)}
-            placeholder={`Tối đa ${formatCurrency(remaining)}`}
-            hint={`Tương đương ${formatCurrency(parseFloat(settleAmount) || 0)}`}
-          />
+      {/* ── pay action ── */}
+      {group.status === 'SETTLED' ? (
+        <div className="rounded-sm border border-positive/30 bg-positive/5 px-4 py-3 text-center">
+          <p className="font-mono text-[12px] text-positive uppercase tracking-widest">
+            Settled — paid in full
+          </p>
+        </div>
+      ) : showSettle ? (
+        <div className="rounded-sm border border-border bg-surface px-4 py-4 space-y-3">
+          <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
+            Record payment
+          </p>
+
           <div>
-            <label className="block text-xs font-medium text-secondary mb-1">Thanh toán từ ví</label>
+            <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-1.5">
+              Số tiền thanh toán
+            </label>
+            <input
+              type="number"
+              value={settleAmount}
+              onChange={(e) => setSettleAmount(e.target.value)}
+              placeholder={`Max ${remaining.toLocaleString('en-US')}`}
+              className="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-primary placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+            />
+            {settleAmount && (
+              <p className="font-mono text-[10px] text-muted mt-1">
+                = <Amount value={parseFloat(settleAmount) || 0} size={10} />
+              </p>
+            )}
+          </div>
+
+          <div>
+            <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-1.5">
+              Thanh toán từ ví
+            </label>
             <select
               value={settleWalletId ?? ''}
               onChange={(e) => setSettleWalletId(Number(e.target.value) || null)}
-              className="w-full rounded-sm border border-border bg-surface px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              className="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
             >
               <option value="">Chọn ví...</option>
               {wallets?.map((w) => (
@@ -155,7 +209,8 @@ export default function DebtGroupDetailPage() {
               ))}
             </select>
           </div>
-          <div className="flex gap-2">
+
+          <div className="flex gap-2 pt-1">
             <Button variant="outline" onClick={() => setShowSettle(false)} className="flex-1">
               Hủy
             </Button>
@@ -167,54 +222,72 @@ export default function DebtGroupDetailPage() {
               {settleMutation.isPending ? 'Đang xử lý...' : 'Xác nhận'}
             </Button>
           </div>
-        </Card>
-      ) : group.status !== 'SETTLED' ? (
-        <Button onClick={() => setShowSettle(true)} className="w-full py-3">
-          💳 Thanh toán nợ
-        </Button>
+        </div>
       ) : (
-        <Card className="text-center">
-          <p className="text-positive text-sm font-medium">✅ Đã thanh toán xong!</p>
-        </Card>
+        <Pill
+          accent
+          onClick={() => setShowSettle(true)}
+          className="w-full !h-10 !rounded-sm !text-[12px] justify-center"
+        >
+          Pay debt
+        </Pill>
       )}
 
-      {/* Transaction history */}
-      <div className="space-y-2">
-        <p className="text-xs font-medium text-muted uppercase tracking-wide">
-          Lịch sử ({txs?.length ?? 0})
-        </p>
-        <Card padding="none">
+      {/* ── pay history ── */}
+      <div>
+        <SectionLabel right={`${txs?.length ?? 0} entries`} className="mb-2">
+          Pay history
+        </SectionLabel>
+
+        <div className="rounded-sm border border-border bg-surface overflow-hidden">
           {txs && txs.length > 0 ? txs.map((tx, i) => (
             <div
               key={tx.id}
-              className={`flex items-center gap-3 p-3 ${i < txs.length - 1 ? 'border-b border-border' : ''}`}
+              className={`flex items-center gap-3 px-4 py-3 ${i < txs.length - 1 ? 'border-b border-border' : ''}`}
             >
-              <div className={`w-8 h-8 rounded-full flex items-center justify-center text-sm shrink-0 ${
-                tx.txnType === 'PRINCIPAL' ? 'bg-negative/10 text-negative' : 'bg-positive/10 text-positive'
-              }`}>
-                {tx.txnType === 'PRINCIPAL' ? '📋' : '✓'}
-              </div>
+              {/* type glyph */}
+              <span
+                className="font-mono text-base shrink-0 w-4 text-center"
+                style={{
+                  color: tx.txnType === 'PRINCIPAL'
+                    ? 'var(--color-negative)'
+                    : 'var(--color-positive)',
+                }}
+              >
+                {tx.txnType === 'PRINCIPAL' ? '◖' : '◗'}
+              </span>
+
+              {/* label + date */}
               <div className="flex-1">
-                <p className="text-sm text-primary">
-                  {tx.txnType === 'PRINCIPAL' ? 'Phát sinh nợ'
-                    : tx.txnType === 'FINAL_PAYMENT' ? 'Thanh toán cuối'
-                    : tx.txnType === 'INTEREST' ? 'Lãi suất'
-                    : 'Thanh toán'}
+                <p className="font-sans text-sm text-primary">
+                  {tx.txnType === 'PRINCIPAL'    ? 'Phát sinh nợ'
+                   : tx.txnType === 'FINAL_PAYMENT' ? 'Thanh toán cuối'
+                   : tx.txnType === 'INTEREST'    ? 'Lãi suất'
+                   : 'Thanh toán'}
                 </p>
-                <p className="text-2xs text-muted">{formatDate(tx.date)}</p>
+                <p className="font-mono text-[10px] text-muted mt-0.5">{formatDate(tx.date)}</p>
               </div>
-              <p className={`text-sm font-semibold font-mono tabular-nums ${
-                tx.type === 'INCOME' ? 'text-positive' : 'text-negative'
-              }`}>
-                {tx.type === 'INCOME' ? '+' : '-'}{formatCurrency(Number(tx.amount))}
-              </p>
+
+              {/* amount */}
+              <Amount
+                value={Number(tx.amount)}
+                size={13}
+                weight={500}
+                sign
+                style={{
+                  color: tx.type === 'INCOME'
+                    ? 'var(--color-positive)'
+                    : 'var(--color-negative)',
+                }}
+              />
             </div>
           )) : (
-            <div className="p-4 text-center text-xs text-muted">Chưa có giao dịch</div>
+            <div className="px-4 py-8 text-center font-mono text-[11px] text-faint uppercase tracking-widest">
+              No transactions yet
+            </div>
           )}
-        </Card>
+        </div>
       </div>
     </div>
   )
 }
-

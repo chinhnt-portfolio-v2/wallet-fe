@@ -1,53 +1,49 @@
+/* Wallet · dark editorial finance-terminal palette.
+   Warm near-black + acid-lime + signal red. No light variant — this is dark-only. */
+
 :root {
-  /* Surface */
-  --color-bg: #F8FAFC;
-  --color-surface: #FFFFFF;
-  --color-surface-2: #F1F5F9;
-  --color-surface-3: #E2E8F0;
+  /* Surface — warm near-black */
+  --color-bg: #0d0c0a;
+  --color-bg-2: #15140f;
+  --color-surface: #1a1813;
+  --color-surface-2: #211e17;
+  --color-surface-3: #2a2620;
 
-  /* Text */
-  --color-text-primary: #0F172A;
-  --color-text-secondary: #334155;
-  --color-text-muted: #94A3B8;
+  /* Lines */
+  --color-border: rgba(245, 241, 232, 0.08);
+  --color-border-hi: rgba(245, 241, 232, 0.16);
 
-  /* Semantic */
-  --color-accent: #0EA5E9;
-  --color-positive: #10B981;
-  --color-negative: #F43F5E;
-  --color-warning: #F59E0B;
+  /* Bone-white text scale */
+  --color-text-primary: #f5f1e8;
+  --color-text-secondary: rgba(245, 241, 232, 0.72);
+  --color-text-muted: rgba(245, 241, 232, 0.45);
+  --color-text-faint: rgba(245, 241, 232, 0.28);
 
-  /* Border */
-  --color-border: #E2E8F0;
+  /* Signal */
+  --color-accent: #c8f53a;        /* acid lime */
+  --color-accent-ink: #1a1f08;    /* text on accent */
+  --color-positive: #7ed957;
+  --color-negative: #ff5e4a;
+  --color-warning: #ffb648;
 
   /* Typography */
-  --font-sans: 'Inter', sans-serif;
-  --font-mono: 'JetBrains Mono', monospace;
+  --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 
-  /* Radius */
+  /* Radius — tighter than before, terminal feel */
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
 
-  /* Shadow */
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.05);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.08);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.12);
+  /* Shadow — soft, dark */
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 18px 42px rgba(0, 0, 0, 0.55);
 }
 
+/* Keep .dark class as no-op so theme-toggle code doesn't break.
+   Design is dark-only; .dark inherits :root tokens. */
 .dark {
-  --color-bg: #0F172A;
-  --color-surface: #1E293B;
-  --color-surface-2: #334155;
-  --color-surface-3: #475569;
-  --color-text-primary: #F8FAFC;
-  --color-text-secondary: #CBD5E1;
-  --color-text-muted: #64748B;
-  --color-accent: #38BDF8;
-  --color-positive: #34D399;
-  --color-negative: #FB7185;
-  --color-warning: #FBBF24;
-  --color-border: #334155;
-  --shadow-sm: 0 1px 2px rgba(0,0,0,0.2);
-  --shadow-md: 0 4px 12px rgba(0,0,0,0.3);
-  --shadow-lg: 0 8px 24px rgba(0,0,0,0.4);
+  color-scheme: dark;
 }

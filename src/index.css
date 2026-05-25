@@ -1,3 +1,4 @@
+@import url('https://fonts.googleapis.com/css2?family=Geist:wght@300;400;500;600;700&family=Geist+Mono:wght@300;400;500;600&family=Instrument+Serif:ital@0;1&display=swap');
 @import './design-system/tokens.css';
 
 @tailwind base;
@@ -9,6 +10,7 @@
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     scroll-behavior: smooth;
+    color-scheme: dark;
   }
 
   body {
@@ -16,9 +18,9 @@
     color: var(--color-text-primary);
   }
 
-  ::-webkit-scrollbar { width: 4px; }
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
   ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb { background: var(--color-border); border-radius: 9999px; }
+  ::-webkit-scrollbar-thumb { background: var(--color-border-hi); border-radius: 9999px; }
 }
 
 @layer components {
@@ -31,10 +33,16 @@
 
   .input {
     @apply w-full px-3 py-2 text-sm transition-all duration-150;
-    background-color: var(--color-surface);
+    background-color: var(--color-surface-2);
     border: 1px solid var(--color-border);
     border-radius: var(--radius-sm);
     color: var(--color-text-primary);
+    font-family: var(--font-mono);
+  }
+  .input:focus {
+    outline: none;
+    border-color: var(--color-border-hi);
+    box-shadow: 0 0 0 2px rgba(200, 245, 58, 0.18);
   }
 
   .skeleton {
@@ -43,6 +51,23 @@
   }
 
   .tabular { font-variant-numeric: tabular-nums; }
+
+  /* Editorial section label — small uppercase mono with rule */
+  .section-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--color-text-muted);
+  }
+
+  /* Tick crosshair separator */
+  .tick::before {
+    content: '+';
+    color: var(--color-text-faint);
+    margin-right: 6px;
+    font-family: var(--font-mono);
+  }
 
   @keyframes slide-up {
     from { transform: translateY(100%); opacity: 0; }

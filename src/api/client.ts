@@ -1,8 +1,12 @@
 import axios from 'axios'
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL
-  ? `${import.meta.env.VITE_API_BASE_URL}/api/v1`
-  : '/api/v1'
+// Dev: use relative /api/v1 so Vite proxy (vite.config.ts) forwards to backend
+// (avoids CORS). Prod: use absolute VITE_API_BASE_URL for direct calls.
+const BASE_URL = import.meta.env.DEV
+  ? '/api/v1'
+  : import.meta.env.VITE_API_BASE_URL
+    ? `${import.meta.env.VITE_API_BASE_URL}/api/v1`
+    : '/api/v1'
 
 // ─── Token Refresh State ────────────────────────────────────────────────────
 

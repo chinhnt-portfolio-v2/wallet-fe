@@ -1,16 +1,16 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { useExportTransactions, transactionsToCSV, downloadCSV } from '@/lib/export'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { SectionLabel } from '@/design-system'
 
 const PRESETS = [
-  { label: 'Tất cả', days: null,       key: 'all' },
-  { label: '7 ngày',  days: 7,           key: '7d'  },
-  { label: '30 ngày', days: 30,         key: '30d' },
-  { label: '90 ngày', days: 90,         key: '90d' },
-  { label: 'Tháng này', days: null,     key: 'this-month' },
-  { label: 'Tháng trước', days: null,  key: 'last-month' },
+  { label: 'Tất cả',       days: null, key: 'all'        },
+  { label: '7 ngày',       days: 7,    key: '7d'         },
+  { label: '30 ngày',      days: 30,   key: '30d'        },
+  { label: '90 ngày',      days: 90,   key: '90d'        },
+  { label: 'Tháng này',    days: null, key: 'this-month' },
+  { label: 'Tháng trước',  days: null, key: 'last-month' },
 ]
 
 function getDateRange(key: string): { from: string; to: string } | null {
@@ -57,7 +57,6 @@ export default function ExportPage() {
     try {
       let txs = data.transactions
 
-      // Filter by date range if selected
       const range = getDateRange(selectedPreset)
       if (range) {
         txs = txs.filter((tx) => tx.date >= range.from && tx.date <= range.to)
@@ -90,87 +89,112 @@ export default function ExportPage() {
     <div className="space-y-5">
       {/* Header */}
       <div>
-        <h2 className="text-lg font-semibold text-primary">Xuất dữ liệu</h2>
-        <p className="text-xs text-muted">Tải về file CSV cho Excel, Google Sheets</p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted mb-0.5">Account / Export</p>
+        <h2 className="text-base font-semibold text-primary">Xuất dữ liệu</h2>
       </div>
 
-      {/* Info card */}
-      <Card className="p-4 space-y-3">
-        <div className="flex items-start gap-3">
-          <div className="w-10 h-10 rounded-full bg-accent/10 flex items-center justify-center shrink-0">
-            <span className="text-accent text-lg">📊</span>
+      {/* ── Format info panel ────────────────────────────── */}
+      <section className="space-y-3">
+        <SectionLabel>Format</SectionLabel>
+
+        <div className="bg-surface border border-border rounded-lg p-4 space-y-4">
+          {/* CSV format row */}
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-lg bg-accent/10 flex items-center justify-center shrink-0">
+              <span className="font-mono text-[11px] font-bold text-accent">CSV</span>
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-medium text-primary">Comma-separated values</p>
+              <p className="font-mono text-[11px] text-muted mt-0.5">
+                Ngày · Loại · Số tiền · Ví · Danh mục · Ghi chú — UTF-8, Excel compatible
+              </p>
+            </div>
           </div>
-          <div>
-            <p className="text-sm font-medium text-primary">Xuất CSV</p>
-            <p className="text-xs text-muted mt-0.5">
-              File CSV chứa: ngày, loại (chi/thu), số tiền, ví, danh mục, ghi chú.
-              Mở được trên Excel, Google Sheets, Numbers.
-            </p>
-          </div>
+
+          {/* Stats row */}
+          {data && (
+            <div className="grid grid-cols-3 gap-0 border-t border-border pt-4">
+              <div className="text-center border-r border-border">
+                <p className="font-mono text-xl font-bold text-primary">{totalCount}</p>
+                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">Giao dịch</p>
+              </div>
+              <div className="text-center border-r border-border">
+                <p className="font-mono text-xl font-bold text-primary">{data.wallets.length}</p>
+                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">Ví</p>
+              </div>
+              <div className="text-center">
+                <p className="font-mono text-xl font-bold text-primary">{data.categories.length}</p>
+                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">Danh mục</p>
+              </div>
+            </div>
+          )}
+
+          {isLoading && (
+            <div className="grid grid-cols-3 gap-0 border-t border-border pt-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="text-center">
+                  <div className="h-6 w-10 mx-auto bg-surface-2 rounded animate-pulse mb-1" />
+                  <div className="h-2.5 w-16 mx-auto bg-surface-2 rounded animate-pulse" />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
+      </section>
 
-        {data && (
-          <div className="flex gap-4 pt-2 border-t border-border">
-            <div className="text-center flex-1">
-              <p className="text-xl font-bold font-mono text-primary">{totalCount}</p>
-              <p className="text-xs text-muted">Tổng giao dịch</p>
-            </div>
-            <div className="text-center flex-1 border-x border-border">
-              <p className="text-xl font-bold font-mono text-primary">{data.wallets.length}</p>
-              <p className="text-xs text-muted">Ví</p>
-            </div>
-            <div className="text-center flex-1">
-              <p className="text-xl font-bold font-mono text-primary">{data.categories.length}</p>
-              <p className="text-xs text-muted">Danh mục</p>
-            </div>
-          </div>
-        )}
-      </Card>
-
-      {/* Date range selector */}
-      <div>
-        <label className="block text-xs font-medium text-secondary mb-2">
+      {/* ── Date range selector ───────────────────────────── */}
+      <section className="space-y-3">
+        <SectionLabel right={
+          data
+            ? range
+              ? `${filteredCount} giao dịch`
+              : `${totalCount} giao dịch`
+            : undefined
+        }>
           Khoảng thời gian
-        </label>
+        </SectionLabel>
+
         <div className="grid grid-cols-3 gap-2">
           {PRESETS.map((p) => (
             <button
               key={p.key}
               onClick={() => setSelectedPreset(p.key)}
-              className={`py-2.5 text-xs rounded-md border transition-all font-medium ${
+              className={`py-2.5 font-mono text-[11px] uppercase tracking-wide rounded-lg border transition-all ${
                 selectedPreset === p.key
                   ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-border text-muted hover:border-accent/50'
+                  : 'border-border bg-surface text-muted hover:border-border-hi hover:text-primary'
               }`}
             >
               {p.label}
             </button>
           ))}
         </div>
-        {data && (
-          <p className="text-xs text-muted mt-2">
-            {range
-              ? `${filteredCount} giao dịch (${range.from} → ${range.to})`
-              : `${totalCount} giao dịch (tất cả)`}
+
+        {data && range && (
+          <p className="font-mono text-[11px] text-muted">
+            {range.from} → {range.to}
           </p>
         )}
-      </div>
+      </section>
 
-      {/* Export button */}
-      <Button
-        onClick={handleExport}
-        disabled={isExporting || isLoading || !data}
-        className="w-full py-3"
-      >
-        {isExporting || isLoading
-          ? 'Đang chuẩn bị...'
-          : `📥 Tải file CSV (${data ? filteredCount : 0} giao dịch)`}
-      </Button>
+      {/* ── Export action ─────────────────────────────────── */}
+      <section className="space-y-3">
+        <SectionLabel>Download</SectionLabel>
 
-      {/* Note */}
-      <p className="text-xs text-muted text-center">
-        File có định dạng UTF-8, tương thích với Excel tiếng Việt.
-      </p>
+        <Button
+          onClick={handleExport}
+          disabled={isExporting || isLoading || !data}
+          className="w-full py-3 font-mono text-[12px] uppercase tracking-[0.06em]"
+        >
+          {isExporting || isLoading
+            ? 'Đang chuẩn bị...'
+            : `Tải file CSV · ${data ? filteredCount : 0} giao dịch`}
+        </Button>
+
+        <p className="font-mono text-[10px] text-faint text-center">
+          UTF-8 · tương thích Excel tiếng Việt · Google Sheets · Numbers
+        </p>
+      </section>
     </div>
   )
 }

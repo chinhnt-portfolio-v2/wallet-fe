@@ -1,17 +1,21 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useQuery, useMutation } from '@tanstack/react-query'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
-import { useWallets, useCreateWallet } from '@/hooks/useWallets'
+import { useWallets } from '@/hooks/useWallets'
 import { useCategories } from '@/hooks/useCategories'
 import { useCreateTransaction } from '@/hooks/useTransactions'
-import { formatCurrency } from '@/lib/utils'
 import { WALLET_TYPE_LABEL } from '@/lib/utils'
 import { NlpInputBar } from '@/components/nlp/nlp-input-bar'
 import { NlpConfirmationCard } from '@/components/nlp/nlp-confirmation-card'
+import {
+  DisplayAmount,
+  SectionLabel,
+  CategoryChip,
+  Pill,
+} from '@/design-system'
 import type { TxnType, CreateTransactionRequest, NlpParseResult } from '@/types'
 
 // Helper: today's date + N days as YYYY-MM-DD
@@ -21,6 +25,19 @@ function addDays(days: number): string {
   return d.toISOString().split('T')[0]
 }
 
+// ─── Field wrapper ────────────────────────────────────────────────────────────
+function Field({ label, children }: { label: string; children: React.ReactNode }) {
+  return (
+    <div>
+      <div className="font-mono text-[10px] uppercase tracking-[0.12em] text-muted mb-2">
+        {label}
+      </div>
+      {children}
+    </div>
+  )
+}
+
+// ─── Main page ────────────────────────────────────────────────────────────────
 export default function AddTransactionPage() {
   const navigate = useNavigate()
   const [txType, setTxType] = useState<TxnType>('EXPENSE')
@@ -28,6 +45,7 @@ export default function AddTransactionPage() {
   const [walletId, setWalletId] = useState<number | null>(null)
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [note, setNote] = useState('')
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
   const [showAdvanced, setShowAdvanced] = useState(false)
 
   // BNPL debt creation fields
@@ -49,7 +67,6 @@ export default function AddTransactionPage() {
   const isPostpaid = selectedWallet?.type === 'POSTPAID'
   const isExpenseOnPostpaid = txType === 'EXPENSE' && isPostpaid
 
-  // When category is selected and wallet is POSTPAID, pre-fill debt title
   const selectedCategory = categories?.find((c) => c.id === categoryId)
 
   // F3: BNPL Auto-Expand — when POSTPAID wallet is selected, auto-expand the advanced section
@@ -105,18 +122,29 @@ export default function AddTransactionPage() {
     })
   }
 
+  const amountNum = parseFloat(amount) || 0
+
   return (
-    <div className="space-y-5">
-      {/* Header */}
-      <div className="flex items-center justify-between">
+    <div className="space-y-5 pb-8">
+      {/* ── Page header ──────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Thêm giao dịch</h2>
-          <p className="text-xs text-muted">Nhanh — số tiền + ví</p>
+          <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted mb-1">
+            ◇ Quick log
+          </div>
+          <h2 className="font-display italic text-[28px] leading-none text-primary">
+            Log a transaction
+          </h2>
         </div>
-        <button onClick={() => navigate(-1)} className="btn-ghost text-sm px-2">←</button>
+        <button
+          onClick={() => navigate(-1)}
+          className="w-8 h-8 rounded-[8px] border border-border bg-surface text-secondary flex items-center justify-center font-mono text-sm hover:bg-surface-2 transition-colors mt-1"
+        >
+          ✕
+        </button>
       </div>
 
-      {/* NLP Input */}
+      {/* ── NLP input ────────────────────────────────────────────────── */}
       {!nlpResult ? (
         <NlpInputBar onResult={setNlpResult} />
       ) : (
@@ -151,171 +179,209 @@ export default function AddTransactionPage() {
         />
       )}
 
+      {/* divider */}
       <div className="relative">
         <div className="absolute inset-0 flex items-center" aria-hidden="true">
           <div className="w-full border-t border-border" />
         </div>
         <div className="relative flex justify-center">
-          <span className="bg-background px-2 text-xs text-muted">hoặc nhập thủ công</span>
+          <span className="bg-bg px-2 font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
+            or enter manually
+          </span>
         </div>
       </div>
 
-      {/* Type toggle */}
-      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
+      {/* ── Type tabs ────────────────────────────────────────────────── */}
+      <div className="flex gap-1 bg-surface rounded-[10px] p-[3px] border border-border">
         {(['EXPENSE', 'INCOME'] as const).map((t) => (
           <button
             key={t}
             onClick={() => {
               setTxType(t)
-              // Reset debt creation when switching away from expense
               if (t !== 'EXPENSE') setCreateDebt(false)
+              setCategoryId(null)
             }}
-            className={`flex-1 py-2 text-sm rounded-sm transition-all ${
+            className={`flex-1 h-[34px] rounded-[8px] border-none cursor-pointer font-mono text-[11px] uppercase tracking-[0.1em] transition-colors ${
               txType === t
-                ? t === 'EXPENSE'
-                  ? 'bg-negative text-white shadow-sm font-medium'
-                  : 'bg-positive text-white shadow-sm font-medium'
-                : 'text-muted hover:text-primary hover:bg-surface-2'
+                ? 'bg-surface-3 text-primary shadow-[inset_0_0_0_1px_var(--color-border-hi)]'
+                : 'bg-transparent text-muted hover:text-primary'
             }`}
           >
-            {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
+            {t === 'EXPENSE' ? 'Expense' : 'Income'}
           </button>
         ))}
       </div>
 
-      {/* Amount */}
-      <div>
-        <label className="block text-xs font-medium text-secondary mb-1.5">Số tiền (VND)</label>
-        <div className="relative">
+      {/* ── Amount display (serif italic hero) ───────────────────────── */}
+      <div className="py-2 text-center">
+        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted mb-3">Amount</div>
+        <div className="flex items-baseline justify-center gap-3">
           <input
             type="number"
             inputMode="decimal"
             value={amount}
             onChange={(e) => setAmount(e.target.value)}
-            className="input text-xl font-bold font-mono pr-12 py-3"
             placeholder="0"
             autoFocus
+            className={`w-full max-w-xs h-14 px-4 rounded-[var(--radius-md)] border bg-surface text-primary font-mono text-3xl outline-none tabular-nums transition-colors ${
+              amountNum > 0 ? 'border-accent/60 focus:border-accent' : 'border-border focus:border-border-hi'
+            }`}
+            style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}
           />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-muted">₫</span>
+          <span className="font-mono text-sm text-muted shrink-0">VND</span>
         </div>
-        {amount && (
-          <p className="text-2xs text-muted mt-1">
-            = {formatCurrency(parseFloat(amount) || 0)}
-          </p>
+        {amountNum > 0 && (
+          <div className="mt-3 flex justify-center">
+            <DisplayAmount value={amountNum} size={42} />
+          </div>
         )}
       </div>
 
-      {/* Wallet */}
+      {/* ── Category strip (horizontal scroll, expense only) ─────────── */}
+      {txType === 'EXPENSE' && (
+        <div>
+          <SectionLabel className="mb-3">Category</SectionLabel>
+          <div className="flex gap-2 overflow-x-auto pb-1 -mx-0" style={{ scrollbarWidth: 'none' }}>
+            {filteredCategories.map((c) => {
+              const sel = categoryId === c.id
+              return (
+                <button
+                  key={c.id}
+                  onClick={() => setCategoryId(sel ? null : c.id)}
+                  className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3 py-2 rounded-[12px] border transition-colors min-w-[70px] ${
+                    sel
+                      ? 'border-accent bg-accent/10'
+                      : 'border-border bg-surface hover:border-border-hi'
+                  }`}
+                >
+                  <CategoryChip
+                    cat={c.name.toLowerCase()}
+                    name={c.name}
+                    size={22}
+                  />
+                  <span className={`font-mono text-[9px] uppercase tracking-[0.05em] ${
+                    sel ? 'text-primary' : 'text-muted'
+                  }`}>
+                    {c.name.split(' ')[0]}
+                  </span>
+                </button>
+              )
+            })}
+          </div>
+        </div>
+      )}
+
+      {/* ── Wallet selector ──────────────────────────────────────────── */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Chọn ví</label>
+        <SectionLabel className="mb-3">From wallet</SectionLabel>
         {loadingWallets ? (
-          <div className="grid grid-cols-2 gap-2">
-            {[1, 2, 3, 4].map((i) => (
-              <div key={i} className="card p-3 animate-pulse">
-                <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-full bg-surface-2" />
-                  <div className="space-y-1">
-                    <div className="h-3 w-16 bg-surface-2 rounded" />
-                    <div className="h-2 w-10 bg-surface-2 rounded" />
-                  </div>
-                </div>
-              </div>
+          <div className="flex gap-2 overflow-x-auto pb-1">
+            {[1, 2, 3].map((i) => (
+              <div key={i} className="flex-shrink-0 w-32 h-12 rounded-[10px] bg-surface-2 animate-pulse" />
             ))}
           </div>
         ) : wallets && wallets.length > 0 ? (
-          <div className="grid grid-cols-2 gap-2">
-            {wallets.map((w) => (
-              <button
-                key={w.id}
-                onClick={() => setWalletId(w.id)}
-                aria-pressed={walletId === w.id}
-                aria-label={`Chọn ví ${w.name}`}
-                className={`card p-3 text-left transition-all relative ${
-                  walletId === w.id
-                    ? 'border-accent ring-2 ring-accent/20'
-                    : 'hover:border-accent/50'
-                }`}
-              >
-                <div className="flex items-center gap-2">
-                  <div
-                    className="w-9 h-9 rounded-full flex items-center justify-center text-lg"
-                    style={{ backgroundColor: `${w.color}20` }}
-                  >
-                    {w.icon}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium text-primary truncate">{w.name}</p>
-                    <p className="text-xs text-muted">{WALLET_TYPE_LABEL[w.type] ?? w.type}</p>
-                  </div>
-                </div>
-                {walletId === w.id && (
-                  <span className="absolute top-2 right-2 w-4 h-4 bg-accent rounded-full flex items-center justify-center" aria-hidden="true">
-                    <span className="text-white text-2xs">✓</span>
+          <div className="flex gap-2 overflow-x-auto pb-1" style={{ scrollbarWidth: 'none' }}>
+            {wallets.map((w) => {
+              const sel = walletId === w.id
+              return (
+                <button
+                  key={w.id}
+                  onClick={() => setWalletId(w.id)}
+                  aria-pressed={sel}
+                  aria-label={`Chọn ví ${w.name}`}
+                  className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-[10px] border transition-colors font-sans text-xs ${
+                    sel
+                      ? 'border-border-hi bg-surface-3 text-primary'
+                      : 'border-border bg-surface text-secondary hover:border-border-hi'
+                  }`}
+                >
+                  <span
+                    className="w-2 h-2 rounded-[2px] shrink-0"
+                    style={{ background: w.color }}
+                  />
+                  <span>{w.name}</span>
+                  <span className="font-mono text-[10px] text-muted">
+                    {WALLET_TYPE_LABEL[w.type] ?? w.type}
                   </span>
-                )}
-              </button>
-            ))}
+                </button>
+              )
+            })}
           </div>
         ) : (
           <Card className="p-4 text-center">
-            <p className="text-sm text-muted">Chưa có ví nào.</p>
-            <a href="/wallets" className="text-xs text-accent hover:underline mt-1 block">
-              Tạo ví mới →
+            <p className="font-sans text-sm text-muted">No wallets yet.</p>
+            <a href="/wallets" className="font-mono text-[11px] text-accent hover:underline mt-1 block">
+              Create wallet →
             </a>
           </Card>
         )}
       </div>
 
-      {/* Advanced toggle */}
+      {/* ── Advanced toggle ───────────────────────────────────────────── */}
       <button
         onClick={() => setShowAdvanced(!showAdvanced)}
-        className="text-xs text-accent hover:underline"
+        className="font-mono text-[11px] uppercase tracking-[0.08em] text-accent hover:underline"
       >
-        {showAdvanced ? '▲ Thu gọn' : '▼ Thêm chi tiết'}
+        {showAdvanced ? '▲ Collapse' : '▼ More details'}
       </button>
 
       {showAdvanced && (
         <div className="space-y-4 border-t border-border pt-4">
-          {/* Category */}
-          <div>
-            <label className="block text-xs font-medium text-secondary mb-2">Danh mục</label>
-            <div className="flex flex-wrap gap-2">
-              {filteredCategories.map((c) => (
-                <button
-                  key={c.id}
-                  onClick={() => setCategoryId(categoryId === c.id ? null : c.id)}
-                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs transition-all ${
-                    categoryId === c.id ? 'ring-2 ring-primary/40' : 'hover:opacity-8070'
-                  }`}
-                  style={{
-                    backgroundColor: `${c.color}20`,
-                    border: `1.5px solid ${c.color}`,
-                    color: c.color,
-                  }}
-                >
-                  <span>{c.icon}</span>
-                  <span>{c.name}</span>
-                </button>
-              ))}
-            </div>
-          </div>
+          {/* date */}
+          <Field label="Date">
+            <input
+              type="date"
+              value={date}
+              onChange={(e) => setDate(e.target.value)}
+              className="w-full h-10 px-3 rounded-[var(--radius-md)] border border-border bg-bg-2 text-primary font-mono text-sm outline-none focus:border-border-hi"
+              style={{ colorScheme: 'dark' }}
+            />
+          </Field>
 
-          {/* Note */}
+          {/* note */}
           <Input
-            label="Ghi chú"
+            label="Merchant / note"
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder="VD: Ăn trưa công ty"
+            placeholder={txType === 'INCOME' ? 'e.g. Salary, freelance, gift…' : 'e.g. Pizza 4Ps, Grab, rent…'}
           />
+
+          {/* income category strip */}
+          {txType === 'INCOME' && filteredCategories.length > 0 && (
+            <Field label="Category">
+              <div className="flex flex-wrap gap-2">
+                {filteredCategories.map((c) => {
+                  const sel = categoryId === c.id
+                  return (
+                    <button
+                      key={c.id}
+                      onClick={() => setCategoryId(sel ? null : c.id)}
+                      className={`flex items-center gap-2 px-3 py-2 rounded-[8px] border transition-colors text-xs ${
+                        sel
+                          ? 'border-accent bg-accent/10 text-primary'
+                          : 'border-border bg-surface text-secondary hover:border-border-hi'
+                      }`}
+                    >
+                      <CategoryChip cat={c.name.toLowerCase()} name={c.name} size={18} />
+                      <span className="font-sans">{c.name}</span>
+                    </button>
+                  )
+                })}
+              </div>
+            </Field>
+          )}
 
           {/* BNPL Debt toggle — shown only for EXPENSE on POSTPAID wallet */}
           {isExpenseOnPostpaid && (
-            <div className="border border-negative/30 bg-negative/5 rounded-md p-3 space-y-3">
-              <div className="flex items-center justify-between">
+            <div className="border border-negative/30 bg-negative/5 rounded-[var(--radius-md)] p-4 space-y-3">
+              <div className="flex items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold text-negative">🛒 Ghi nhận nợ trả sau</p>
-                  <p className="text-xs text-muted mt-0.5">
-                    Tạo nhóm nợ để theo dõi khoản mua trả góp và thanh toán khi đến hạn
+                  <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-negative">
+                    ◈ BNPL debt tracking
+                  </p>
+                  <p className="font-sans text-xs text-muted mt-1">
+                    Create a debt group to track this buy-now-pay-later purchase
                   </p>
                 </div>
                 <button
@@ -352,7 +418,7 @@ export default function AddTransactionPage() {
                     label="Đơn vị / người bán (tùy chọn)"
                     value={debtCounterparty}
                     onChange={(e) => setDebtCounterparty(e.target.value)}
-                    placeholder="VD: Shopee, MoMo, Lazada..."
+                    placeholder="VD: Shopee, MoMo, Lazada…"
                   />
                 </div>
               )}
@@ -361,24 +427,29 @@ export default function AddTransactionPage() {
         </div>
       )}
 
-      {/* BNPL info — shown when wallet is POSTPAID (section auto-expanded) */}
+      {/* BNPL info banner */}
       {isExpenseOnPostpaid && (
-        <div className="flex items-start gap-2 p-3 border border-border rounded-md bg-surface-2">
-          <span className="text-negative text-sm shrink-0">ℹ️</span>
-          <p className="text-xs text-muted">
-            Ví trả sau — bật <strong className="text-negative">"Ghi nhận nợ"</strong> bên dưới để tạo nhóm theo dõi và thanh toán đúng hạn.
+        <div className="flex items-start gap-2.5 p-3 border border-border rounded-[var(--radius-md)] bg-surface-2">
+          <span className="font-mono text-negative text-sm shrink-0">ℹ</span>
+          <p className="font-sans text-xs text-muted">
+            Postpaid wallet — enable{' '}
+            <strong className="font-mono text-[11px] text-negative uppercase tracking-[0.06em]">BNPL tracking</strong>
+            {' '}above to create a debt group and track payments on time.
           </p>
         </div>
       )}
 
-      {/* Submit */}
-      <Button
-        onClick={handleSubmit}
-        disabled={createTx.isPending || !walletId || !amount}
-        className="w-full py-3 text-base"
-      >
-        {createTx.isPending ? 'Đang lưu...' : '✓ Lưu giao dịch'}
-      </Button>
+      {/* ── Submit ────────────────────────────────────────────────────── */}
+      <div className="pt-1">
+        <Pill
+          accent
+          onClick={handleSubmit}
+          disabled={createTx.isPending || !walletId || !amount}
+          className="w-full h-[50px] rounded-[var(--radius-md)] text-[13px] tracking-[0.12em] justify-center"
+        >
+          {createTx.isPending ? 'Saving…' : `Save ${txType === 'EXPENSE' ? 'expense' : 'income'} →`}
+        </Pill>
+      </div>
     </div>
   )
 }

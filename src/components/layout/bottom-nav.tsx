@@ -1,19 +1,18 @@
 import { Link, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
-import { IconDashboard, IconTransactions, IconDebts, IconBudgets, IconWallets } from './nav-icons'
 
 interface NavItem {
   href: string
   label: string
-  icon: React.ReactNode
+  glyph: string
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/', label: 'Tổng quan', icon: <IconDashboard /> },
-  { href: '/transactions', label: 'Giao dịch', icon: <IconTransactions /> },
-  { href: '/debts', label: 'Nợ', icon: <IconDebts /> },
-  { href: '/budgets', label: 'Ngân sách', icon: <IconBudgets /> },
-  { href: '/wallets', label: 'Ví', icon: <IconWallets /> },
+  { href: '/', label: 'Dashboard', glyph: '◐' },
+  { href: '/transactions', label: 'Transactions', glyph: '◑' },
+  { href: '/debts', label: 'Debts', glyph: '◖' },
+  { href: '/budgets', label: 'Budgets', glyph: '◕' },
+  { href: '/wallets', label: 'Wallets', glyph: '◔' },
 ]
 
 export function BottomNav() {
@@ -22,10 +21,10 @@ export function BottomNav() {
   return (
     <nav
       aria-label="Điều hướng chính"
-      className="fixed bottom-0 left-0 right-0 bg-surface border-t border-border z-30 md:hidden"
+      className="fixed bottom-0 left-0 right-0 bg-bg-2 border-t border-border z-30 md:hidden"
     >
       <div className="max-w-lg mx-auto flex pb-[env(safe-area-inset-bottom)]">
-        {NAV_ITEMS.map(({ href, label, icon }) => {
+        {NAV_ITEMS.map(({ href, label, glyph }) => {
           const isActive = href === '/' ? location.pathname === '/' : location.pathname.startsWith(href)
           return (
             <Link
@@ -34,12 +33,12 @@ export function BottomNav() {
               aria-label={label}
               aria-current={isActive ? 'page' : undefined}
               className={cn(
-                'flex-1 flex flex-col items-center py-2 text-xs transition-colors',
-                isActive ? 'text-accent font-medium' : 'text-muted hover:text-primary'
+                'flex-1 flex flex-col items-center gap-0.5 py-2.5 transition-colors',
+                isActive ? 'text-accent' : 'text-faint hover:text-muted'
               )}
             >
-              {icon}
-              <span className="mt-0.5">{label}</span>
+              <span className="text-lg leading-none select-none" aria-hidden="true">{glyph}</span>
+              <span className="font-mono text-[10px] tracking-wider uppercase">{label}</span>
             </Link>
           )
         })}

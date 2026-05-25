@@ -1,12 +1,12 @@
 import { useState } from 'react'
 import { useCategories, useCreateCategory, useUpdateCategory, useDeleteCategory } from '@/hooks/useCategories'
-import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { BottomSheet } from '@/components/ui/BottomSheet'
+import { SectionLabel, CategoryChip } from '@/design-system'
 import { toast } from 'sonner'
 
 // Rich category icon palette
@@ -49,8 +49,8 @@ function CategoryForm({
   }
 
   return (
-    <Card className="space-y-4">
-      <p className="text-sm font-medium text-primary">{initial?.id ? '✏️ Sửa danh mục' : '+ Tạo danh mục mới'}</p>
+    <div className="bg-surface border border-border rounded-lg p-4 space-y-4">
+      <SectionLabel>{initial?.id ? 'Sửa danh mục' : 'Tạo danh mục mới'}</SectionLabel>
 
       {/* Type toggle */}
       <div className="flex gap-1 bg-surface-2 rounded-md p-1">
@@ -59,7 +59,7 @@ function CategoryForm({
             key={t}
             type="button"
             onClick={() => setType(t)}
-            className={`flex-1 py-1.5 text-xs rounded-sm transition-colors ${
+            className={`flex-1 py-1.5 font-mono text-[11px] uppercase tracking-wide rounded-sm transition-colors ${
               type === t
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white font-medium shadow-sm'
@@ -67,7 +67,7 @@ function CategoryForm({
                 : 'text-muted hover:text-primary hover:bg-surface-2'
             }`}
           >
-            {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
+            {t === 'EXPENSE' ? 'Chi' : 'Thu'}
           </button>
         ))}
       </div>
@@ -82,7 +82,7 @@ function CategoryForm({
 
       {/* Icon picker */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Icon</label>
+        <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-2">Icon</label>
         <div className="grid grid-cols-9 gap-1.5 max-h-36 overflow-y-auto pr-1">
           {CATEGORY_ICONS.map((i) => (
             <button
@@ -103,7 +103,7 @@ function CategoryForm({
 
       {/* Color picker */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-2">Màu</label>
+        <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-2">Màu</label>
         <div className="flex gap-2 flex-wrap">
           {CATEGORY_COLORS.map((c) => (
             <button
@@ -111,7 +111,7 @@ function CategoryForm({
               type="button"
               onClick={() => setColor(c)}
               className={`w-7 h-7 rounded-full transition-all ${
-                color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-110110'
+                color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-110'
               }`}
               style={{ backgroundColor: c }}
             />
@@ -120,21 +120,24 @@ function CategoryForm({
       </div>
 
       {/* Preview */}
-      <div
-        className="inline-flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium"
-        style={{ backgroundColor: `${color}20`, border: `1.5px solid ${color}`, color }}
-      >
-        <span>{icon}</span>
-        <span>{name || 'Xem trước'}</span>
+      <div className="flex items-center gap-3">
+        <span className="font-mono text-[10px] uppercase tracking-widest text-muted">Preview</span>
+        <div
+          className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-sm font-medium"
+          style={{ backgroundColor: `${color}20`, border: `1.5px solid ${color}`, color }}
+        >
+          <span>{icon}</span>
+          <span className="font-mono text-[12px]">{name || 'Xem trước'}</span>
+        </div>
       </div>
 
-      <div className="flex gap-2">
+      <div className="flex gap-2 pt-1">
         <Button variant="outline" onClick={onCancel} className="flex-1">Hủy</Button>
         <Button onClick={handleSubmit} disabled={isPending || !name.trim()} className="flex-1">
           {isPending ? 'Đang lưu...' : initial?.id ? 'Lưu thay đổi' : 'Tạo danh mục'}
         </Button>
       </div>
-    </Card>
+    </div>
   )
 }
 
@@ -164,18 +167,19 @@ function EditModal({
   }
 
   return (
-    <BottomSheet open onClose={onClose} title="✏️ Sửa danh mục">
+    <BottomSheet open onClose={onClose} title="Sửa danh mục">
       <CategoryForm
         initial={category}
         onSubmit={handleUpdate}
         onCancel={onClose}
         isPending={update.isPending}
       />
-      {/* Delete */}
       <div className="border-t border-border pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-2">
-            <p className="text-xs text-negative text-center">Bạn chắc chắn muốn xóa "{category.name}"?</p>
+            <p className="font-mono text-[11px] text-negative text-center">
+              Xóa "{category.name}"? Không thể hoàn tác.
+            </p>
             <div className="flex gap-2">
               <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">Hủy</Button>
               <Button
@@ -190,9 +194,9 @@ function EditModal({
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center text-xs text-negative hover:underline py-1"
+            className="w-full text-center font-mono text-[11px] text-negative hover:underline py-1 uppercase tracking-wide"
           >
-            🗑️ Xóa danh mục
+            Xóa danh mục
           </button>
         )}
       </div>
@@ -217,20 +221,23 @@ export default function CategoriesPage() {
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-lg font-semibold text-primary">Danh mục</h2>
-          <p className="text-xs text-muted">{Array.isArray(categories) ? categories.length : 0} danh mục</p>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted mb-0.5">Money / Categories</p>
+          <h2 className="text-base font-semibold text-primary">Danh mục</h2>
         </div>
-        <Button
-          variant={showForm ? 'outline' : 'accent'}
-          size="sm"
+        <button
           onClick={() => setShowForm(!showForm)}
+          className={`h-7 px-3 rounded-full font-mono text-[11px] uppercase tracking-[0.05em] transition-all ${
+            showForm
+              ? 'bg-transparent shadow-[inset_0_0_0_1px_var(--color-border-hi)] text-primary hover:bg-surface-2'
+              : 'bg-accent text-accent-ink hover:brightness-105'
+          }`}
         >
           {showForm ? '− Đóng' : '+ Thêm'}
-        </Button>
+        </button>
       </div>
 
       {/* Create form */}
@@ -248,7 +255,7 @@ export default function CategoriesPage() {
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-1.5 text-xs rounded-sm transition-colors ${
+            className={`flex-1 py-1.5 font-mono text-[11px] uppercase tracking-wide rounded-sm transition-colors ${
               tab === t
                 ? t === 'EXPENSE'
                   ? 'bg-negative text-white font-medium shadow-sm'
@@ -256,10 +263,17 @@ export default function CategoriesPage() {
                 : 'text-muted hover:text-primary hover:bg-surface-2'
             }`}
           >
-            {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
+            {t === 'EXPENSE' ? 'Chi tiêu' : 'Thu nhập'}
           </button>
         ))}
       </div>
+
+      {/* Section label with count */}
+      {!isLoading && (
+        <SectionLabel right={`${visible.length} danh mục`}>
+          {tab === 'EXPENSE' ? 'Chi tiêu' : 'Thu nhập'}
+        </SectionLabel>
+      )}
 
       {/* Loading */}
       {isLoading && (
@@ -277,27 +291,34 @@ export default function CategoriesPage() {
         />
       )}
 
-      {/* Grid */}
-      {!isLoading && (
-        <div className="grid grid-cols-3 gap-2">
-          {visible.map((cat) => (
-            <button
-              key={cat.id}
-              onClick={() => setEditTarget(cat as typeof editTarget)}
-              className="card p-3 flex flex-col items-center gap-2 text-center hover:border-accent/50 transition-all"
-            >
-              <div
-                className="w-11 h-11 rounded-full flex items-center justify-center text-xl"
-                style={{ backgroundColor: `${cat.color}20` }}
+      {/* List — editorial row layout with CategoryChip */}
+      {!isLoading && visible.length > 0 && (
+        <div className="bg-surface border border-border rounded-lg divide-y divide-border">
+          {visible.map((cat) => {
+            // Derive hue from cat.color hex for CategoryChip — best-effort
+            const hue = cat.color
+              ? Math.round((parseInt(cat.color.slice(1, 3), 16) / 255) * 120 +
+                  (parseInt(cat.color.slice(3, 5), 16) / 255) * 60 +
+                  (parseInt(cat.color.slice(5, 7), 16) / 255) * 180) % 360
+              : 0
+            return (
+              <button
+                key={cat.id}
+                onClick={() => setEditTarget(cat as typeof editTarget)}
+                className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors text-left"
               >
-                {cat.icon}
-              </div>
-              <div className="min-w-0 w-full">
-                <p className="text-xs font-medium text-primary truncate">{cat.name}</p>
-                {cat.isDefault && <Badge variant="neutral" className="mt-0.5 text-2xs px-1 py-0">Mặc định</Badge>}
-              </div>
-            </button>
-          ))}
+                <CategoryChip cat="other" name={cat.name} hue={hue} size={32} />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm text-primary truncate">{cat.name}</p>
+                  <p className="font-mono text-[11px] text-muted">{cat.icon}</p>
+                </div>
+                {cat.isDefault && (
+                  <Badge variant="neutral" className="text-2xs px-1.5 py-0 shrink-0">Mặc định</Badge>
+                )}
+                <span className="font-mono text-[11px] text-muted shrink-0">→</span>
+              </button>
+            )
+          })}
         </div>
       )}
 
