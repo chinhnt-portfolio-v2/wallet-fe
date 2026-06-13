@@ -2,8 +2,11 @@ import { useState, useRef, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { useTransactions } from '@/hooks/useTransactions'
+import { useCategories } from '@/hooks/useCategories'
+import { useWallets } from '@/hooks/useWallets'
 import { ListSkeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { Select } from '@/components/ui/Select'
 import { TransactionRow } from '@/components/transactions/transaction-row'
 import { TransactionTable } from '@/components/transactions/transaction-table'
 import { TxSummaryTiles } from '@/components/transactions/tx-summary-tiles'
@@ -21,6 +24,8 @@ export default function TransactionsPage() {
 
   // ── Filter state ──
   const [typeFilter, setTypeFilter] = useState('')
+  const [categoryFilter, setCategoryFilter] = useState('')
+  const [walletFilter, setWalletFilter] = useState('')
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [search, setSearch] = useState('')
@@ -43,21 +48,35 @@ export default function TransactionsPage() {
 
   const handleClear = () => {
     setTypeFilter(''); setDateFrom(''); setDateTo('')
+    setCategoryFilter(''); setWalletFilter('')
     setSearch(''); setDebouncedSearch(''); resetPage()
   }
 
   const { data: rawTxs, isLoading, error, refetch } = useTransactions({
     type: typeFilter || undefined, size: PAGE_SIZE, page,
+    categoryId: categoryFilter ? Number(categoryFilter) : undefined,
+    walletId: walletFilter ? Number(walletFilter) : undefined,
     dateFrom: dateFrom || undefined, dateTo: dateTo || undefined,
     search: debouncedSearch || undefined,
   })
+
+  const { data: categories } = useCategories()
+  const { data: wallets } = useWallets()
+  const categoryOptions = useMemo(() => [
+    { value: '', label: t('transaction.allCategories') },
+    ...(Array.isArray(categories) ? categories : []).map((c) => ({ value: String(c.id), label: c.name })),
+  ], [categories, t])
+  const walletOptions = useMemo(() => [
+    { value: '', label: t('transaction.allWallets') },
+    ...(Array.isArray(wallets) ? wallets : []).map((w) => ({ value: String(w.id), label: w.name })),
+  ], [wallets, t])
 
   const txs: Transaction[] = useMemo(
     () => (Array.isArray(rawTxs) ? rawTxs : []),
     [rawTxs],
   )
   const hasNext = txs.length === PAGE_SIZE
-  const hasFilters = !!(typeFilter || dateFrom || dateTo || debouncedSearch)
+  const hasFilters = !!(typeFilter || categoryFilter || walletFilter || dateFrom || dateTo || debouncedSearch)
 
   // Summary from current page
   const summary = useMemo(() => ({
@@ -117,10 +136,20 @@ export default function TransactionsPage() {
         />
       </div>
 
-      {/* Date range panel */}
+      {/* Filters panel — date range + category + wallet */}
       {showDatePanel && (
-        <DateRangePanel dateFrom={dateFrom} dateTo={dateTo}
-          onChange={(f, to) => { setDateFrom(f); setDateTo(to); resetPage() }} />
+        <div className="space-y-3 pt-3">
+          <DateRangePanel dateFrom={dateFrom} dateTo={dateTo}
+            onChange={(f, to) => { setDateFrom(f); setDateTo(to); resetPage() }} />
+          <div className="grid grid-cols-2 gap-2">
+            <Select aria-label={t('transaction.categoryFilter')} value={categoryFilter}
+              onChange={(e) => { setCategoryFilter(e.target.value); resetPage() }}
+              options={categoryOptions} />
+            <Select aria-label={t('transaction.walletFilter')} value={walletFilter}
+              onChange={(e) => { setWalletFilter(e.target.value); resetPage() }}
+              options={walletOptions} />
+          </div>
+        </div>
       )}
 
       {/* Content */}

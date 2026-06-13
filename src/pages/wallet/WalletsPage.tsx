@@ -29,7 +29,7 @@ function WalletHeroCard({ wallets }: { wallets: Wallet[] }) {
         {t('wallet.totalAvailableBalance')}
       </p>
       <div className="mt-1.5 flex items-baseline gap-1">
-        <Amount value={totalBalance} size={36} weight={800} className="text-primary-ink tabular-nums tracking-[-0.025em]" />
+        <Amount value={totalBalance} size={36} weight={800} style={{ color: 'var(--primary-ink)' }} className="tabular-nums tracking-[-0.025em]" />
       </div>
       <p className="text-[12px] opacity-75 font-medium mt-1.5">
         {t('wallet.activeWalletsCount', { count: active.length })}
@@ -39,11 +39,11 @@ function WalletHeroCard({ wallets }: { wallets: Wallet[] }) {
       <div className="hidden sm:flex gap-3 mt-4">
         <div className="flex-1 rounded-xl bg-white/[0.13] px-4 py-3">
           <p className="text-[11px] font-semibold opacity-80">{t('wallet.totalAssets')}</p>
-          <Amount value={totalAssets} size={18} weight={800} className="text-primary-ink tabular-nums mt-0.5" />
+          <Amount value={totalAssets} size={18} weight={800} style={{ color: 'var(--primary-ink)' }} className="tabular-nums mt-0.5" />
         </div>
         <div className="flex-1 rounded-xl bg-white/[0.13] px-4 py-3">
           <p className="text-[11px] font-semibold opacity-80">{t('wallet.creditDebt')}</p>
-          <Amount value={creditDebt} size={18} weight={800} className="text-primary-ink tabular-nums mt-0.5" />
+          <Amount value={creditDebt} size={18} weight={800} style={{ color: 'var(--primary-ink)' }} className="tabular-nums mt-0.5" />
         </div>
       </div>
     </div>

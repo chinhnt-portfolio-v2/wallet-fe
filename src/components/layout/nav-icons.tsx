@@ -5,6 +5,7 @@
 import {
   LayoutDashboard,
   ArrowLeftRight,
+  BarChart3,
   Wallet,
   PieChart,
   Layers,
@@ -27,6 +28,10 @@ export function IconDashboard() {
 
 export function IconTransactions() {
   return <ArrowLeftRight className={ICON_CLASS} aria-hidden="true" />
+}
+
+export function IconStats() {
+  return <BarChart3 className={ICON_CLASS} aria-hidden="true" />
 }
 
 export function IconWallets() {
@@ -81,6 +86,7 @@ export function IconMenu() {
 export const NAV_ICON_MAP: Record<string, () => JSX.Element> = {
   '/': IconDashboard,
   '/transactions': IconTransactions,
+  '/stats': IconStats,
   '/wallets': IconWallets,
   '/budgets': IconBudgets,
   '/debts': IconDebts,

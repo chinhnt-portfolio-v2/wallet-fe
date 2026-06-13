@@ -80,7 +80,7 @@ export function TxFilterBar({
       <button
         onClick={onToggleDatePanel}
         aria-pressed={showDatePanel}
-        aria-label={t('transaction.dateRange')}
+        aria-label={t('transaction.filters')}
         className={`min-h-[44px] sm:min-h-0 sm:h-9 flex items-center gap-1.5 px-3 rounded-lg border text-[11px] font-semibold transition-colors ${
           showDatePanel
             ? 'border-primary bg-primary-soft text-primary'
@@ -88,7 +88,7 @@ export function TxFilterBar({
         }`}
       >
         <SlidersHorizontal size={13} aria-hidden="true" />
-        <span className="hidden sm:inline">{t('transaction.dateRange')}</span>
+        <span className="hidden sm:inline">{t('transaction.filters')}</span>
       </button>
 
       {/* Clear filters */}

@@ -6,6 +6,7 @@ import { cn } from '@/lib/utils'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import {
   IconMenu,
+  IconStats,
   IconWishlist,
   IconWallets,
   IconCategories,
@@ -26,6 +27,7 @@ interface MenuItem {
 }
 
 const MENU_ITEMS: MenuItem[] = [
+  { href: '/stats', labelKey: 'nav.stats', Icon: IconStats },
   { href: '/wishlist', labelKey: 'nav.wishlist', Icon: IconWishlist },
   { href: '/wallets', labelKey: 'nav.wallets', Icon: IconWallets },
   { href: '/categories', labelKey: 'nav.categories', Icon: IconCategories },

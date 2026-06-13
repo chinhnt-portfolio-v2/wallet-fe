@@ -7,6 +7,7 @@ import { APP_VERSION, APP_TAGLINE } from '@/lib/app-meta'
 import {
   IconDashboard,
   IconTransactions,
+  IconStats,
   IconWallets,
   IconBudgets,
   IconDebts,
@@ -30,6 +31,7 @@ const NAV_SECTIONS: { sectionKey: string; items: NavItem[] }[] = [
     items: [
       { href: '/', labelKey: 'nav.dashboard', Icon: IconDashboard },
       { href: '/transactions', labelKey: 'nav.transactions', Icon: IconTransactions },
+      { href: '/stats', labelKey: 'nav.stats', Icon: IconStats },
     ],
   },
   {

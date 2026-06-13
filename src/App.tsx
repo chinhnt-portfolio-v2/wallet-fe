@@ -17,6 +17,7 @@ const CategoriesPage = lazy(() => import('@/pages/wallet/CategoriesPage'))
 const ProfilePage = lazy(() => import('@/pages/wallet/ProfilePage'))
 const TransferPage = lazy(() => import('@/pages/wallet/TransferPage'))
 const BudgetsPage = lazy(() => import('@/pages/wallet/BudgetsPage'))
+const StatsPage = lazy(() => import('@/pages/wallet/StatsPage'))
 const RecurringPage = lazy(() => import('@/pages/wallet/RecurringPage'))
 const ExportPage = lazy(() => import('@/pages/wallet/ExportPage'))
 const NotificationsPage = lazy(() => import('@/pages/wallet/NotificationsPage'))
@@ -54,6 +55,7 @@ export default function App() {
           <Route path="/wallets/transfer" element={<Shell><TransferPage /></Shell>} />
           <Route path="/categories" element={<Shell><CategoriesPage /></Shell>} />
           <Route path="/budgets" element={<Shell><BudgetsPage /></Shell>} />
+          <Route path="/stats" element={<Shell><StatsPage /></Shell>} />
           <Route path="/recurring" element={<Shell><RecurringPage /></Shell>} />
           <Route path="/export" element={<Shell><ExportPage /></Shell>} />
           <Route path="/notifications" element={<Shell><NotificationsPage /></Shell>} />

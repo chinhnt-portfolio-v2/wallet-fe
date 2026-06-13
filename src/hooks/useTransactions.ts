@@ -6,6 +6,8 @@ export interface TransactionFilters {
   type?: string
   size?: number
   page?: number
+  categoryId?: number
+  walletId?: number
   groupId?: number
   dateFrom?: string
   dateTo?: string
@@ -23,6 +25,8 @@ export function useTransactions(params?: TransactionFilters) {
         page: pageParam,
         size,
         ...(rest.type ? { type: rest.type } : {}),
+        ...(rest.categoryId ? { categoryId: rest.categoryId } : {}),
+        ...(rest.walletId ? { walletId: rest.walletId } : {}),
         ...(rest.groupId ? { groupId: rest.groupId } : {}),
         ...(rest.dateFrom ? { dateFrom: rest.dateFrom } : {}),
         ...(rest.dateTo ? { dateTo: rest.dateTo } : {}),
