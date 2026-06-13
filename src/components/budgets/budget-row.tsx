@@ -15,28 +15,24 @@ interface BudgetRowProps {
 }
 
 /**
- * Responsive budget row.
- *
- * Mobile (<768px): a stacked card so the figures never overlap (audit §2.9 fix) —
- * header (chip + name + pct), progress bar, then spent / limit on one line.
- * Desktop (≥768px): the original dense grid row.
- *
- * The limit is inline-editable on both layouts; the value is rounded to the
- * nearest 1.000 ₫ on commit.
+ * Budget row — mobile card + desktop grid row.
+ * Progress bar color: ok=positive / warning=warning / exceeded=negative.
+ * Status tag beside name (not color-only).
  */
 export function BudgetRow({ budget, onEdit, onDelete }: BudgetRowProps) {
   const { t } = useTranslation()
+  const status = budget.status ?? 'ok'
   const pct = (budget.percentage ?? 0) / 100
-  const isOver = (budget.status ?? 'ok') === 'exceeded'
-  const isWarn = (budget.status ?? 'ok') === 'warning'
+  const isOver = status === 'exceeded'
+  const isWarn = status === 'warning'
 
-  const statusLabel = isOver
-    ? t('budget.overBudget')
+  const statusLabel = isOver ? t('budget.overBudget') : isWarn ? t('budget.nearLimit') : t('budget.onTrack')
+  const statusClass = isOver
+    ? 'text-negative bg-negative-soft'
     : isWarn
-      ? t('budget.nearLimit')
-      : t('budget.onTrack')
-
-  const statusClass = isOver ? 'text-negative' : isWarn ? 'text-warning' : 'text-positive'
+      ? 'text-warning bg-warning-soft'
+      : 'text-positive bg-positive-soft'
+  const barColor = isOver ? 'var(--negative)' : isWarn ? 'var(--warning)' : 'var(--positive)'
 
   const [editing, setEditing] = useState(false)
   const [draft, setDraft] = useState(budget.monthlyLimit)
@@ -58,9 +54,7 @@ export function BudgetRow({ budget, onEdit, onDelete }: BudgetRowProps) {
 
   const catName = budget.category?.name ?? 'Other'
   const catId = (budget.category?.name ?? 'other').toLowerCase()
-
   const pctText = `${Math.round(budget.percentage ?? 0)}%`
-  const progressColor = isWarn ? 'var(--color-warning)' : 'var(--color-positive)'
 
   const limitField = editing ? (
     <input
@@ -71,12 +65,12 @@ export function BudgetRow({ budget, onEdit, onDelete }: BudgetRowProps) {
       onChange={(e) => setDraft(Number(e.target.value.replace(/\D/g, '')) || 0)}
       onBlur={commitLimit}
       onKeyDown={(e) => e.key === 'Enter' && commitLimit()}
-      className="w-full text-right font-mono text-[13px] text-primary bg-surface-2 border border-accent rounded px-1.5 py-0.5 outline-none"
+      className="w-full text-right text-[13px] text-ink bg-surface-2 border border-primary rounded-xs px-1.5 py-0.5 outline-none tabular-nums"
     />
   ) : (
     <button
       onClick={() => { setDraft(budget.monthlyLimit); setEditing(true) }}
-      className="font-mono text-[13px] text-secondary hover:text-accent transition-colors tabular-nums text-right"
+      className="text-[13px] text-sub hover:text-primary transition-colors tabular-nums text-right"
       title={t('budget.clickToEdit')}
     >
       {formatCurrency(budget.monthlyLimit)}
@@ -84,65 +78,82 @@ export function BudgetRow({ budget, onEdit, onDelete }: BudgetRowProps) {
   )
 
   return (
-    <div className="border-t border-border group">
-      {/* ── Mobile card (<768px) ──────────────────────────────────── */}
-      <div className="flex md:hidden flex-col gap-2.5 px-4 py-3">
+    <div className="border-t border-line group">
+      {/* ── Mobile card (<768px) ── */}
+      <div className="flex md:hidden flex-col gap-2 px-4 py-3">
         <div className="flex items-center gap-3">
           <CategoryChip cat={catId} name={catName} size={28} className="shrink-0" />
           <div className="min-w-0 flex-1">
-            <p className="font-sans text-[14px] text-primary font-medium truncate">{catName}</p>
-            <p className={`font-mono text-[11px] ${statusClass}`}>{statusLabel}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              <p className="text-[13px] font-semibold text-ink truncate">{catName}</p>
+              <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${statusClass}`}>
+                {statusLabel}
+              </span>
+            </div>
           </div>
-          <span className={`font-mono text-[12px] shrink-0 ${isOver ? 'text-negative' : 'text-muted'}`}>
+          <span className={`text-[12px] font-semibold shrink-0 tabular-nums ${isOver ? 'text-negative' : isWarn ? 'text-warning' : 'text-muted'}`}>
             {pctText}
           </span>
         </div>
-        <ProgressBar pct={pct} over={isOver} color={progressColor} height={4} />
+
+        <ProgressBar pct={pct} over={isOver} color={barColor} height={4} />
+
         <div className="flex items-center justify-between gap-3">
-          <span className="font-mono text-[11px] text-faint">
-            {t('budget.spent')}{' '}
-            <Amount value={budget.currentSpent ?? 0} size={12} weight={500}
-              style={{ color: isOver ? 'var(--color-negative)' : 'var(--color-text)' }} />
+          <span className="text-[11px] text-muted tabular-nums">
+            <Amount value={budget.currentSpent ?? 0} size={11} weight={500}
+              style={{ color: isOver ? 'var(--negative)' : 'var(--ink)' }} />
             {' / '}
             <span className="text-muted">{formatCurrency(budget.monthlyLimit)}</span>
           </span>
           <div className="flex items-center gap-2 shrink-0">
-            <button onClick={onEdit} className="font-mono text-[10px] text-muted hover:text-accent uppercase tracking-wide min-h-[44px] px-1">
+            <button onClick={onEdit}
+              className="text-[10px] font-bold text-muted hover:text-primary uppercase tracking-wide min-h-[44px] px-1">
               {t('common.edit')}
             </button>
-            <button onClick={onDelete} className="font-mono text-[12px] text-negative/70 hover:text-negative min-h-[44px] px-1">
+            <button onClick={onDelete}
+              className="text-[12px] text-negative/70 hover:text-negative min-h-[44px] px-1">
               ✕
             </button>
           </div>
         </div>
       </div>
 
-      {/* ── Desktop grid (≥768px) ─────────────────────────────────── */}
-      <div className="hidden md:flex items-center gap-3 px-4 py-3 hover:bg-surface-2/40 transition-colors">
-        <span className="font-mono text-[12px] text-faint cursor-grab select-none shrink-0">⋮⋮</span>
+      {/* ── Desktop grid (≥768px) ── */}
+      <div className="hidden md:flex items-center gap-3 px-4 py-3 hover:bg-hover/50 transition-colors">
+        <span className="text-[12px] text-muted cursor-grab select-none shrink-0">⋮⋮</span>
         <CategoryChip cat={catId} name={catName} size={28} className="shrink-0" />
         <div className="min-w-0 w-28 shrink-0">
-          <p className="font-sans text-[13px] text-primary font-medium truncate">{catName}</p>
-          <p className={`font-mono text-[10px] ${statusClass}`}>{statusLabel}</p>
+          <p className="text-[13px] font-semibold text-ink truncate">{catName}</p>
+          <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${statusClass}`}>
+            {statusLabel}
+          </span>
         </div>
         <div className="w-28 shrink-0">
-          <p className="font-mono text-[10px] text-faint uppercase tracking-[0.1em] mb-0.5">{t('budget.spent')}</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted mb-0.5">
+            {t('budget.spent')}
+          </p>
           <Amount value={budget.currentSpent ?? 0} size={13} weight={500}
-            style={{ color: isOver ? 'var(--color-negative)' : 'var(--color-text)' }} />
+            style={{ color: isOver ? 'var(--negative)' : 'var(--ink)' }} />
         </div>
         <div className="flex-1 min-w-0">
-          <ProgressBar pct={pct} over={isOver} color={progressColor} height={4} />
-          <p className="font-mono text-[10px] text-muted mt-1">{pctText}</p>
+          <ProgressBar pct={pct} over={isOver} color={barColor} height={4} />
+          <p className={`text-[10px] mt-0.5 tabular-nums font-semibold ${isOver ? 'text-negative' : isWarn ? 'text-warning' : 'text-muted'}`}>
+            {pctText}
+          </p>
         </div>
         <div className="w-32 shrink-0 text-right">
-          <p className="font-mono text-[10px] text-faint uppercase tracking-[0.1em] mb-0.5">{t('budget.limit')}</p>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.1em] text-muted mb-0.5">
+            {t('budget.limit')}
+          </p>
           {limitField}
         </div>
         <div className="flex items-center gap-1 shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-          <button onClick={onEdit} className="font-mono text-[10px] text-muted hover:text-accent px-2 py-1 uppercase tracking-wide">
+          <button onClick={onEdit}
+            className="text-[10px] font-bold text-muted hover:text-primary px-2 py-1 uppercase tracking-wide">
             {t('common.edit')}
           </button>
-          <button onClick={onDelete} className="font-mono text-[10px] text-negative/60 hover:text-negative px-2 py-1 uppercase tracking-wide">
+          <button onClick={onDelete}
+            className="text-[10px] text-negative/60 hover:text-negative px-2 py-1">
             ✕
           </button>
         </div>

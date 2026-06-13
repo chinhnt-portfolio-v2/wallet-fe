@@ -1,6 +1,8 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
+import { CreditCard, ShoppingBag, Users, HandCoins } from 'lucide-react'
+import type { LucideIcon } from 'lucide-react'
 import { useUpdateDebtGroup, useDeleteDebtGroup } from '@/hooks/useDebtGroups'
 import { Button } from '@/components/ui/Button'
 import { BottomSheet } from '@/components/ui/BottomSheet'
@@ -8,11 +10,16 @@ import { Input } from '@/components/ui/Input'
 import { ymdToInstant } from '@/lib/date-utils'
 import type { DebtGroup } from '@/types'
 
-const GROUP_TYPES: { value: DebtGroup['groupType']; labelKey: string; descKey: string }[] = [
-  { value: 'BNPL',            labelKey: 'debt.kindBnpl',      descKey: 'debt.descBnpl' },
-  { value: 'DEBT',            labelKey: 'debt.types.DEBT',    descKey: 'debt.descFriend' },
-  { value: 'LOAN_GIVEN',      labelKey: 'debt.kindLoanGiven', descKey: 'debt.descLoanGiven' },
-  { value: 'PURCHASE_CREDIT', labelKey: 'debt.kindCredit',   descKey: 'debt.descCredit' },
+const GROUP_TYPES: {
+  value: DebtGroup['groupType']
+  labelKey: string
+  descKey: string
+  Icon: LucideIcon
+}[] = [
+  { value: 'BNPL',            labelKey: 'debt.kindBnpl',      descKey: 'debt.descBnpl',      Icon: ShoppingBag },
+  { value: 'DEBT',            labelKey: 'debt.kindFriend',    descKey: 'debt.descFriend',    Icon: Users },
+  { value: 'LOAN_GIVEN',      labelKey: 'debt.kindLoanGiven', descKey: 'debt.descLoanGiven', Icon: HandCoins },
+  { value: 'PURCHASE_CREDIT', labelKey: 'debt.kindCredit',    descKey: 'debt.descCredit',    Icon: CreditCard },
 ]
 
 interface FormPayload {
@@ -58,22 +65,33 @@ function DebtGroupForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      {/* type picker */}
       <div>
-        <p className="font-mono text-[11px] uppercase tracking-widest text-secondary mb-2">{t('debt.typeLabel')}</p>
+        <p className="text-[10px] font-extrabold uppercase tracking-widest text-muted mb-2">
+          {t('debt.typeLabel')}
+        </p>
         <div className="grid grid-cols-2 gap-2">
-          {GROUP_TYPES.map((gt) => (
+          {GROUP_TYPES.map(({ value, labelKey, descKey, Icon }) => (
             <button
-              key={gt.value}
+              key={value}
               type="button"
-              onClick={() => setGroupType(gt.value)}
+              onClick={() => setGroupType(value)}
               className={`rounded-sm border p-3 text-left transition-all ${
-                groupType === gt.value
-                  ? 'border-accent bg-accent/5'
-                  : 'border-border bg-surface-2 hover:border-border-hi'
+                groupType === value
+                  ? 'border-primary bg-primary-soft'
+                  : 'border-line bg-surface-2 hover:bg-hover'
               }`}
             >
-              <p className="font-mono text-[11px] font-medium text-primary">{t(gt.labelKey)}</p>
-              <p className="font-mono text-[11px] text-secondary mt-0.5">{t(gt.descKey)}</p>
+              <div className="flex items-center gap-2 mb-1">
+                <Icon
+                  size={13}
+                  className={groupType === value ? 'text-primary' : 'text-sub'}
+                />
+                <p className={`text-[11px] font-semibold ${groupType === value ? 'text-primary' : 'text-ink'}`}>
+                  {t(labelKey)}
+                </p>
+              </div>
+              <p className="text-[11px] text-sub">{t(descKey)}</p>
             </button>
           ))}
         </div>
@@ -88,7 +106,7 @@ function DebtGroupForm({
       />
 
       <div>
-        <label className="block font-mono text-[11px] uppercase tracking-widest text-secondary mb-1.5">
+        <label className="block text-[10px] font-extrabold uppercase tracking-widest text-muted mb-1.5">
           {t('debt.totalAmount')}
         </label>
         <input
@@ -98,7 +116,7 @@ function DebtGroupForm({
           onChange={(e) => setTotalAmount(e.target.value)}
           placeholder="0"
           required
-          className="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-primary [color-scheme:dark] placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+          className="w-full rounded-sm border border-line bg-surface-2 px-3 py-2 text-sm text-ink placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary tabular-nums"
         />
       </div>
 
@@ -106,7 +124,11 @@ function DebtGroupForm({
         label={t('debt.counterparty')}
         value={counterparty}
         onChange={(e) => setCounterparty(e.target.value)}
-        placeholder={groupType === 'LOAN_GIVEN' ? t('debt.counterpartyPlaceholderLoan') : t('debt.counterpartyPlaceholderDebt')}
+        placeholder={
+          groupType === 'LOAN_GIVEN'
+            ? t('debt.counterpartyPlaceholderLoan')
+            : t('debt.counterpartyPlaceholderDebt')
+        }
       />
 
       <Input
@@ -117,7 +139,9 @@ function DebtGroupForm({
       />
 
       <div className="flex gap-2">
-        <Button variant="outline" onClick={onCancel} type="button" className="flex-1">{t('common.cancel')}</Button>
+        <Button variant="outline" onClick={onCancel} type="button" className="flex-1">
+          {t('common.cancel')}
+        </Button>
         <Button type="submit" disabled={!canSubmit} className="flex-1">
           {isPending ? t('common.saving') : t('common.saveChanges')}
         </Button>
@@ -148,16 +172,27 @@ export function DebtEditModal({ group, onClose }: { group: DebtGroup; onClose: (
 
   return (
     <BottomSheet open onClose={onClose} title={t('debt.editDebtGroup')}>
-      <DebtGroupForm initial={group} onSubmit={handleUpdate} onCancel={onClose} isPending={update.isPending} />
-      <div className="border-t border-border pt-3 mt-3">
+      <DebtGroupForm
+        initial={group}
+        onSubmit={handleUpdate}
+        onCancel={onClose}
+        isPending={update.isPending}
+      />
+      <div className="border-t border-line pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-2">
-            <p className="font-mono text-[11px] text-negative text-center">
+            <p className="text-[11px] font-medium text-negative text-center">
               {t('debt.deleteConfirm', { name: group.title })}
             </p>
             <div className="flex gap-2">
-              <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">{t('common.cancel')}</Button>
-              <Button onClick={handleDelete} disabled={del.isPending} className="flex-1 !bg-negative !text-white">
+              <Button variant="outline" onClick={() => setShowDelete(false)} className="flex-1">
+                {t('common.cancel')}
+              </Button>
+              <Button
+                onClick={handleDelete}
+                disabled={del.isPending}
+                className="flex-1 !bg-negative !text-white hover:!bg-negative/90"
+              >
                 {del.isPending ? t('common.deleting') : t('common.delete')}
               </Button>
             </div>
@@ -165,7 +200,7 @@ export function DebtEditModal({ group, onClose }: { group: DebtGroup; onClose: (
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center font-mono text-[11px] text-negative hover:underline py-1"
+            className="w-full text-center text-[11px] font-medium text-negative hover:underline py-2 min-h-[44px]"
           >
             {t('debt.deleteDebtGroup')}
           </button>

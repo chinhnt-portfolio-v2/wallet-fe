@@ -1,5 +1,7 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { X, Check, Pencil } from 'lucide-react'
+import { Amount } from '@/design-system'
 import { ymdToInstant } from '@/lib/date-utils'
 import type { NlpParseResult, CreateTransactionRequest, TxnType } from '@/types'
 
@@ -12,6 +14,11 @@ interface NlpConfirmationCardProps {
   onDismiss: () => void
 }
 
+/**
+ * NLP parsed-draft confirmation card (Minh design).
+ * Shows parsed fields as editable chips with warning highlight for unresolved fields.
+ * Compact: type toggle, amount, wallet, category, date, note, action buttons.
+ */
 export function NlpConfirmationCard({
   result,
   wallets,
@@ -37,7 +44,6 @@ export function NlpConfirmationCard({
       categoryId: categoryId ?? undefined,
       amount: parseFloat(amount),
       type,
-      // F10: convert the NLP-parsed date to an ISO instant before creating.
       date: ymdToInstant(date),
       note: note || undefined,
     }
@@ -55,22 +61,28 @@ export function NlpConfirmationCard({
     })
   }
 
-  const fieldClass = (field: string) =>
-    `input text-sm w-full ${isUnresolved(field) ? 'border-warning ring-1 ring-warning/30' : ''}`
-
   const filteredCategories = categories.filter((c) => c.type === type)
 
+  const inputCls = (field: string) =>
+    `w-full h-9 px-3 rounded-lg border bg-surface-2 text-ink text-sm outline-none transition-colors focus:border-primary focus:ring-1 focus:ring-primary/20 ${
+      isUnresolved(field)
+        ? 'border-warning ring-1 ring-warning/20'
+        : 'border-line'
+    }`
+
+  const amountNum = parseFloat(amount) || 0
+
   return (
-    <div className="card p-4 space-y-3 border-accent/50 ring-1 ring-accent/20">
+    <div className="bg-surface border border-primary/30 rounded-xl p-4 space-y-3 shadow-pop">
       {/* Header */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-start justify-between gap-3">
         <div>
-          <p className="text-sm font-semibold text-primary">{t('nlp.confirmTitle')}</p>
-          <p className="text-xs text-muted">
+          <p className="text-sm font-bold text-ink">{t('nlp.confirmTitle')}</p>
+          <p className="text-[11px] text-muted mt-0.5">
             {t('nlp.accuracy', { pct: Math.round(result.confidence * 100) })}
             {result.unresolvedFields.length > 0 && (
               <span className="text-warning ml-1">
-                {t('nlp.needMore', { fields: result.unresolvedFields.join(', ') })}
+                · {t('nlp.needMore', { fields: result.unresolvedFields.join(', ') })}
               </span>
             )}
           </p>
@@ -78,55 +90,76 @@ export function NlpConfirmationCard({
         <button
           onClick={onDismiss}
           aria-label={t('nlp.closeAria')}
-          className="btn-ghost text-muted text-sm px-2"
+          className="w-7 h-7 flex items-center justify-center rounded-lg border border-line text-muted hover:bg-hover transition-colors shrink-0"
         >
-          ✕
+          <X size={13} />
         </button>
       </div>
 
       {/* Type toggle */}
-      <div className="flex gap-1 bg-surface-2 rounded-md p-1">
+      <div className="flex gap-1 bg-surface-2 rounded-lg p-1 border border-line">
         {(['EXPENSE', 'INCOME'] as const).map((tt) => (
           <button
             key={tt}
+            type="button"
             onClick={() => setType(tt)}
-            className={`flex-1 py-1.5 text-xs rounded-sm transition-all ${
+            className={`flex-1 h-7 rounded-md text-[11px] font-semibold uppercase tracking-[0.06em] transition-colors ${
               type === tt
                 ? tt === 'EXPENSE'
-                  ? 'bg-negative text-white font-medium'
-                  : 'bg-positive text-white font-medium'
-                : 'text-muted hover:text-primary'
+                  ? 'bg-negative/10 text-negative'
+                  : 'bg-positive/10 text-positive'
+                : 'text-muted hover:text-ink'
             }`}
           >
-            {tt === 'EXPENSE' ? `💸 ${t('nlp.expense')}` : `📥 ${t('nlp.income')}`}
+            {tt === 'EXPENSE' ? t('nlp.expense') : t('nlp.income')}
           </button>
         ))}
       </div>
 
-      {/* Amount */}
+      {/* Amount — read-only display + edit field */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">
-          {t('nlp.amount')} {isUnresolved('amount') && <span className="text-warning">{t('nlp.unresolved')}</span>}
+        <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted mb-1.5">
+          {t('nlp.amount')}
+          {isUnresolved('amount') && (
+            <span className="text-warning ml-1 normal-case tracking-normal font-semibold">
+              {t('nlp.unresolved')}
+            </span>
+          )}
         </label>
-        <input
-          type="number"
-          inputMode="decimal"
-          value={amount}
-          onChange={(e) => setAmount(e.target.value)}
-          className={fieldClass('amount')}
-          placeholder="0"
-        />
+        <div className="flex items-center gap-2">
+          <input
+            type="number"
+            inputMode="decimal"
+            value={amount}
+            onChange={(e) => setAmount(e.target.value)}
+            className={inputCls('amount')}
+            placeholder="0"
+          />
+          {amountNum > 0 && (
+            <Amount
+              value={type === 'INCOME' ? amountNum : -amountNum}
+              size={13}
+              weight={600}
+              className={`shrink-0 ${type === 'INCOME' ? 'text-positive' : 'text-negative'}`}
+            />
+          )}
+        </div>
       </div>
 
       {/* Wallet */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">
-          {t('nlp.wallet')} {isUnresolved('walletId') && <span className="text-warning">{t('nlp.unresolved')}</span>}
+        <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted mb-1.5">
+          {t('nlp.wallet')}
+          {isUnresolved('walletId') && (
+            <span className="text-warning ml-1 normal-case tracking-normal font-semibold">
+              {t('nlp.unresolved')}
+            </span>
+          )}
         </label>
         <select
           value={walletId ?? ''}
           onChange={(e) => setWalletId(e.target.value ? Number(e.target.value) : null)}
-          className={fieldClass('walletId')}
+          className={inputCls('walletId') + ' appearance-none'}
         >
           <option value="">{t('nlp.selectWallet')}</option>
           {wallets.map((w) => (
@@ -139,13 +172,18 @@ export function NlpConfirmationCard({
 
       {/* Category */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">
-          {t('nlp.category')} {isUnresolved('categoryId') && <span className="text-warning">{t('nlp.unresolved')}</span>}
+        <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted mb-1.5">
+          {t('nlp.category')}
+          {isUnresolved('categoryId') && (
+            <span className="text-warning ml-1 normal-case tracking-normal font-semibold">
+              {t('nlp.unresolved')}
+            </span>
+          )}
         </label>
         <select
           value={categoryId ?? ''}
           onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
-          className={fieldClass('categoryId')}
+          className={inputCls('categoryId') + ' appearance-none'}
         >
           <option value="">{t('nlp.noCategory')}</option>
           {filteredCategories.map((c) => (
@@ -156,27 +194,31 @@ export function NlpConfirmationCard({
         </select>
       </div>
 
-      {/* Date */}
-      <div>
-        <label className="block text-xs font-medium text-secondary mb-1">{t('nlp.date')}</label>
-        <input
-          type="date"
-          value={date}
-          onChange={(e) => setDate(e.target.value)}
-          className="input text-sm w-full"
-        />
-      </div>
-
-      {/* Note */}
-      <div>
-        <label className="block text-xs font-medium text-secondary mb-1">{t('nlp.note')}</label>
-        <input
-          type="text"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          placeholder={t('nlp.notePlaceholder')}
-          className="input text-sm w-full"
-        />
+      {/* Date + Note — two columns */}
+      <div className="grid grid-cols-2 gap-3">
+        <div>
+          <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted mb-1.5">
+            {t('nlp.date')}
+          </label>
+          <input
+            type="date"
+            value={date}
+            onChange={(e) => setDate(e.target.value)}
+            className={inputCls('date')}
+          />
+        </div>
+        <div>
+          <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted mb-1.5">
+            {t('nlp.note')}
+          </label>
+          <input
+            type="text"
+            value={note}
+            onChange={(e) => setNote(e.target.value)}
+            placeholder={t('nlp.notePlaceholder')}
+            className={inputCls('note')}
+          />
+        </div>
       </div>
 
       {/* Actions */}
@@ -184,15 +226,17 @@ export function NlpConfirmationCard({
         <button
           onClick={handleConfirm}
           disabled={!walletId || !amount}
-          className="flex-1 btn-primary py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+          className="flex-1 h-10 flex items-center justify-center gap-1.5 rounded-lg bg-primary text-primary-ink text-[12px] font-semibold hover:bg-primary-hover transition-colors disabled:opacity-40 disabled:cursor-not-allowed shadow-button"
         >
-          ✓ {t('nlp.confirm')}
+          <Check size={13} aria-hidden="true" />
+          {t('nlp.confirm')}
         </button>
         <button
           onClick={handleEdit}
-          className="flex-1 btn-ghost py-2 text-sm border border-border"
+          className="flex-1 h-10 flex items-center justify-center gap-1.5 rounded-lg border border-line bg-surface text-sub text-[12px] font-semibold hover:bg-hover transition-colors"
         >
-          ✏️ {t('nlp.edit')}
+          <Pencil size={12} aria-hidden="true" />
+          {t('nlp.edit')}
         </button>
       </div>
     </div>

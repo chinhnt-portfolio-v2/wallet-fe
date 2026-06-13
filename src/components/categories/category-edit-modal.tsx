@@ -35,10 +35,10 @@ export function CategoryEditModal({
   return (
     <BottomSheet open onClose={onClose} title={t('category.editCategory')}>
       <CategoryForm initial={category} onSubmit={handleUpdate} onCancel={onClose} isPending={update.isPending} />
-      <div className="border-t border-border pt-3 mt-3">
+      <div className="border-t border-line pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-2">
-            <p className="font-mono text-[11px] text-negative text-center">
+            <p className="text-[11px] font-medium text-negative text-center">
               {t('category.deleteConfirm', { name: category.name })}
             </p>
             <div className="flex gap-2">
@@ -51,7 +51,7 @@ export function CategoryEditModal({
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center font-mono text-[11px] text-negative hover:underline py-1 uppercase tracking-wide"
+            className="w-full text-center text-[11px] font-bold text-negative hover:underline py-1 uppercase tracking-wide"
           >
             {t('category.deleteCategory')}
           </button>

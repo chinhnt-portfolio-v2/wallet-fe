@@ -22,7 +22,7 @@ export function isReceivable(groupType: GroupType): boolean {
 
 /** CSS var for the amount/accent colour: green for receivables, red for payables. */
 export function debtAmountColor(groupType: GroupType): string {
-  return isReceivable(groupType) ? 'var(--color-positive)' : 'var(--color-negative)'
+  return isReceivable(groupType) ? 'var(--positive)' : 'var(--negative)'
 }
 
 /** i18n key for the list/CTA action label: "Collect" vs "Pay". */

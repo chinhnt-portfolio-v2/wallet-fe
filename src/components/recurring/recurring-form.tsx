@@ -10,7 +10,6 @@ import type { RecurringFrequency, RecurringRule, Wallet, Category, TxnType } fro
 
 const FREQ_OPTIONS: RecurringFrequency[] = ['DAILY', 'WEEKLY', 'MONTHLY', 'YEARLY']
 
-// Form payload shared between create and update. `type` is a TxnType.
 export interface RecurringFormData {
   walletId: number
   categoryId: number
@@ -70,7 +69,6 @@ export function RecurringForm({
     <div className="space-y-4">
       <SectionLabel>{isEditing ? t('recurring.editRecurring') : t('recurring.createRecurring')}</SectionLabel>
 
-      {/* Type — one segmented style (lime), never coral */}
       <SegmentedControl
         options={[
           { value: 'EXPENSE', label: t('transaction.expenseShort') },
@@ -84,11 +82,13 @@ export function RecurringForm({
 
       {/* Wallet */}
       <div>
-        <label className="block font-mono text-[11px] uppercase tracking-widest text-secondary mb-1.5">{t('recurring.wallet')}</label>
+        <label className="block text-[11px] font-extrabold uppercase tracking-widest text-sub mb-1.5">
+          {t('recurring.wallet')}
+        </label>
         <select
           value={walletId}
           onChange={(e) => setWalletId(Number(e.target.value))}
-          className="input [color-scheme:dark]"
+          className="input"
         >
           <option value={0}>{t('recurring.selectWalletOption')}</option>
           {activeWallets.map((w) => (
@@ -97,7 +97,6 @@ export function RecurringForm({
         </select>
       </div>
 
-      {/* Amount */}
       <Input
         label={t('recurring.amount')}
         type="number"
@@ -105,18 +104,20 @@ export function RecurringForm({
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         placeholder={t('recurring.amountPlaceholder')}
-        className="font-mono"
+        className="tabular-nums"
       />
 
       {/* Category */}
       <div>
-        <label className="block font-mono text-[11px] uppercase tracking-widest text-secondary mb-2">{t('recurring.category')}</label>
+        <label className="block text-[11px] font-extrabold uppercase tracking-widest text-sub mb-2">
+          {t('recurring.category')}
+        </label>
         <div className="flex flex-wrap gap-2">
           {filteredCats.map((c) => (
             <button
               key={c.id}
               onClick={() => setCategoryId(c.id)}
-              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full font-mono text-[11px] transition-all ${
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-[11px] font-semibold transition-all ${
                 categoryId === c.id ? 'ring-2 ring-primary/40' : 'hover:opacity-80'
               }`}
               style={{ backgroundColor: `${c.color}20`, border: `1.5px solid ${c.color}`, color: c.color }}
@@ -129,16 +130,18 @@ export function RecurringForm({
 
       {/* Frequency */}
       <div>
-        <label className="block font-mono text-[11px] uppercase tracking-widest text-secondary mb-2">{t('recurring.frequency')}</label>
+        <label className="block text-[11px] font-extrabold uppercase tracking-widest text-sub mb-2">
+          {t('recurring.frequency')}
+        </label>
         <div className="grid grid-cols-2 gap-2">
           {FREQ_OPTIONS.map((f) => (
             <button
               key={f}
               onClick={() => setFrequency(f)}
-              className={`py-2 font-mono text-[11px] uppercase tracking-wide rounded-md border transition-all ${
+              className={`py-2 text-[11px] font-semibold uppercase tracking-wide rounded-md border transition-all ${
                 frequency === f
-                  ? 'border-accent bg-accent/10 text-accent'
-                  : 'border-border text-secondary hover:border-accent/50'
+                  ? 'border-primary bg-primary-soft text-primary'
+                  : 'border-line text-sub hover:border-primary/50'
               }`}
             >
               {t(`recurring.frequencies.${f}`)}
@@ -153,7 +156,6 @@ export function RecurringForm({
         <Input label={t('recurring.endDateOptional')} type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
       </div>
 
-      {/* Note */}
       <Input label={t('recurring.note')} value={note} onChange={(e) => setNote(e.target.value)} placeholder={t('recurring.notePlaceholder')} />
 
       <div className="flex gap-2 pt-2">

@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next'
-import { Amount, DisplayAmount, ProgressBar } from '@/design-system'
+import { Amount, ProgressBar } from '@/design-system'
 
 interface BudgetSummaryProps {
   totalLimit: number
@@ -9,68 +9,78 @@ interface BudgetSummaryProps {
 }
 
 /**
- * Budget summary hero.
- *
- * <768px: a single stacked column so figures never collide (audit §2.9 fix —
- * "REMAINING" no longer overlaps the amount). ≥768px: the original 3-up grid.
+ * Overview card: Đã chi / limit, % bar, Còn lại.
+ * Matches §7 Budgets spec — left: spent hero + bar; right: remaining stat.
  */
 export function BudgetSummary({ totalLimit, totalSpent, exceeded, warning }: BudgetSummaryProps) {
   const { t } = useTranslation()
   const isOverAll = totalSpent > totalLimit
   const usedPct = totalLimit > 0 ? Math.round((totalSpent / totalLimit) * 100) : 0
   const remainOrOver = Math.abs(totalLimit - totalSpent)
+  const barColor = isOverAll ? 'var(--negative)' : usedPct >= 80 ? 'var(--warning)' : 'var(--positive)'
 
   return (
-    <div className="rounded-xl border border-border bg-surface p-5">
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-5 md:gap-6 md:items-center">
-        {/* Total budget hero */}
+    <div className="rounded-md border border-line bg-surface p-5">
+      <div className="grid grid-cols-1 md:grid-cols-[1fr_auto_1fr] gap-4 md:gap-6 md:items-center">
+
+        {/* left: spent + bar */}
         <div>
-          <p className="font-mono text-[10px] text-faint uppercase tracking-[0.14em] mb-2">
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted mb-2">
             {t('budget.totalBudget')}
           </p>
-          <DisplayAmount
-            value={totalLimit}
-            size={34}
-            sub={t('budget.spentPct', { pct: ((totalSpent / totalLimit) * 100 || 0).toFixed(0) })}
-          />
-          <p className="font-mono text-[11px] text-muted mt-2">
+          <div className="flex items-baseline gap-2 mb-1">
             <Amount
               value={totalSpent}
-              size={11}
-              style={{ color: isOverAll ? 'var(--color-negative)' : 'var(--color-muted)' }}
-            />{' '}
-            {t('budget.spentSoFar')}
+              size={28}
+              weight={700}
+              style={{ color: isOverAll ? 'var(--negative)' : 'var(--ink)' }}
+            />
+            <span className="text-[12px] text-muted tabular-nums">
+              / <Amount value={totalLimit} size={12} bare />₫
+            </span>
+          </div>
+          <div className="mt-2">
+            <ProgressBar
+              pct={totalLimit > 0 ? Math.min(totalSpent / totalLimit, 1) : 0}
+              over={isOverAll}
+              height={5}
+              color={barColor}
+            />
+          </div>
+          <p className="text-[10px] text-muted mt-1.5 tabular-nums">
+            {t('budget.used', { pct: usedPct })}
           </p>
         </div>
 
-        {/* Remaining / over */}
-        <div className="md:border-l md:border-border md:pl-6 pt-4 md:pt-0 border-t md:border-t-0 border-border">
-          <p className="font-mono text-[10px] text-faint uppercase tracking-[0.14em] mb-2">
+        {/* divider (desktop) */}
+        <div className="hidden md:block w-px self-stretch bg-line" />
+
+        {/* right: remaining + alerts */}
+        <div>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.12em] text-muted mb-2">
             {isOverAll ? t('budget.overBy') : t('budget.remaining')}
           </p>
           <Amount
             value={remainOrOver}
             size={22}
-            weight={500}
-            style={{ color: isOverAll ? 'var(--color-negative)' : 'var(--color-accent)' }}
+            weight={700}
+            style={{ color: isOverAll ? 'var(--negative)' : 'var(--positive)' }}
           />
-        </div>
-
-        {/* Total progress */}
-        <div className="md:border-l md:border-border md:pl-6 pt-4 md:pt-0 border-t md:border-t-0 border-border">
-          <p className="font-mono text-[10px] text-faint uppercase tracking-[0.12em] mb-2">
-            {t('budget.used', { pct: usedPct })}
-          </p>
-          <ProgressBar pct={totalLimit > 0 ? totalSpent / totalLimit : 0} over={isOverAll} height={6} />
-          <div className="flex gap-2 mt-3 flex-wrap">
+          <div className="flex flex-wrap gap-2 mt-3">
             {exceeded > 0 && (
-              <span className="font-mono text-[10px] text-negative">⚠ {t('budget.countOver', { count: exceeded })}</span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-negative bg-negative-soft px-2 py-0.5 rounded-full">
+                {t('budget.countOver', { count: exceeded })}
+              </span>
             )}
             {warning > 0 && (
-              <span className="font-mono text-[10px] text-warning">⚠ {t('budget.countNear', { count: warning })}</span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-warning bg-warning-soft px-2 py-0.5 rounded-full">
+                {t('budget.countNear', { count: warning })}
+              </span>
             )}
             {!exceeded && !warning && (
-              <span className="font-mono text-[10px] text-positive">✓ {t('budget.allOnTrack')}</span>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-positive bg-positive-soft px-2 py-0.5 rounded-full">
+                {t('budget.allOnTrack')}
+              </span>
             )}
           </div>
         </div>

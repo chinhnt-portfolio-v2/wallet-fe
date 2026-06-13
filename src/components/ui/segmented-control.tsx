@@ -1,3 +1,4 @@
+import { useRef, useCallback } from 'react'
 import { cn } from '@/lib/utils'
 
 export interface SegmentedOption<T extends string = string> {
@@ -10,7 +11,7 @@ interface SegmentedControlProps<T extends string = string> {
   value: T
   onChange: (value: T) => void
   size?: 'sm' | 'md'
-  /** Accessible group label (visually hidden). */
+  /** Accessible group label (visually hidden if not placed visibly). Required for a11y. */
   ariaLabel?: string
   className?: string
 }
@@ -21,15 +22,10 @@ const sizeStyles = {
 }
 
 /**
- * The single segmented-control for the app (audit §3 / checklist 19).
- *
- * One active style everywhere: lime pill (`bg-accent` + ink text). Replaces the
- * three divergent active styles (lime / dark / coral) found across Transactions,
- * Debts, Categories and Wishlist. Selected state is never coral — coral is the
- * negative/error color and must not double as "selected".
- *
- * Touch targets meet the 44px floor at `md` via the wrapper padding; `sm` is for
- * dense desktop toolbars only.
+ * Segmented control — Minh design.
+ * ARIA: radiogroup + radio + aria-checked (correct for mutually-exclusive choice).
+ * Keyboard: Left/Right and Up/Down arrows move + select; roving tabindex.
+ * Track: `bg-surface-2` pill; active segment: `bg-primary text-primary-ink`.
  */
 export function SegmentedControl<T extends string = string>({
   options,
@@ -39,31 +35,56 @@ export function SegmentedControl<T extends string = string>({
   ariaLabel,
   className,
 }: SegmentedControlProps<T>) {
+  const buttonRefs = useRef<(HTMLButtonElement | null)[]>([])
+
+  const moveTo = useCallback(
+    (index: number) => {
+      const next = (index + options.length) % options.length
+      onChange(options[next].value)
+      buttonRefs.current[next]?.focus()
+    },
+    [options, onChange],
+  )
+
+  const handleKeyDown = (e: React.KeyboardEvent, index: number) => {
+    if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+      e.preventDefault()
+      moveTo(index + 1)
+    } else if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+      e.preventDefault()
+      moveTo(index - 1)
+    }
+  }
+
   return (
     <div
-      role="tablist"
+      role="radiogroup"
       aria-label={ariaLabel}
       className={cn(
-        'inline-flex items-center gap-1 rounded-lg border border-border bg-surface-2 p-1',
-        className
+        'inline-flex items-center gap-1 rounded-lg border border-line bg-surface-2 p-1',
+        className,
       )}
     >
-      {options.map((opt) => {
+      {options.map((opt, i) => {
         const active = opt.value === value
         return (
           <button
             key={opt.value}
+            ref={(el) => { buttonRefs.current[i] = el }}
             type="button"
-            role="tab"
-            aria-selected={active}
+            role="radio"
+            aria-checked={active}
+            /* Roving tabindex: only the selected option is in tab order */
+            tabIndex={active ? 0 : -1}
             onClick={() => onChange(opt.value)}
+            onKeyDown={(e) => handleKeyDown(e, i)}
             className={cn(
-              'rounded-md font-mono uppercase tracking-wider transition-colors duration-150',
-              'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent/40',
+              'rounded-md font-sans font-semibold uppercase tracking-wider transition-colors duration-150',
+              'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
               sizeStyles[size],
               active
-                ? 'bg-accent text-accent-ink font-semibold'
-                : 'text-muted hover:text-primary'
+                ? 'bg-primary text-primary-ink'
+                : 'text-muted hover:text-ink',
             )}
           >
             {opt.label}

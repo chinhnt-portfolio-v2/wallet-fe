@@ -29,11 +29,11 @@ export function CategoryChip({ cat, name, hue, size = 28, className }: CategoryC
   const fg = `oklch(0.78 0.16 ${effectiveHue})`
   return (
     <div
-      className={`flex items-center justify-center font-mono font-medium shrink-0 ${className ?? ''}`}
+      className={`flex items-center justify-center font-sans font-semibold shrink-0 ${className ?? ''}`}
       style={{
         width: size,
         height: size,
-        borderRadius: 8,
+        borderRadius: 6,
         background: bg,
         color: fg,
         fontSize: size * 0.5,

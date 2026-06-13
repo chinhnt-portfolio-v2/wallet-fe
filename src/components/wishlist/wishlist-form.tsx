@@ -11,20 +11,25 @@ interface WishlistFormProps {
   editing?: WishlistItem | null
 }
 
-const PRIORITIES: { value: WishlistPriority; emoji: string; labelKey: string }[] = [
-  { value: 'HIGH',   emoji: '🔴', labelKey: 'wishlist.priorityHigh' },
-  { value: 'MEDIUM', emoji: '🟡', labelKey: 'wishlist.priorityMedium' },
-  { value: 'LOW',    emoji: '🟢', labelKey: 'wishlist.priorityLow' },
+// CAO=negative, TRUNG BÌNH=warning, THẤP=primary (Minh spec §11)
+const PRIORITIES: {
+  value: WishlistPriority
+  labelKey: string
+  activeClass: string
+}[] = [
+  { value: 'HIGH',   labelKey: 'wishlist.priorityHigh',   activeClass: 'border-negative bg-negative-soft text-negative' },
+  { value: 'MEDIUM', labelKey: 'wishlist.priorityMedium', activeClass: 'border-warning bg-warning-soft text-warning' },
+  { value: 'LOW',    labelKey: 'wishlist.priorityLow',    activeClass: 'border-primary bg-primary-soft text-primary' },
 ]
+
+const inputCls =
+  'w-full bg-surface border border-line rounded-md px-3 py-2.5 text-sm text-ink placeholder:text-muted outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-colors'
 
 export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
   const { t } = useTranslation()
   const create = useCreateWishlistItem()
   const update = useUpdateWishlistItem()
 
-  // Reset key — when editing target or open state changes, this changes and we
-  // re-seed local state during render (the recommended "store previous prop"
-  // pattern) instead of calling setState inside an effect.
   const resetKey = `${open ? 1 : 0}:${editing?.id ?? 'new'}`
   const [seededKey, setSeededKey] = useState(resetKey)
 
@@ -37,8 +42,6 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
   const [urlError,   setUrlError]   = useState('')
 
   if (seededKey !== resetKey) {
-    // Re-seed fields from the (possibly new) editing target. Runs during render,
-    // synchronously, before the form is painted.
     setSeededKey(resetKey)
     setName(editing?.name ?? '')
     setPrice(editing?.estimatedPrice != null ? String(editing.estimatedPrice) : '')
@@ -96,46 +99,52 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name */}
         <div>
-          <label className="text-xs text-muted mb-1 block">{t('wishlist.name')}</label>
+          <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-sub mb-1.5">
+            {t('wishlist.name')}
+          </label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder={t('wishlist.namePlaceholder')}
             required
-            className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:ring-2 focus:ring-accent"
+            className={inputCls}
           />
         </div>
 
         {/* Price */}
         <div>
-          <label className="text-xs text-muted mb-1 block">{t('wishlist.price')}</label>
+          <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-sub mb-1.5">
+            {t('wishlist.price')}
+          </label>
           <input
             type="number"
             value={price}
             onChange={(e) => setPrice(e.target.value)}
-            placeholder="5,990,000"
+            placeholder="5990000"
             min={0}
-            className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:ring-2 focus:ring-accent"
+            className={`${inputCls} tabular-nums`}
           />
         </div>
 
-        {/* Priority */}
+        {/* Priority — CAO=negative / TRUNG BÌNH=warning / THẤP=primary */}
         <div>
-          <label className="text-xs text-muted mb-1 block">{t('wishlist.priority')}</label>
+          <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-sub mb-1.5">
+            {t('wishlist.priority')}
+          </label>
           <div className="flex gap-2">
             {PRIORITIES.map((p) => (
               <button
                 key={p.value}
                 type="button"
                 onClick={() => setPriority(p.value)}
-                className={`flex-1 text-xs py-2 px-2 rounded-lg border transition-colors ${
+                className={`flex-1 min-h-[44px] text-[11px] font-bold uppercase tracking-[0.05em] rounded-md border transition-colors ${
                   priority === p.value
-                    ? 'border-accent bg-accent/10 text-accent font-semibold'
-                    : 'border-border text-muted bg-surface-2'
+                    ? p.activeClass
+                    : 'border-line text-muted bg-surface-2 hover:border-primary/40 hover:bg-hover'
                 }`}
               >
-                {p.emoji} {t(p.labelKey)}
+                {t(p.labelKey)}
               </button>
             ))}
           </div>
@@ -143,46 +152,52 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
 
         {/* Target date */}
         <div>
-          <label className="text-xs text-muted mb-1 block">{t('wishlist.targetDate')}</label>
+          <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-sub mb-1.5">
+            {t('wishlist.targetDate')}
+          </label>
           <input
             type="date"
             value={targetDate}
             onChange={(e) => setTargetDate(e.target.value)}
-            className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-primary outline-none focus:ring-2 focus:ring-accent"
+            className={inputCls}
           />
         </div>
 
-        {/* URL */}
+        {/* Product URL */}
         <div>
-          <label className="text-xs text-muted mb-1 block">{t('wishlist.productLink')}</label>
+          <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-sub mb-1.5">
+            {t('wishlist.productLink')}
+          </label>
           <input
             type="url"
             value={url}
             onChange={(e) => { setUrl(e.target.value); validateUrl(e.target.value) }}
             placeholder={t('wishlist.productLinkPlaceholder')}
-            className={`w-full bg-surface-2 border rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:ring-2 focus:ring-accent ${
-              urlError ? 'border-negative' : 'border-border'
-            }`}
+            className={`${inputCls} ${urlError ? 'border-negative focus:border-negative focus:ring-negative/20' : ''}`}
           />
-          {urlError && <p className="text-2xs text-negative mt-1">{urlError}</p>}
+          {urlError && (
+            <p className="text-[10px] font-semibold text-negative mt-1">{urlError}</p>
+          )}
         </div>
 
         {/* Notes */}
         <div>
-          <label className="text-xs text-muted mb-1 block">{t('wishlist.notes')}</label>
+          <label className="block text-[10px] font-extrabold uppercase tracking-[0.07em] text-sub mb-1.5">
+            {t('wishlist.notes')}
+          </label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
             placeholder={t('wishlist.notesPlaceholder')}
-            className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:ring-2 focus:ring-accent resize-none"
+            className={`${inputCls} resize-none`}
           />
         </div>
 
         <button
           type="submit"
           disabled={isPending || !name.trim()}
-          className="w-full bg-accent text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50"
+          className="w-full min-h-[44px] bg-primary text-primary-ink rounded-md text-sm font-bold hover:bg-primary-hover transition-colors disabled:opacity-50 shadow-button"
         >
           {isPending ? t('common.saving') : editing ? t('wishlist.update') : t('wishlist.addToList')}
         </button>

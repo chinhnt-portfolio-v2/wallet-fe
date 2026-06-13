@@ -2,22 +2,21 @@ import { cn } from '@/lib/utils'
 import type { ButtonHTMLAttributes } from 'react'
 
 interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'accent' | 'ghost' | 'outline' | 'danger'
+  variant?: 'primary' | 'ghost' | 'outline' | 'danger'
   size?: 'sm' | 'md' | 'lg'
 }
 
 const variants = {
-  primary: 'bg-primary text-white hover:bg-primary/90',
-  accent: 'bg-accent text-white hover:bg-accent/90',
-  ghost: 'bg-transparent text-secondary hover:bg-surface-2',
-  outline: 'border border-border bg-transparent text-secondary hover:bg-surface-2',
+  primary: 'bg-primary text-primary-ink hover:bg-primary-hover shadow-button',
+  ghost: 'bg-transparent text-sub hover:bg-hover',
+  outline: 'border border-line bg-transparent text-sub hover:bg-hover',
   danger: 'bg-negative text-white hover:bg-negative/90',
 }
 
 const sizes = {
   sm: 'h-7 px-3 text-xs rounded-sm',
-  md: 'h-9 px-4 text-sm',
-  lg: 'h-11 px-5 text-sm',
+  md: 'h-9 px-4 text-sm rounded-md',
+  lg: 'h-11 px-5 text-sm rounded-md',
 }
 
 export function Button({
@@ -27,18 +26,13 @@ export function Button({
   className,
   ...props
 }: ButtonProps) {
-  // Fancy (audit §4.2): accent CTAs get a lime glow + scale-on-press micro-interaction
-  // via `.cta-glow` (CSS-only, reduced-motion gated in index.css). Other variants keep
-  // the plain active-scale press feedback.
-  const isAccent = variant === 'accent'
   return (
     <button
       className={cn(
         'inline-flex items-center justify-center gap-2 font-medium transition-all duration-150',
-        'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
+        'focus:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2',
         'disabled:opacity-50 disabled:pointer-events-none',
-        'rounded-md',
-        isAccent ? 'cta-glow' : 'active:scale-95',
+        'active:scale-[.98]',
         variants[variant],
         sizes[size],
         className

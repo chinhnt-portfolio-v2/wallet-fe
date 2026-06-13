@@ -1,26 +1,99 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 import { useCategories, useCreateCategory } from '@/hooks/useCategories'
-import { Badge } from '@/components/ui/Badge'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { SegmentedControl } from '@/components/ui/segmented-control'
-import { SectionLabel } from '@/design-system'
+import { SectionLabel, Pill } from '@/design-system'
 import { CategoryForm, type CategoryFormData } from '@/components/categories/category-form'
 import { CategoryEditModal } from '@/components/categories/category-edit-modal'
 import { toast } from 'sonner'
+import type { Category } from '@/types'
 
 type EditTarget = { id: number } & CategoryFormData
 
+// ── Category card in the grid ─────────────────────────────────────────────
+function CategoryCard({
+  cat,
+  onClick,
+}: {
+  cat: Category
+  onClick: () => void
+}) {
+  const { t } = useTranslation()
+  const color = cat.color ?? '#64748B'
+  const chipBg = `${color}1f`   // ~12% alpha — Minh spec category chip
+
+  return (
+    <button
+      onClick={onClick}
+      className="group bg-surface border border-line rounded-md p-3 text-left hover:shadow-pop hover:border-primary/30 transition-all"
+    >
+      {/* Icon chip */}
+      <div
+        className="w-10 h-10 rounded-sm flex items-center justify-center text-xl mb-2.5 shrink-0"
+        style={{ backgroundColor: chipBg, color }}
+        aria-hidden="true"
+      >
+        {cat.icon}
+      </div>
+
+      {/* Name */}
+      <p className="text-sm font-bold text-ink truncate leading-tight mb-1">
+        {cat.name}
+      </p>
+
+      {/* Tags row */}
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span
+          className={`text-[10px] font-extrabold uppercase tracking-[0.07em] px-1.5 py-0.5 rounded-sm ${
+            cat.isDefault
+              ? 'bg-surface-2 text-muted'
+              : 'bg-primary-soft text-primary'
+          }`}
+        >
+          {cat.isDefault ? t('category.default') : t('category.custom')}
+        </span>
+        {/* Desktop: txn count placeholder — API doesn't expose it yet */}
+        <span className="hidden md:block text-[10px] font-semibold text-muted">
+          {/* txn count would go here when API supports it */}
+        </span>
+      </div>
+    </button>
+  )
+}
+
+// ── Dashed "add" tile ─────────────────────────────────────────────────────
+function AddCategoryTile({ onClick }: { onClick: () => void }) {
+  const { t } = useTranslation()
+  return (
+    <button
+      onClick={onClick}
+      className="group bg-surface border-2 border-dashed border-line rounded-md p-3 flex flex-col items-center justify-center gap-2 min-h-[96px] hover:border-primary/50 hover:bg-primary-soft/30 transition-all"
+    >
+      <span className="w-8 h-8 rounded-full bg-primary-soft text-primary flex items-center justify-center group-hover:bg-primary group-hover:text-primary-ink transition-colors">
+        <Plus size={16} strokeWidth={2.5} />
+      </span>
+      <span className="text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted group-hover:text-primary transition-colors">
+        {t('category.add')}
+      </span>
+    </button>
+  )
+}
+
+// ── Page ─────────────────────────────────────────────────────────────────
 export default function CategoriesPage() {
   const { t } = useTranslation()
   const { data: categories, isLoading } = useCategories()
   const createCategory = useCreateCategory()
-  const [showForm, setShowForm] = useState(false)
-  const [editTarget, setEditTarget] = useState<EditTarget | null>(null)
-  const [tab, setTab] = useState<'EXPENSE' | 'INCOME'>('EXPENSE')
+  const [showForm,    setShowForm]    = useState(false)
+  const [editTarget,  setEditTarget]  = useState<EditTarget | null>(null)
+  const [tab,         setTab]         = useState<'EXPENSE' | 'INCOME'>('EXPENSE')
 
-  const visible = Array.isArray(categories) ? categories.filter((c) => c.type === tab) : []
+  const visible = Array.isArray(categories)
+    ? categories.filter((c) => c.type === tab)
+    : []
 
   const handleCreate = (data: CategoryFormData) => {
     createCategory.mutate(data, {
@@ -31,25 +104,27 @@ export default function CategoriesPage() {
 
   return (
     <div className="page-enter space-y-5">
-      {/* Header — one page-title recipe (serif italic + mono eyebrow) */}
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="font-mono text-[11px] uppercase tracking-widest text-secondary mb-0.5">{t('category.subtitle')}</p>
-          <h2 className="font-display italic text-2xl text-primary leading-tight">{t('category.title')}</h2>
+          <p className="text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted mb-0.5">
+            {t('category.subtitle')}
+          </p>
+          <h1 className="text-xl font-extrabold tracking-[-0.02em] text-ink leading-tight">
+            {t('category.title')}
+          </h1>
         </div>
-        <button
+        <Pill
+          accent={!showForm}
+          ghost={showForm}
           onClick={() => setShowForm(!showForm)}
-          className={`h-7 px-3 rounded-full font-mono text-[11px] uppercase tracking-[0.05em] transition-all ${
-            showForm
-              ? 'bg-transparent shadow-[inset_0_0_0_1px_var(--color-border-hi)] text-primary hover:bg-surface-2'
-              : 'bg-accent text-accent-ink hover:brightness-105 cta-glow'
-          }`}
+          className="min-h-[44px]"
         >
           {showForm ? `− ${t('category.close')}` : `+ ${t('category.add')}`}
-        </button>
+        </Pill>
       </div>
 
-      {/* Create form */}
+      {/* Inline create form */}
       {showForm && (
         <CategoryForm
           onSubmit={handleCreate}
@@ -58,7 +133,7 @@ export default function CategoriesPage() {
         />
       )}
 
-      {/* Tab — one segmented style (lime), never coral */}
+      {/* Tabs */}
       <SegmentedControl
         options={[
           { value: 'EXPENSE', label: t('category.expense') },
@@ -70,59 +145,54 @@ export default function CategoriesPage() {
         className="w-full grid grid-cols-2"
       />
 
-      {/* Section label with count */}
+      {/* Section label */}
       {!isLoading && (
         <SectionLabel right={t('category.countLabel', { count: visible.length })}>
           {tab === 'EXPENSE' ? t('category.expense') : t('category.income')}
         </SectionLabel>
       )}
 
-      {/* Loading — mirrors the row list layout */}
+      {/* Loading skeletons — grid shape */}
       {isLoading && (
-        <div className="bg-surface border border-border rounded-lg divide-y divide-border">
-          {[...Array(6)].map((_, i) => (
-            <div key={i} className="flex items-center gap-3 px-4 py-3">
-              <Skeleton className="w-8 h-8 rounded-md shrink-0" />
-              <Skeleton className="h-3.5 w-32" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {[...Array(8)].map((_, i) => (
+            <div key={i} className="bg-surface border border-line rounded-md p-3 space-y-2">
+              <Skeleton className="w-10 h-10 rounded-sm" />
+              <Skeleton className="h-3.5 w-2/3" />
+              <Skeleton className="h-3 w-1/3" />
             </div>
           ))}
         </div>
       )}
 
       {/* Empty */}
-      {!isLoading && visible.length === 0 && (
+      {!isLoading && visible.length === 0 && !showForm && (
         <EmptyState
           icon="🏷️"
           title={t('category.noCategories')}
-          description={t('category.noCategoriesDesc', { type: tab === 'EXPENSE' ? t('category.expense') : t('category.income') })}
+          description={t('category.noCategoriesDesc', {
+            type: tab === 'EXPENSE' ? t('category.expense') : t('category.income'),
+          })}
+          action={
+            <Pill accent onClick={() => setShowForm(true)}>
+              + {t('category.add')}
+            </Pill>
+          }
         />
       )}
 
-      {/* List — emoji rendered at 16px inside a neutral colour-tinted tile */}
+      {/* 2-col mobile / 4-col desktop grid */}
       {!isLoading && visible.length > 0 && (
-        <div className="bg-surface border border-border rounded-lg divide-y divide-border">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {visible.map((cat) => (
-            <button
+            <CategoryCard
               key={cat.id}
+              cat={cat as Category}
               onClick={() => setEditTarget(cat as EditTarget)}
-              className="w-full flex items-center gap-3 px-4 py-3 hover:bg-surface-2 transition-colors text-left"
-            >
-              <span
-                className="w-8 h-8 rounded-md flex items-center justify-center text-base shrink-0"
-                style={{ backgroundColor: `${cat.color ?? '#64748B'}1f` }}
-                aria-hidden="true"
-              >
-                {cat.icon}
-              </span>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm text-primary truncate">{cat.name}</p>
-              </div>
-              {cat.isDefault && (
-                <Badge variant="neutral" className="text-2xs px-1.5 py-0 shrink-0">{t('category.default')}</Badge>
-              )}
-              <span className="font-mono text-[11px] text-secondary shrink-0" aria-hidden="true">→</span>
-            </button>
+            />
           ))}
+          {/* Dashed add tile */}
+          <AddCategoryTile onClick={() => setShowForm(true)} />
         </div>
       )}
 

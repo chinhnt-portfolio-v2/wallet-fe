@@ -10,10 +10,25 @@ interface BottomSheetProps {
   className?: string
 }
 
+const FOCUSABLE_SELECTORS = [
+  'a[href]',
+  'button:not([disabled])',
+  'input:not([disabled])',
+  'select:not([disabled])',
+  'textarea:not([disabled])',
+  '[tabindex]:not([tabindex="-1"])',
+].join(', ')
+
+function getFocusable(container: HTMLElement): HTMLElement[] {
+  return Array.from(container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTORS))
+}
+
 export function BottomSheet({ open, onClose, title, children, className }: BottomSheetProps) {
   const { t } = useTranslation()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
+  const panelRef = useRef<HTMLDivElement>(null)
 
+  // Scroll lock + initial focus
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -24,6 +39,7 @@ export function BottomSheet({ open, onClose, title, children, className }: Botto
     return () => { document.body.style.overflow = '' }
   }, [open])
 
+  // ESC to close
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && open) onClose()
@@ -31,6 +47,31 @@ export function BottomSheet({ open, onClose, title, children, className }: Botto
     document.addEventListener('keydown', handler)
     return () => document.removeEventListener('keydown', handler)
   }, [open, onClose])
+
+  // Focus trap: cycle Tab/Shift+Tab within panel's focusable elements
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key !== 'Tab' || !panelRef.current) return
+      const focusable = getFocusable(panelRef.current)
+      if (focusable.length === 0) return
+      const first = focusable[0]
+      const last = focusable[focusable.length - 1]
+      if (e.shiftKey) {
+        if (document.activeElement === first) {
+          e.preventDefault()
+          last.focus()
+        }
+      } else {
+        if (document.activeElement === last) {
+          e.preventDefault()
+          first.focus()
+        }
+      }
+    }
+    document.addEventListener('keydown', handler)
+    return () => document.removeEventListener('keydown', handler)
+  }, [open])
 
   if (!open) return null
 
@@ -41,28 +82,31 @@ export function BottomSheet({ open, onClose, title, children, className }: Botto
       aria-modal="true"
       aria-label={title}
     >
+      {/* Scrim — Minh: rgba(15,23,42,.28) + blur */}
       <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        className="absolute inset-0 backdrop-blur-sm"
+        style={{ background: 'rgba(15,23,42,.28)' }}
         onClick={onClose}
         aria-hidden="true"
       />
       <div
+        ref={panelRef}
         className={cn(
-          'relative bg-surface w-full max-w-md rounded-t-2xl sm:rounded-2xl',
-          'shadow-xl max-h-[90vh] flex flex-col overflow-hidden',
+          'relative bg-surface w-full max-w-md rounded-t-xl sm:rounded-xl',
+          'shadow-modal max-h-[90vh] flex flex-col overflow-hidden',
           'animate-slide-up',
-          className
+          className,
         )}
       >
-        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-border shrink-0">
+        <div className="flex items-center justify-between px-5 pt-4 pb-3 border-b border-line shrink-0">
           {title && (
-            <p className="text-sm font-semibold text-primary">{title}</p>
+            <p className="text-sm font-semibold text-ink">{title}</p>
           )}
           <button
             ref={closeButtonRef}
             onClick={onClose}
             aria-label={t('common.close')}
-            className="text-muted hover:text-primary text-xl transition-colors ml-auto"
+            className="text-muted hover:text-ink text-xl transition-colors ml-auto"
           >
             &times;
           </button>

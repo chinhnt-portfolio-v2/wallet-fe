@@ -12,8 +12,8 @@ test.describe('Login Page', () => {
     await pinLocale(page)
     await page.goto(`${BASE}/login`)
     await page.waitForLoadState('domcontentloaded')
-    // Brand is "ledger" (post-redesign), not "Wallet".
-    await expect(page.getByRole('heading', { name: /ledger/i })).toBeVisible()
+    // Brand mark is the page h1 "Ví" (Minh redesign).
+    await expect(page.getByRole('heading', { name: 'Ví', exact: true })).toBeVisible()
     await expect(page.getByRole('button', { name: /Tiếp tục với Google/i })).toBeVisible()
   })
 

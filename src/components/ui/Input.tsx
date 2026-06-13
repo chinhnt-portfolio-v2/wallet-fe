@@ -13,21 +13,18 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="space-y-1">
         {label && (
-          <label className="block text-xs font-medium text-secondary">
+          <label className="block text-xs font-medium text-sub">
             {label}
           </label>
         )}
         <input
           ref={ref}
           className={cn(
-            'w-full rounded-sm border bg-surface px-3 py-2 text-sm text-primary',
+            'w-full rounded-sm border bg-surface px-3 py-2 text-sm text-ink',
             'placeholder:text-muted',
-            // Dark color-scheme so the native date/time picker + calendar icon
-            // render against the dark theme instead of a light OS popup.
-            '[color-scheme:dark]',
-            'focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent',
+            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
             'transition-all duration-150',
-            error ? 'border-negative focus:ring-negative/30 focus:border-negative' : 'border-border',
+            error ? 'border-negative focus:ring-negative/20 focus:border-negative' : 'border-line',
             className
           )}
           {...props}

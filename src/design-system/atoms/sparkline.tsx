@@ -16,15 +16,17 @@ interface SparklineProps {
  * Compact line + area chart for cash-flow / spend trends.
  *
  * Responsive: renders into a fixed viewBox and stretches to the container width
- * (`w-full`) with `preserveAspectRatio="none"` — so callers (e.g. Dashboard mobile)
- * can constrain width without the SVG overflowing the viewport. The line is a smooth
+ * (`w-full`) with `preserveAspectRatio="none"`. The line is a smooth
  * Catmull-Rom curve and the area fades to transparent via a vertical gradient.
+ *
+ * Note: dashboard cashflow + net-worth move to Recharts in Phase 3; this atom
+ * is kept for small inline tile trends.
  */
 export function Sparkline({
   points,
   width = 220,
   height = 60,
-  color = 'var(--color-accent)',
+  color = 'var(--primary)',
   fill = true,
   dotLast = true,
   className,

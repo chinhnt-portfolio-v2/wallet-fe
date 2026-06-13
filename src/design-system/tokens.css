@@ -1,55 +1,85 @@
-/* Wallet · dark editorial finance-terminal palette.
-   Warm near-black + acid-lime + signal red. No light variant — this is dark-only. */
+/* Wallet · "Minh" design system — calm, trustworthy blue, light-first.
+   Two themes: light (:root default) + dark (.dark override). Squared / low radius.
+   Source of truth: design_handoff_wallet_redesign/README.md → Design Tokens.
+   The whole palette derives from one --primary hex; semantic + category colors are fixed. */
 
 :root {
-  /* Surface — warm near-black */
-  --color-bg: #0d0c0a;
-  --color-bg-2: #15140f;
-  --color-surface: #1a1813;
-  --color-surface-2: #211e17;
-  --color-surface-3: #2a2620;
+  /* Surface */
+  --bg: #eef2f9;          /* app background */
+  --surface: #ffffff;     /* cards, sheets, nav */
+  --surface-2: #f7f9fd;   /* insets, tracks, secondary fills */
+
+  /* Text */
+  --ink: #0f1729;         /* primary text */
+  --sub: #5b6b85;         /* secondary text */
+  --muted: #92a0b8;       /* tertiary / captions */
 
   /* Lines */
-  --color-border: rgba(245, 241, 232, 0.08);
-  --color-border-hi: rgba(245, 241, 232, 0.16);
+  --line: #e7ecf4;        /* hairlines, borders */
 
-  /* Bone-white text scale.
-     Legibility floor (audit §3): any text that conveys information must use
-     `--color-text-muted` (45%) or brighter, at min 11px. The 28%
-     `--color-text-faint` tier is DECORATIVE ONLY — hairline rules, crosshair
-     ticks, chart axis marks — never readable labels, values, or helper copy. */
-  --color-text-primary: #f5f1e8;
-  --color-text-secondary: rgba(245, 241, 232, 0.72);
-  --color-text-muted: rgba(245, 241, 232, 0.45);
-  --color-text-faint: rgba(245, 241, 232, 0.28);
+  /* Brand */
+  --primary: #2f5bff;     /* brand / actions */
+  --primary-ink: #ffffff; /* text/icon on primary */
+  --primary-soft: #eaf0ff;/* tinted primary surface */
+  --primary-hover: #1c47e6;
+  --hover: #eff3fc;       /* row/control hover bg */
 
-  /* Signal */
-  --color-accent: #c8f53a;        /* acid lime */
-  --color-accent-ink: #1a1f08;    /* text on accent */
-  --color-positive: #7ed957;
-  --color-negative: #ff5e4a;
-  --color-warning: #ffb648;
+  /* Semantic */
+  --positive: #12a150;    --positive-soft: #e4f6ec;   /* income (+) */
+  --negative: #e5484d;    --negative-soft: #fdecec;   /* expense (−), danger */
+  --warning: #d97706;     --warning-soft: #fdf0dd;    /* alerts, due-soon */
 
-  /* Typography — display uses Lora (has vietnamese subset) so VI heading
-     diacritics render correctly; Instrument Serif kept for ASCII hero numerals. */
-  --font-display: 'Lora', 'Instrument Serif', ui-serif, Georgia, serif;
-  --font-numeral: 'Instrument Serif', 'Lora', ui-serif, Georgia, serif;
-  --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+  /* Category accents (fixed, theme-independent). Chip bg = color @ ~12% alpha. */
+  --cat-food: #d97706;
+  --cat-transport: #6366f1;
+  --cat-shopping: #db2777;
+  --cat-bills: #0891b2;
+  --cat-coffee: #b45309;
+  --cat-fun: #7c3aed;
+  --cat-health: #e5484d;
+  --cat-home: #0d9488;
+  --cat-education: #2563eb;
+  --cat-income: #16a34a;
+  --cat-other: #64748b;
+  --cat-credit: #7c3aed;
 
-  /* Radius — tighter than before, terminal feel */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
+  /* Typography — single geometric sans (Vietnamese subset covers diacritics). */
+  --font-sans: 'Plus Jakarta Sans', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
 
-  /* Shadow — soft, dark */
-  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 6px 18px rgba(0, 0, 0, 0.45);
-  --shadow-lg: 0 18px 42px rgba(0, 0, 0, 0.55);
+  /* Radius — squared / low (FINAL, base × 0.4 already applied). */
+  --radius-xs: 5px;     /* chips, small controls, toggles */
+  --radius-sm: 6px;     /* list rows, inputs, small cards */
+  --radius-md: 8px;     /* standard cards, buttons */
+  --radius-lg: 10px;    /* large cards, hero, modal headers */
+  --radius-xl: 16px;    /* phone frame, window, modal shell, FAB */
+  --radius-pill: 999px; /* status pills, segmented bg, toggles */
+  --radius-circle: 50%; /* avatars, decorative */
+
+  /* Shadows — card uses a 1px line, not a shadow. */
+  --shadow-button: 0 12px 24px -8px var(--primary); /* primary CTA glow */
+  --shadow-fab: 0 12px 24px -6px var(--primary);
+  --shadow-pop: 0 10px 24px -12px rgba(15, 23, 42, 0.30); /* hover lift */
+  --shadow-modal: 0 40px 80px -24px rgba(15, 23, 42, 0.55);
+
+  color-scheme: light;
 }
 
-/* Keep .dark class as no-op so theme-toggle code doesn't break.
-   Design is dark-only; .dark inherits :root tokens. */
 .dark {
+  --bg: #0a0f1d;
+  --surface: #121a2e;
+  --surface-2: #0f1626;
+  --ink: #eef2fb;
+  --sub: #9aa7c4;
+  --muted: #66738f;
+  --line: #222c45;
+  --primary: #5b82ff;       /* brand brightened for dark */
+  --primary-ink: #0a0f1d;
+  --primary-soft: #1b2542;
+  --primary-hover: #7c9bff;
+  --hover: #1e2949;
+  --positive: #34d399;      --positive-soft: #12301f;
+  --negative: #fb7185;      --negative-soft: #3a1620;
+  --warning: #fbbf24;       --warning-soft: #3a2c12;
+
   color-scheme: dark;
 }

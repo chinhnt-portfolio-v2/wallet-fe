@@ -31,18 +31,18 @@ export function WalletEditModal({ wallet, onClose }: { wallet: Wallet; onClose: 
   return (
     <BottomSheet open onClose={onClose} title={t('wallet.editWallet')}>
       <WalletForm initial={wallet} onSubmit={handleUpdate} onCancel={onClose} isPending={update.isPending} />
-      <div className="border-t border-border pt-3 mt-3">
+      <div className="border-t border-line pt-3 mt-3">
         {showDelete ? (
           <div className="space-y-3">
-            <div className="p-3 rounded border border-negative/20 bg-negative/5 space-y-1">
-              <p className="font-mono text-[11px] uppercase tracking-widest text-negative">
+            <div className="p-3 rounded-md border border-negative/20 bg-negative/5 space-y-1">
+              <p className="text-[11px] font-extrabold uppercase tracking-widest text-negative">
                 {t('wallet.deleteWarning')}
               </p>
-              <p className="font-mono text-[11px] text-secondary">
+              <p className="text-[11px] text-sub">
                 {t('wallet.deleteDetail', { name: wallet.name, balance: formatCurrency(Number(wallet.balance)) })}
               </p>
             </div>
-            <p className="font-mono text-[11px] text-negative text-center uppercase tracking-widest">
+            <p className="text-[11px] font-bold text-negative text-center uppercase tracking-widest">
               {t('common.cannotUndo')}
             </p>
             <div className="flex gap-2">
@@ -55,7 +55,7 @@ export function WalletEditModal({ wallet, onClose }: { wallet: Wallet; onClose: 
         ) : (
           <button
             onClick={() => setShowDelete(true)}
-            className="w-full text-center font-mono text-[11px] uppercase tracking-widest text-negative hover:underline py-1"
+            className="w-full text-center text-[11px] font-bold uppercase tracking-widest text-negative hover:underline py-1"
           >
             {t('common.delete')}
           </button>

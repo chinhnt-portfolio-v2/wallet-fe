@@ -1,48 +1,100 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Wallet, TrendingUp, Repeat } from 'lucide-react'
 import { useWallets, useCreateWallet } from '@/hooks/useWallets'
 
 const STORAGE_KEY = 'wallet_onboarding_done'
 
-// Static step metadata; titles/descriptions/CTAs are resolved via i18n keys.
+// ─── Feature rows shown in the illustration block ────────
+
+const FEATURES = [
+  { icon: Wallet,    key: 'onboarding.featureWallet'   },
+  { icon: TrendingUp, key: 'onboarding.featureBudget'  },
+  { icon: Repeat,    key: 'onboarding.featureRecurring' },
+] as const
+
+// ─── Steps ────────────────────────────────────────────────
+
 const STEPS = [
-  { step: 1, total: 3, emoji: '👋', titleKey: 'onboarding.step1Title', descKey: 'onboarding.step1Desc', ctaKey: 'onboarding.step1Cta' },
-  { step: 2, total: 3, emoji: '💸', titleKey: 'onboarding.step2Title', descKey: 'onboarding.step2Desc', ctaKey: 'onboarding.step2Cta' },
-  { step: 3, total: 3, emoji: '💸', titleKey: 'onboarding.step3Title', descKey: 'onboarding.step3Desc', ctaKey: 'onboarding.step3Cta' },
+  { step: 1, total: 3, titleKey: 'onboarding.step1Title', descKey: 'onboarding.step1Desc', ctaKey: 'onboarding.step1Cta' },
+  { step: 2, total: 3, titleKey: 'onboarding.step2Title', descKey: 'onboarding.step2Desc', ctaKey: 'onboarding.step2Cta' },
+  { step: 3, total: 3, titleKey: 'onboarding.step3Title', descKey: 'onboarding.step3Desc', ctaKey: 'onboarding.step3Cta' },
 ]
 
-/**
- * useShouldShowOnboarding
- *
- * Returns true when the onboarding modal should render.
- * Conditions:
- *   1. User is logged in (wallet_token exists in localStorage)
- *   2. Wallet query has resolved AND user has exactly zero wallets
- *   3. Onboarding has not been completed before (localStorage)
- *
- * `shouldShow` is derived during render (no setState-in-effect) so the value
- * updates synchronously as the wallet query resolves.
- */
+// ─── Hook ─────────────────────────────────────────────────
+
 export function useShouldShowOnboarding() {
   const token = localStorage.getItem('wallet_token')
   const { data: wallets, isLoading, isError } = useWallets()
-
   const completed = localStorage.getItem(STORAGE_KEY)
-
   const shouldShow =
     !completed && !isLoading && !isError && !!token && !!wallets && wallets.length === 0
-
   return { shouldShow, isLoading, wallets }
 }
 
-/**
- * OnboardingModal
- *
- * Full-screen overlay wizard shown on first login when user has no wallets.
- * 3 steps with step indicator dots, skip link, and final CTA that
- * creates a sample wallet and navigates to /wallets.
- */
+// ─── Illustration block ───────────────────────────────────
+
+function IllustrationBlock({ name }: { name?: string }) {
+  const { t } = useTranslation()
+
+  return (
+    <div className="flex flex-col items-center justify-center gap-6 bg-primary-soft rounded-2xl p-8">
+      {/* Big wallet icon */}
+      <div className="relative">
+        <div className="w-20 h-20 rounded-2xl bg-primary flex items-center justify-center shadow-fab">
+          <Wallet className="w-10 h-10 text-primary-ink" aria-hidden="true" />
+        </div>
+        {/* Floating chip */}
+        <div className="absolute -top-3 -right-4 px-2.5 py-1 bg-surface border border-line rounded-full shadow-pop">
+          <span className="text-[10px] font-extrabold text-positive uppercase tracking-wide">
+            {t('onboarding.chipFree')}
+          </span>
+        </div>
+      </div>
+
+      {/* Welcome headline */}
+      <div className="text-center space-y-1">
+        <h2 className="text-lg font-extrabold tracking-[-0.02em] text-ink leading-snug">
+          {t('onboarding.welcomeTitle', { name: name ?? t('onboarding.defaultName') })}
+        </h2>
+        <p className="text-xs text-muted">{t('onboarding.welcomeDesc')}</p>
+      </div>
+
+      {/* Feature rows */}
+      <div className="w-full space-y-2.5">
+        {FEATURES.map(({ icon: Icon, key }) => (
+          <div key={key} className="flex items-center gap-3 bg-surface rounded-xl px-3 py-2.5 border border-line">
+            <div className="w-7 h-7 rounded-lg bg-primary-soft flex items-center justify-center shrink-0">
+              <Icon className="w-3.5 h-3.5 text-primary" aria-hidden="true" />
+            </div>
+            <span className="text-xs font-medium text-ink">{t(key)}</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+// ─── Progress dots ────────────────────────────────────────
+
+function ProgressDots({ current, total }: { current: number; total: number }) {
+  return (
+    <div className="flex items-center justify-center gap-2" aria-hidden="true">
+      {Array.from({ length: total }, (_, i) => (
+        <div
+          key={i}
+          className={`h-1.5 rounded-full transition-all duration-300 ${
+            i === current ? 'w-6 bg-primary' : i < current ? 'w-1.5 bg-primary/40' : 'w-1.5 bg-line'
+          }`}
+        />
+      ))}
+    </div>
+  )
+}
+
+// ─── Main modal ───────────────────────────────────────────
+
 export function OnboardingModal() {
   const { shouldShow, isLoading } = useShouldShowOnboarding()
   const navigate = useNavigate()
@@ -51,9 +103,14 @@ export function OnboardingModal() {
 
   const [current, setCurrent] = useState(0)
   const [dismissed, setDismissed] = useState(false)
+  const closeRef = useRef<HTMLButtonElement>(null)
 
-  // Visibility is derived from eligibility + local dismissal (no setState effect).
   const open = shouldShow && !dismissed
+
+  // Focus trap: focus the modal when it opens
+  useEffect(() => {
+    if (open) closeRef.current?.focus()
+  }, [open])
 
   if (isLoading || dismissed || !shouldShow) return null
 
@@ -65,14 +122,8 @@ export function OnboardingModal() {
     localStorage.setItem(STORAGE_KEY, 'true')
   }
 
-  const handleSkip = () => {
-    setDismissed(true)
-    localStorage.setItem(STORAGE_KEY, 'true')
-  }
-
   const handleNext = async () => {
     if (isLast) {
-      // Create a sample wallet then navigate to /add to add first transaction
       try {
         await createWallet.mutateAsync({
           name: t('onboarding.sampleWalletName'),
@@ -83,7 +134,7 @@ export function OnboardingModal() {
           initialBalance: 0,
         })
       } catch {
-        // Wallet may already exist (race condition); navigate regardless
+        // Wallet may already exist; navigate regardless
       }
       localStorage.setItem(STORAGE_KEY, 'true')
       navigate('/add', { replace: true })
@@ -94,71 +145,85 @@ export function OnboardingModal() {
 
   return (
     <OnboardingOverlay open={open} onClose={handleClose}>
-      <div className="flex flex-col h-full min-h-0">
-        {/* Skip link */}
-        <div className="flex justify-end mb-1 shrink-0">
-          <button
-            onClick={handleSkip}
-            className="text-xs text-muted hover:text-accent transition-colors px-1 py-0.5"
-          >
-            {t('onboarding.skip')}
-          </button>
-        </div>
+      {/* Mobile layout: stacked */}
+      <div className="lg:hidden flex flex-col gap-5 h-full min-h-0">
+        <IllustrationBlock />
 
-        {/* Illustration area */}
-        <div className="flex-1 flex flex-col items-center justify-center gap-5 py-4 min-h-0">
-          {/* Large emoji icon with accent ring */}
-          <div className="relative">
-            <div className="w-24 h-24 rounded-full bg-accent/10 flex items-center justify-center text-5xl select-none">
-              {step.emoji}
-            </div>
-            {/* Step badge */}
-            <div className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-accent flex items-center justify-center">
-              <span className="text-white text-2xs font-bold">{step.step}</span>
-            </div>
-          </div>
+        <div className="flex flex-col gap-4 flex-1">
+          <ProgressDots current={current} total={STEPS.length} />
 
-          {/* Text */}
-          <div className="text-center space-y-2 max-w-[260px]">
-            <h2 className="text-lg font-bold text-primary leading-snug">
-              {t(step.titleKey)}
-            </h2>
-            <p className="text-sm text-muted leading-relaxed">
-              {t(step.descKey)}
+          <div className="text-center space-y-1.5">
+            <p className="text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted">
+              {t('onboarding.stepProgress', { step: step.step, total: step.total })}
             </p>
+            <h3 className="text-base font-extrabold text-ink">{t(step.titleKey)}</h3>
+            <p className="text-sm text-muted leading-relaxed">{t(step.descKey)}</p>
+          </div>
+
+          <div className="space-y-2 pt-1">
+            <button
+              type="button"
+              onClick={handleNext}
+              disabled={createWallet.isPending}
+              className="w-full h-11 rounded-xl bg-primary text-primary-ink font-semibold text-sm
+                         hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed
+                         transition-colors shadow-button active:scale-[.98]"
+            >
+              {createWallet.isPending ? t('onboarding.processing') : t(step.ctaKey)}
+            </button>
+            <button
+              type="button"
+              onClick={handleClose}
+              className="w-full h-9 text-xs text-muted hover:text-ink transition-colors"
+            >
+              {t('onboarding.skip')}
+            </button>
           </div>
         </div>
+      </div>
 
-        {/* Footer: dots + progress + CTA */}
-        <div className="shrink-0 pt-2 pb-1 space-y-4">
-          {/* Step dots */}
-          <div className="flex items-center justify-center gap-2">
-            {STEPS.map((s, i) => (
-              <div
-                key={s.step}
-                className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === current
-                    ? 'w-6 bg-accent'
-                    : i < current
-                    ? 'w-1.5 bg-accent/40'
-                    : 'w-1.5 bg-border'
-                }`}
-              />
-            ))}
+      {/* Desktop layout: side-by-side */}
+      <div className="hidden lg:flex gap-8 h-full min-h-0">
+        {/* Left: illustration */}
+        <div className="w-72 shrink-0 flex flex-col justify-center">
+          <IllustrationBlock />
+        </div>
+
+        {/* Right: content */}
+        <div className="flex-1 flex flex-col justify-between py-2">
+          {/* Skip */}
+          <div className="flex justify-end">
+            <button
+              ref={closeRef}
+              type="button"
+              onClick={handleClose}
+              className="text-xs text-muted hover:text-ink transition-colors px-1 py-0.5
+                         focus:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 rounded"
+            >
+              {t('onboarding.skip')}
+            </button>
           </div>
 
-          {/* Progress label */}
-          <p className="text-center text-xs text-muted">
-            {t('onboarding.stepProgress', { step: step.step, total: step.total })}
-          </p>
+          {/* Step content */}
+          <div className="space-y-3">
+            <ProgressDots current={current} total={STEPS.length} />
+            <div className="space-y-2">
+              <p className="text-[10px] font-extrabold uppercase tracking-[0.07em] text-muted">
+                {t('onboarding.stepProgress', { step: step.step, total: step.total })}
+              </p>
+              <h3 className="text-xl font-extrabold tracking-[-0.02em] text-ink">{t(step.titleKey)}</h3>
+              <p className="text-sm text-muted leading-relaxed">{t(step.descKey)}</p>
+            </div>
+          </div>
 
           {/* CTA */}
           <button
+            type="button"
             onClick={handleNext}
             disabled={createWallet.isPending}
-            className="w-full py-3 rounded-full bg-accent text-white font-semibold text-sm
-                       hover:bg-accent/90 active:scale-95 transition-all duration-150
-                       disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
+            className="w-full h-11 rounded-xl bg-primary text-primary-ink font-semibold text-sm
+                       hover:bg-primary-hover disabled:opacity-60 disabled:cursor-not-allowed
+                       transition-colors shadow-button active:scale-[.98]"
           >
             {createWallet.isPending ? t('onboarding.processing') : t(step.ctaKey)}
           </button>
@@ -168,7 +233,8 @@ export function OnboardingModal() {
   )
 }
 
-/* ── Full-screen overlay ─────────────────────────────────── */
+// ─── Overlay ──────────────────────────────────────────────
+
 interface OnboardingOverlayProps {
   open: boolean
   onClose: () => void
@@ -179,39 +245,47 @@ function OnboardingOverlay({ open, onClose, children }: OnboardingOverlayProps) 
   const { t } = useTranslation()
 
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    if (!open) return
+    document.body.style.overflow = 'hidden'
     return () => { document.body.style.overflow = '' }
   }, [open])
+
+  // Close on Escape
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [open, onClose])
 
   if (!open) return null
 
   return (
     <div
-      className="fixed inset-0 z-[100] flex flex-col"
+      className="fixed inset-0 z-[100] flex items-end lg:items-center justify-center"
       role="dialog"
       aria-modal="true"
       aria-label={t('onboarding.dialogAria')}
     >
-      {/* Blurred backdrop */}
+      {/* Scrim */}
       <div
-        className="absolute inset-0 bg-bg/95 backdrop-blur-sm"
+        className="absolute inset-0 bg-bg/80 backdrop-blur-sm"
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Sheet */}
+      {/* Panel — bottom sheet on mobile, centred modal on desktop */}
       <div
-        className="relative flex-1 flex flex-col justify-end mx-4 mb-6 mt-20 rounded-2xl overflow-hidden
-                    bg-surface border border-border shadow-2xl animate-slide-up"
+        className="relative w-full lg:w-[760px] lg:max-h-[560px]
+                   bg-surface border border-line
+                   rounded-t-2xl lg:rounded-2xl
+                   shadow-modal overflow-hidden
+                   animate-slide-up lg:animate-none
+                   mx-0 lg:mx-8 mb-0 lg:mb-0"
       >
-        {/* Gradient accent bar at top */}
-        <div className="h-1 w-full bg-gradient-to-r from-accent via-accent/60 to-accent shrink-0" />
-
-        <div className="flex-1 px-5 py-5 overflow-hidden">
+        {/* Brand accent bar */}
+        <div className="h-1 w-full bg-primary shrink-0" />
+        <div className="p-5 lg:p-8 lg:min-h-[480px] flex flex-col">
           {children}
         </div>
       </div>

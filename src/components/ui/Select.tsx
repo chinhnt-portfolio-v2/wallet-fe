@@ -13,19 +13,17 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
     return (
       <div className="space-y-1">
         {label && (
-          <label className="block text-xs font-medium text-secondary">
+          <label className="block text-xs font-medium text-sub">
             {label}
           </label>
         )}
         <select
           ref={ref}
           className={cn(
-            'w-full rounded-sm border bg-surface px-3 py-2 text-sm text-primary',
-            // Dark color-scheme so the native option dropdown renders dark.
-            '[color-scheme:dark]',
-            'focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent',
+            'w-full rounded-sm border bg-surface px-3 py-2 text-sm text-ink',
+            'focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary',
             'transition-all duration-150 cursor-pointer',
-            error ? 'border-negative' : 'border-border',
+            error ? 'border-negative' : 'border-line',
             className
           )}
           {...props}

@@ -1,6 +1,7 @@
 import { useState, type ComponentType } from 'react'
 import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
+import { Plus } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import {
@@ -12,23 +13,12 @@ import {
   IconNotifications,
   IconExport,
   IconSettings,
+  IconDashboard,
+  IconTransactions,
+  IconDebts,
 } from '@/components/layout/nav-icons'
 
-interface NavItem {
-  href: string
-  labelKey: string
-  glyph: string
-}
-
-const NAV_ITEMS: NavItem[] = [
-  { href: '/', labelKey: 'nav.dashboard', glyph: '◐' },
-  { href: '/transactions', labelKey: 'nav.transactions', glyph: '◑' },
-  { href: '/debts', labelKey: 'nav.debts', glyph: '◖' },
-  { href: '/budgets', labelKey: 'nav.budgets', glyph: '◕' },
-]
-
-// Destinations the 4 primary tabs don't reach — surfaced via the "Menu" sheet so
-// the whole app is reachable on mobile (audit §3, mobile nav ergonomics).
+// Destinations the 4 primary tabs don't reach — surfaced via the "Menu" sheet.
 interface MenuItem {
   href: string
   labelKey: string
@@ -51,6 +41,22 @@ function isActiveHref(pathname: string, href: string): boolean {
   return href === '/' ? pathname === '/' : pathname.startsWith(href)
 }
 
+interface TabItem {
+  href: string
+  labelKey: string
+  Icon: ComponentType
+}
+
+// 5-slot layout: [Dashboard] [Transactions] [FAB+] [Debts] [Menu]
+// The center slot (index 2) is the FAB-like "+ Add" button.
+const LEFT_TABS: TabItem[] = [
+  { href: '/', labelKey: 'nav.dashboard', Icon: IconDashboard },
+  { href: '/transactions', labelKey: 'nav.transactions', Icon: IconTransactions },
+]
+const RIGHT_TABS: TabItem[] = [
+  { href: '/debts', labelKey: 'nav.debts', Icon: IconDebts },
+]
+
 export function BottomNav() {
   const location = useLocation()
   const navigate = useNavigate()
@@ -68,10 +74,11 @@ export function BottomNav() {
     <>
       <nav
         aria-label={t('nav.overview')}
-        className="fixed bottom-0 left-0 right-0 bg-bg-2 border-t border-border z-30 md:hidden"
+        className="fixed bottom-0 left-0 right-0 bg-surface border-t border-line z-30 md:hidden"
       >
-        <div className="max-w-lg mx-auto flex pb-[env(safe-area-inset-bottom)]">
-          {NAV_ITEMS.map(({ href, labelKey, glyph }) => {
+        <div className="max-w-lg mx-auto flex items-end pb-[env(safe-area-inset-bottom)]">
+          {/* Left tabs */}
+          {LEFT_TABS.map(({ href, labelKey, Icon }) => {
             const isActive = isActiveHref(location.pathname, href)
             const label = t(labelKey)
             return (
@@ -82,16 +89,53 @@ export function BottomNav() {
                 aria-current={isActive ? 'page' : undefined}
                 className={cn(
                   'flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] py-2.5 transition-colors',
-                  isActive ? 'text-accent' : 'text-faint hover:text-muted'
+                  isActive ? 'text-primary' : 'text-muted hover:text-sub'
                 )}
               >
-                <span className="text-lg leading-none select-none" aria-hidden="true">{glyph}</span>
-                <span className="font-mono text-[10px] tracking-wider uppercase">{label}</span>
+                <Icon />
+                <span className="text-[10px] font-semibold tracking-wider uppercase">{label}</span>
               </Link>
             )
           })}
 
-          {/* 5th tab — opens the overflow menu sheet. */}
+          {/* Center FAB-style "+ Add" button */}
+          <div className="flex-1 flex flex-col items-center justify-end pb-1">
+            <Link
+              to="/add"
+              aria-label={t('nav.logExpense')}
+              className={cn(
+                'w-12 h-12 rounded-xl bg-primary text-primary-ink shadow-fab',
+                'flex items-center justify-center transition-all duration-150',
+                'active:scale-95',
+                '-mt-4'
+              )}
+            >
+              <Plus className="w-5 h-5" aria-hidden="true" />
+            </Link>
+          </div>
+
+          {/* Right tabs */}
+          {RIGHT_TABS.map(({ href, labelKey, Icon }) => {
+            const isActive = isActiveHref(location.pathname, href)
+            const label = t(labelKey)
+            return (
+              <Link
+                key={href}
+                to={href}
+                aria-label={label}
+                aria-current={isActive ? 'page' : undefined}
+                className={cn(
+                  'flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] py-2.5 transition-colors',
+                  isActive ? 'text-primary' : 'text-muted hover:text-sub'
+                )}
+              >
+                <Icon />
+                <span className="text-[10px] font-semibold tracking-wider uppercase">{label}</span>
+              </Link>
+            )
+          })}
+
+          {/* 5th slot — overflow menu */}
           <button
             type="button"
             onClick={() => setMenuOpen(true)}
@@ -100,11 +144,11 @@ export function BottomNav() {
             aria-current={menuActive ? 'page' : undefined}
             className={cn(
               'flex-1 flex flex-col items-center justify-center gap-0.5 min-h-[44px] py-2.5 transition-colors',
-              menuActive ? 'text-accent' : 'text-faint hover:text-muted'
+              menuActive ? 'text-primary' : 'text-muted hover:text-sub'
             )}
           >
-            <span className="leading-none" aria-hidden="true"><IconMenu /></span>
-            <span className="font-mono text-[10px] tracking-wider uppercase">{t('common.menu')}</span>
+            <span aria-hidden="true"><IconMenu /></span>
+            <span className="text-[10px] font-semibold tracking-wider uppercase">{t('common.menu')}</span>
           </button>
         </div>
       </nav>
@@ -122,15 +166,15 @@ export function BottomNav() {
                   className={cn(
                     'w-full flex items-center gap-3 min-h-[44px] px-2 py-2.5 rounded-lg text-left transition-colors',
                     isActive
-                      ? 'text-accent bg-surface-2'
-                      : 'text-secondary hover:bg-surface-2 hover:text-primary'
+                      ? 'text-primary bg-primary-soft'
+                      : 'text-sub hover:bg-hover hover:text-ink'
                   )}
                 >
-                  <span className={cn('shrink-0', isActive ? 'text-accent' : 'text-muted')}>
+                  <span className={cn('shrink-0', isActive ? 'text-primary' : 'text-muted')}>
                     <Icon />
                   </span>
-                  <span className="flex-1 font-sans text-sm">{t(labelKey)}</span>
-                  <span className="text-faint" aria-hidden="true">›</span>
+                  <span className="flex-1 text-sm font-medium">{t(labelKey)}</span>
+                  <span className="text-muted text-xs" aria-hidden="true">›</span>
                 </button>
               </li>
             )

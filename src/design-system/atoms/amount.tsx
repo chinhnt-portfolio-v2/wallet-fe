@@ -13,13 +13,13 @@ interface AmountProps {
   bare?: boolean
 }
 
-/** Tabular mono VND amount. Pairs with DisplayAmount for hero values. */
+/** Tabular PJS VND amount. Pairs with DisplayAmount for hero values. */
 export function Amount({
   value,
   size = 14,
   sign = false,
   dim = false,
-  weight = 400,
+  weight = 500,
   className,
   style,
   bare = false,
@@ -29,13 +29,14 @@ export function Amount({
   const signCh = v < 0 ? '−' : sign && v > 0 ? '+' : ''
   return (
     <span
-      className={`font-mono tabular whitespace-nowrap ${className ?? ''}`}
+      className={`tabular-nums whitespace-nowrap ${className ?? ''}`}
       style={{
         fontSize: size,
         fontWeight: weight,
         lineHeight: 1,
         letterSpacing: '-0.01em',
         opacity: dim ? 0.5 : 1,
+        color: dim ? 'var(--muted)' : 'var(--ink)',
         ...style,
       }}
     >
@@ -45,7 +46,7 @@ export function Amount({
         <span
           style={{
             marginLeft: size * 0.1,
-            color: dim ? 'inherit' : 'var(--color-text-muted)',
+            color: 'var(--muted)',
             fontSize: size * 0.7,
           }}
         >
@@ -63,33 +64,32 @@ interface DisplayAmountProps {
   className?: string
 }
 
-/** Editorial hero amount — Instrument Serif italic + VND tag. */
+/** Hero amount — Plus Jakarta Sans 800, tabular-nums, no italic serif. */
 export function DisplayAmount({ value, size = 76, sub, className }: DisplayAmountProps) {
   const v = Math.round(value)
   const s = formatVndDigits(v)
   return (
     <div className={`flex items-baseline gap-2.5 ${className ?? ''}`}>
       <span
-        className="font-numeral tabular text-primary"
+        className="tabular-nums text-ink"
         style={{
           fontSize: size,
           lineHeight: 0.92,
-          letterSpacing: '-0.015em',
-          fontStyle: 'italic',
-          fontWeight: 400,
+          letterSpacing: '-0.025em',
+          fontWeight: 800,
         }}
       >
         {v < 0 ? '−' : ''}
         {s}
       </span>
       <span
-        className="font-mono text-muted"
-        style={{ fontSize: size * 0.22, letterSpacing: '0.04em' }}
+        className="text-muted"
+        style={{ fontSize: size * 0.22, letterSpacing: '0.04em', fontWeight: 600 }}
       >
         VND
       </span>
       {sub && (
-        <span className="font-mono text-muted text-[11px] ml-1.5">{sub}</span>
+        <span className="text-muted text-[11px] ml-1.5">{sub}</span>
       )}
     </div>
   )

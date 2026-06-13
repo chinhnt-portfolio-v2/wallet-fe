@@ -11,7 +11,6 @@ const WALLET_COLORS = [
   '#EC4899', '#F59E0B', '#06B6D4', '#64748B',
 ]
 
-// Wallet types selectable in the create/edit form.
 const FORM_WALLET_TYPES: WalletType[] = ['CASH', 'BANK', 'E_WALLET', 'POSTPAID']
 
 export interface WalletFormData {
@@ -43,15 +42,14 @@ export function WalletForm({
     e.preventDefault()
     if (!name.trim()) { toast.error(t('wallet.enterName')); return }
     const balance = initialBalance ? parseFloat(initialBalance) : undefined
-    // Icon kept as the wallet's first letter — editorial letter tiles, no emoji.
     onSubmit({ name: name.trim(), icon: (name.trim()[0] ?? '?').toUpperCase(), color, type, initialBalance: balance })
   }
 
   const letter = (name.trim()[0] ?? '?').toUpperCase()
 
   return (
-    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-surface border border-border rounded-lg">
-      <p className="font-mono text-[11px] uppercase tracking-widest text-secondary">
+    <form onSubmit={handleSubmit} className="space-y-4 p-4 bg-surface border border-line rounded-lg">
+      <p className="text-[11px] font-extrabold uppercase tracking-widest text-sub">
         {initial?.id ? t('wallet.editWallet') : t('wallet.createWallet')}
       </p>
 
@@ -71,7 +69,9 @@ export function WalletForm({
       />
 
       <div>
-        <label className="block font-mono text-[11px] uppercase tracking-widest text-secondary mb-2">{t('wallet.color')}</label>
+        <label className="block text-[11px] font-extrabold uppercase tracking-widest text-sub mb-2">
+          {t('wallet.color')}
+        </label>
         <div className="flex gap-2 flex-wrap">
           {WALLET_COLORS.map((c) => (
             <button
@@ -80,7 +80,7 @@ export function WalletForm({
               onClick={() => setColor(c)}
               aria-label={c}
               className={`w-7 h-7 rounded-full transition-all ${
-                color === c ? 'ring-2 ring-offset-2 ring-border-hi scale-110' : 'hover:scale-110'
+                color === c ? 'ring-2 ring-offset-2 ring-primary scale-110' : 'hover:scale-110'
               }`}
               style={{ backgroundColor: c }}
             />
@@ -98,23 +98,23 @@ export function WalletForm({
             onChange={(e) => setInitialBalance(e.target.value)}
             placeholder="0"
             min="0"
-            className="font-mono"
+            className="tabular-nums"
             hint={t('wallet.initialBalanceHint')}
           />
         </div>
       )}
 
       {/* Preview — letter tile */}
-      <div className="flex items-center gap-3 p-3 rounded border border-border-hi bg-surface-2">
+      <div className="flex items-center gap-3 p-3 rounded-md border border-line bg-surface-2">
         <div
-          className="w-10 h-10 rounded flex items-center justify-center font-mono text-base font-semibold shrink-0"
+          className="w-10 h-10 rounded-md flex items-center justify-center text-base font-bold shrink-0"
           style={{ backgroundColor: `${color}22`, color }}
         >
           {letter}
         </div>
         <div>
-          <p className="font-sans text-[13px] font-medium text-primary">{name || t('common.preview')}</p>
-          <p className="font-mono text-[11px] text-secondary uppercase tracking-wide">{t(`wallet.types.${type}`)}</p>
+          <p className="text-[13px] font-semibold text-ink">{name || t('common.preview')}</p>
+          <p className="text-[11px] font-bold uppercase tracking-wide text-sub">{t(`wallet.types.${type}`)}</p>
         </div>
       </div>
 
