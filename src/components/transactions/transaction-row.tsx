@@ -1,6 +1,7 @@
 import { useTranslation } from 'react-i18next'
 import { Amount, CategoryChip } from '@/design-system'
 import type { Transaction } from '@/types'
+import { debtChipKey } from './debt-chip'
 
 interface TransactionRowProps {
   tx: Transaction
@@ -14,7 +15,7 @@ interface TransactionRowProps {
  *
  * Mobile (<640px): category icon + name/sub-line + signed amount + time.
  * Desktop (≥640px): handled by TransactionTable — this renders mobile only.
- * Both: debt-linked rows show a Trả nợ/Phải thu chip.
+ * Both: debt-linked rows show a chip (Ghi nợ/Trả nợ/Cho vay/Thu nợ) via debtChipKey.
  */
 export function TransactionRow({ tx, first, onEdit }: TransactionRowProps) {
   const { t } = useTranslation()
@@ -29,13 +30,9 @@ export function TransactionRow({ tx, first, onEdit }: TransactionRowProps) {
     ? t('transaction.incomeRow')
     : (tx.category?.name ?? '—')
 
-  // Debt chip label based on group type
-  const debtChip =
-    tx.group?.groupType === 'LOAN_GIVEN'
-      ? t('transaction.chipReceivable')
-      : tx.groupId
-        ? t('transaction.chipPayDebt')
-        : null
+  // Debt chip label based on group direction + transaction sub-type
+  const debtChipKeyValue = debtChipKey(tx)
+  const debtChip = debtChipKeyValue ? t(debtChipKeyValue) : null
 
   const Avatar = isIncome ? (
     <div

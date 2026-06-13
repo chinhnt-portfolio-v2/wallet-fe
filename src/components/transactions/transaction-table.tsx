@@ -2,6 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Amount, CategoryChip } from '@/design-system'
 import { formatDate } from '@/lib/utils'
 import type { Transaction } from '@/types'
+import { debtChipKey } from './debt-chip'
 
 interface TransactionTableProps {
   txs: Transaction[]
@@ -57,12 +58,8 @@ export function TransactionTable({
               tx.category?.name ||
               (isIncome ? t('transaction.income') : t('transaction.transactionFallback'))
 
-            const debtChip =
-              tx.group?.groupType === 'LOAN_GIVEN'
-                ? t('transaction.chipReceivable')
-                : tx.groupId
-                  ? t('transaction.chipPayDebt')
-                  : null
+            const debtChipKeyValue = debtChipKey(tx)
+            const debtChip = debtChipKeyValue ? t(debtChipKeyValue) : null
 
             return (
               <tr
