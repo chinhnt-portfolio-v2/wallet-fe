@@ -1,11 +1,12 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useWallets } from '@/hooks/useWallets'
 import { useTransfer } from '@/hooks/useTransfer'
 import { Input } from '@/components/ui/Input'
+import { formatVndDigits } from '@/lib/utils'
 import { Amount, SectionLabel, Pill } from '@/design-system'
-import { WALLET_TYPE_LABEL } from '@/lib/utils'
 import type { Wallet } from '@/types'
 
 // ── Wallet selector row ──────────────────────────────────────
@@ -20,15 +21,18 @@ function WalletRow({
   onSelect: () => void
   role: 'from' | 'to'
 }) {
+  const { t } = useTranslation()
   const accent = wallet.color ?? '#64748B'
   return (
     <button
       onClick={onSelect}
       aria-pressed={selected}
-      aria-label={`Chọn ví ${role === 'from' ? 'nguồn' : 'đích'} ${wallet.name}`}
-      className={`w-full text-left rounded-lg border transition-all flex items-center gap-3 px-3 py-2.5 group ${
+      aria-label={role === 'from'
+        ? t('transfer.selectFromWalletAria', { name: wallet.name })
+        : t('transfer.selectToWalletAria', { name: wallet.name })}
+      className={`w-full min-h-[44px] text-left rounded-lg border transition-all flex items-center gap-3 px-3 py-2.5 group ${
         selected
-          ? 'border-accent bg-surface-2 ring-1 ring-accent/20'
+          ? 'border-accent bg-accent/10 ring-1 ring-accent/30'
           : 'border-border bg-surface hover:border-border-hi hover:bg-surface-2'
       }`}
     >
@@ -41,7 +45,7 @@ function WalletRow({
       <div className="flex-1 min-w-0">
         <p className="font-sans text-[13px] font-medium text-primary truncate">{wallet.name}</p>
         <p className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
-          {WALLET_TYPE_LABEL[wallet.type] ?? wallet.type}
+          {t(`wallet.types.${wallet.type}`)}
         </p>
       </div>
       <div className="text-right shrink-0">
@@ -62,6 +66,7 @@ function WalletRow({
 // ── Page ─────────────────────────────────────────────────────
 export default function TransferPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { data: wallets, isLoading } = useWallets()
   const transfer = useTransfer()
 
@@ -78,11 +83,11 @@ export default function TransferPage() {
   const canSubmit = !transfer.isPending && fromId && toId && !sameWallet && parsedAmount > 0 && !overBalance
 
   const handleSubmit = () => {
-    if (!fromId || !toId) { toast.error('Chọn ví nguồn và ví đích'); return }
-    if (sameWallet) { toast.error('Ví nguồn và ví đích không được trùng nhau'); return }
-    if (!amount || parsedAmount <= 0) { toast.error('Nhập số tiền hợp lệ'); return }
+    if (!fromId || !toId) { toast.error(t('transfer.selectFromTo')); return }
+    if (sameWallet) { toast.error(t('transfer.sameWallet')); return }
+    if (!amount || parsedAmount <= 0) { toast.error(t('transfer.enterValidAmount')); return }
     if (fromWallet && parsedAmount > Number(fromWallet.balance)) {
-      toast.error('Số tiền vượt quá số dư khả dụng')
+      toast.error(t('transfer.overBalance'))
       return
     }
 
@@ -90,7 +95,7 @@ export default function TransferPage() {
       { fromWalletId: fromId, toWalletId: toId, amount: parsedAmount, note: note || undefined },
       {
         onSuccess: () => {
-          toast.success('Đã chuyển tiền!')
+          toast.success(t('transfer.transferred'))
           navigate('/wallets')
         },
         onError: (err: Error) => toast.error(err.message),
@@ -101,21 +106,21 @@ export default function TransferPage() {
   const activeWallets = wallets?.filter((w) => w.isActive) ?? []
 
   return (
-    <div className="space-y-6">
+    <div className="page-enter space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="font-display italic text-[28px] leading-none text-primary">Chuyển tiền</h2>
+          <h2 className="font-display italic text-[28px] leading-none text-primary">{t('transfer.title')}</h2>
           <p className="font-mono text-[10px] uppercase tracking-widest text-muted mt-1">
-            Di chuyển giữa các ví
+            {t('transfer.subtitle')}
           </p>
         </div>
-        <Pill ghost onClick={() => navigate(-1)}>← Back</Pill>
+        <Pill ghost onClick={() => navigate(-1)}>← {t('common.back')}</Pill>
       </div>
 
       {/* From wallet */}
       <div className="space-y-2">
-        <SectionLabel>Từ ví</SectionLabel>
+        <SectionLabel>{t('transfer.from')}</SectionLabel>
         {isLoading ? (
           <div className="space-y-2">
             {[1, 2].map((i) => (
@@ -149,7 +154,7 @@ export default function TransferPage() {
 
       {/* To wallet */}
       <div className="space-y-2">
-        <SectionLabel>Đến ví</SectionLabel>
+        <SectionLabel>{t('transfer.to')}</SectionLabel>
         <div className="space-y-2">
           {activeWallets.filter((w) => w.id !== fromId).map((w) => (
             <WalletRow
@@ -162,7 +167,7 @@ export default function TransferPage() {
           ))}
           {activeWallets.filter((w) => w.id !== fromId).length === 0 && fromId && (
             <p className="font-mono text-[11px] text-muted text-center py-4">
-              Không còn ví khả dụng
+              {t('transfer.noWalletsLeft')}
             </p>
           )}
         </div>
@@ -170,16 +175,17 @@ export default function TransferPage() {
 
       {/* Amount — editorial big serif italic input */}
       <div className="space-y-2">
-        <SectionLabel>Số tiền</SectionLabel>
+        <SectionLabel>{t('transfer.amount')}</SectionLabel>
         <div className="relative bg-surface border border-border rounded-lg overflow-hidden focus-within:border-accent/60 focus-within:ring-1 focus-within:ring-accent/20 transition-all">
           <input
-            type="number"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            className="w-full bg-transparent px-4 pt-4 pb-3 font-display italic text-[40px] leading-none text-primary outline-none pr-16 placeholder:text-muted/40"
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={amount ? formatVndDigits(parsedAmount) : ''}
+            onChange={(e) => setAmount(e.target.value.replace(/\D/g, ''))}
+            className="w-full bg-transparent px-4 pt-4 pb-3 font-numeral italic text-[40px] leading-none text-primary outline-none pr-16 placeholder:text-muted/40"
             placeholder="0"
-            aria-label="Số tiền chuyển"
+            aria-label={t('transfer.amountAria')}
           />
           <span className="absolute right-4 bottom-4 font-mono text-[11px] uppercase tracking-widest text-muted">
             VND
@@ -190,38 +196,38 @@ export default function TransferPage() {
         {overBalance && (
           <p className="font-mono text-[11px] text-negative flex items-center gap-1.5">
             <span aria-hidden="true">▲</span>
-            Vượt số dư —{' '}
+            {t('transfer.overBalanceShort')}{' '}
             {fromWallet && (
               <Amount value={Number(fromWallet.balance)} size={11} className="text-negative" />
             )}
-            {' '}khả dụng
+            {' '}{t('transfer.available')}
           </p>
         )}
         {fromWallet && parsedAmount > 0 && parsedAmount === Number(fromWallet.balance) && (
           <p className="font-mono text-[11px] text-muted">
-            ◇ Chuyển toàn bộ — ví nguồn về 0₫
+            {t('transfer.transferAll')}
           </p>
         )}
       </div>
 
       {/* Note */}
       <div className="space-y-2">
-        <SectionLabel>Ghi chú</SectionLabel>
+        <SectionLabel>{t('transfer.note')}</SectionLabel>
         <Input
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="VD: Chuyển tiền tiêu tháng"
+          placeholder={t('transfer.notePlaceholder')}
         />
       </div>
 
       {/* Preview panel */}
       {fromWallet && toWallet && parsedAmount > 0 && (
         <div className="rounded-lg border border-border-hi bg-surface-2 p-4 space-y-3">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted">Xem trước</p>
+          <p className="font-mono text-[10px] uppercase tracking-widest text-muted">{t('transfer.previewTitle')}</p>
           <div className="flex items-center gap-4">
             {/* From */}
             <div className="flex-1 min-w-0 space-y-0.5">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted">Nguồn</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted">{t('transfer.source')}</p>
               <p className="font-sans text-[13px] font-medium text-primary truncate">{fromWallet.name}</p>
               <Amount value={-parsedAmount} size={13} sign className="text-negative" />
             </div>
@@ -229,7 +235,7 @@ export default function TransferPage() {
             <span className="font-mono text-[18px] text-muted shrink-0">→</span>
             {/* To */}
             <div className="flex-1 min-w-0 text-right space-y-0.5">
-              <p className="font-mono text-[10px] uppercase tracking-widest text-muted">Đích</p>
+              <p className="font-mono text-[10px] uppercase tracking-widest text-muted">{t('transfer.destination')}</p>
               <p className="font-sans text-[13px] font-medium text-primary truncate">{toWallet.name}</p>
               <Amount value={parsedAmount} size={13} sign className="text-positive" />
             </div>
@@ -244,7 +250,7 @@ export default function TransferPage() {
         disabled={!canSubmit}
         className="w-full justify-center h-11 text-[13px] rounded-lg"
       >
-        {transfer.isPending ? 'Đang chuyển...' : '✓ Xác nhận chuyển tiền'}
+        {transfer.isPending ? t('transfer.transferring') : t('transfer.confirmTransfer')}
       </Pill>
     </div>
   )

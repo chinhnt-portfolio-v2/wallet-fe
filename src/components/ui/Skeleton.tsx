@@ -5,7 +5,7 @@ interface SkeletonProps {
 }
 
 export function Skeleton({ className }: SkeletonProps) {
-  return <div className={cn('animate-pulse bg-surface-2 rounded', className)} />
+  return <div className={cn('animate-shimmer bg-surface-2 rounded', className)} />
 }
 
 export function CardSkeleton() {

@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from 'react'
+import { useTranslation } from 'react-i18next'
 import type { NlpParseResult } from '@/types'
 import { useNlp } from '@/hooks/use-nlp'
 
@@ -7,6 +8,7 @@ interface NlpInputBarProps {
 }
 
 export function NlpInputBar({ onResult }: NlpInputBarProps) {
+  const { t } = useTranslation()
   const [text, setText] = useState('')
   const nlp = useNlp()
 
@@ -26,7 +28,7 @@ export function NlpInputBar({ onResult }: NlpInputBarProps) {
   return (
     <div className="space-y-1.5">
       <label className="block text-xs font-medium text-secondary">
-        Nhập nhanh bằng ngôn ngữ tự nhiên
+        {t('nlp.label')}
       </label>
       <form onSubmit={handleSubmit} className="flex gap-2">
         <input
@@ -34,21 +36,21 @@ export function NlpInputBar({ onResult }: NlpInputBarProps) {
           value={text}
           onChange={(e) => setText(e.target.value)}
           disabled={nlp.isPending}
-          placeholder="VD: cafe 50k hom qua vi momo"
+          placeholder={t('nlp.placeholder')}
           maxLength={200}
-          aria-label="Nhập mô tả giao dịch"
+          aria-label={t('nlp.inputAria')}
           className="input flex-1 text-sm"
         />
         <button
           type="submit"
           disabled={!canSubmit}
-          aria-label="Phân tích"
+          aria-label={t('nlp.analyze')}
           className="btn-primary px-4 py-2 text-sm shrink-0 disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {nlp.isPending ? (
             <span className="inline-block w-4 h-4 border-2 border-white/40 border-t-white rounded-full animate-spin" aria-hidden="true" />
           ) : (
-            '✨ Phân tích'
+            `✨ ${t('nlp.analyze')}`
           )}
         </button>
       </form>
@@ -56,8 +58,8 @@ export function NlpInputBar({ onResult }: NlpInputBarProps) {
       {nlp.isError && (
         <p role="alert" className="text-xs text-negative">
           {nlp.error?.message === 'Thao tác quá nhanh. Vui lòng chở một chút rồi thử lại.'
-            ? 'Bạn đã dùng quá giới hạn phân tích. Vui lòng thử lại sau.'
-            : 'Không thể phân tích, vui lòng nhập thủ công.'}
+            ? t('nlp.rateLimit')
+            : t('nlp.parseError')}
         </p>
       )}
     </div>

@@ -1,34 +1,15 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useWallets, useCreateWallet } from '@/hooks/useWallets'
 
 const STORAGE_KEY = 'wallet_onboarding_done'
 
+// Static step metadata; titles/descriptions/CTAs are resolved via i18n keys.
 const STEPS = [
-  {
-    step: 1,
-    total: 3,
-    emoji: '👋',
-    title: 'Chào bạn!',
-    description: 'Bắt đầu bằng việc tạo ví đầu tiên để theo dõi thu chi của mình.',
-    cta: 'Tiếp tục',
-  },
-  {
-    step: 2,
-    total: 3,
-    emoji: '💸',
-    title: 'Thêm giao dịch',
-    description: 'Ghi nhận thu nhập hoặc chi tiêu chỉ trong vài giây.',
-    cta: 'Tiếp tục',
-  },
-  {
-    step: 3,
-    total: 3,
-    emoji: '💸',
-    title: 'Bắt đầu ngay!',
-    description: 'Tạo ví đầu tiên và thêm giao dịch chi tiêu hoặc thu nhập đầu tiên ngay.',
-    cta: 'Tạo ví & thêm giao dịch',
-  },
+  { step: 1, total: 3, emoji: '👋', titleKey: 'onboarding.step1Title', descKey: 'onboarding.step1Desc', ctaKey: 'onboarding.step1Cta' },
+  { step: 2, total: 3, emoji: '💸', titleKey: 'onboarding.step2Title', descKey: 'onboarding.step2Desc', ctaKey: 'onboarding.step2Cta' },
+  { step: 3, total: 3, emoji: '💸', titleKey: 'onboarding.step3Title', descKey: 'onboarding.step3Desc', ctaKey: 'onboarding.step3Cta' },
 ]
 
 /**
@@ -39,23 +20,20 @@ const STEPS = [
  *   1. User is logged in (wallet_token exists in localStorage)
  *   2. Wallet query has resolved AND user has exactly zero wallets
  *   3. Onboarding has not been completed before (localStorage)
+ *
+ * `shouldShow` is derived during render (no setState-in-effect) so the value
+ * updates synchronously as the wallet query resolves.
  */
 export function useShouldShowOnboarding() {
   const token = localStorage.getItem('wallet_token')
   const { data: wallets, isLoading, isError } = useWallets()
-  const [shown, setShown] = useState(false)
 
   const completed = localStorage.getItem(STORAGE_KEY)
 
-  useEffect(() => {
-    if (completed) return
-    if (isLoading || isError) return
-    if (!wallets || wallets.length !== 0) return
-    if (!token) return
-    setShown(true)
-  }, [completed, isLoading, isError, wallets, token])
+  const shouldShow =
+    !completed && !isLoading && !isError && !!token && !!wallets && wallets.length === 0
 
-  return { shouldShow: shown && !completed, isLoading, wallets }
+  return { shouldShow, isLoading, wallets }
 }
 
 /**
@@ -68,18 +46,14 @@ export function useShouldShowOnboarding() {
 export function OnboardingModal() {
   const { shouldShow, isLoading } = useShouldShowOnboarding()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const createWallet = useCreateWallet()
 
-  const [open, setOpen] = useState(false)
   const [current, setCurrent] = useState(0)
   const [dismissed, setDismissed] = useState(false)
 
-  // Sync visibility with eligibility
-  useEffect(() => {
-    if (shouldShow && !dismissed) {
-      setOpen(true)
-    }
-  }, [shouldShow, dismissed])
+  // Visibility is derived from eligibility + local dismissal (no setState effect).
+  const open = shouldShow && !dismissed
 
   if (isLoading || dismissed || !shouldShow) return null
 
@@ -87,13 +61,11 @@ export function OnboardingModal() {
   const isLast = current === STEPS.length - 1
 
   const handleClose = () => {
-    setOpen(false)
     setDismissed(true)
     localStorage.setItem(STORAGE_KEY, 'true')
   }
 
   const handleSkip = () => {
-    setOpen(false)
     setDismissed(true)
     localStorage.setItem(STORAGE_KEY, 'true')
   }
@@ -103,7 +75,7 @@ export function OnboardingModal() {
       // Create a sample wallet then navigate to /add to add first transaction
       try {
         await createWallet.mutateAsync({
-          name: 'Ví của tôi',
+          name: t('onboarding.sampleWalletName'),
           type: 'CASH',
           currency: 'VND',
           icon: '💰',
@@ -129,7 +101,7 @@ export function OnboardingModal() {
             onClick={handleSkip}
             className="text-xs text-muted hover:text-accent transition-colors px-1 py-0.5"
           >
-            Bỏ qua
+            {t('onboarding.skip')}
           </button>
         </div>
 
@@ -149,10 +121,10 @@ export function OnboardingModal() {
           {/* Text */}
           <div className="text-center space-y-2 max-w-[260px]">
             <h2 className="text-lg font-bold text-primary leading-snug">
-              {step.title}
+              {t(step.titleKey)}
             </h2>
             <p className="text-sm text-muted leading-relaxed">
-              {step.description}
+              {t(step.descKey)}
             </p>
           </div>
         </div>
@@ -177,7 +149,7 @@ export function OnboardingModal() {
 
           {/* Progress label */}
           <p className="text-center text-xs text-muted">
-            Bước {step.step} / {step.total}
+            {t('onboarding.stepProgress', { step: step.step, total: step.total })}
           </p>
 
           {/* CTA */}
@@ -188,7 +160,7 @@ export function OnboardingModal() {
                        hover:bg-accent/90 active:scale-95 transition-all duration-150
                        disabled:opacity-60 disabled:cursor-not-allowed shadow-sm"
           >
-            {createWallet.isPending ? 'Đang xử lý…' : step.cta}
+            {createWallet.isPending ? t('onboarding.processing') : t(step.ctaKey)}
           </button>
         </div>
       </div>
@@ -204,6 +176,8 @@ interface OnboardingOverlayProps {
 }
 
 function OnboardingOverlay({ open, onClose, children }: OnboardingOverlayProps) {
+  const { t } = useTranslation()
+
   useEffect(() => {
     if (open) {
       document.body.style.overflow = 'hidden'
@@ -220,7 +194,7 @@ function OnboardingOverlay({ open, onClose, children }: OnboardingOverlayProps) 
       className="fixed inset-0 z-[100] flex flex-col"
       role="dialog"
       aria-modal="true"
-      aria-label="Hướng dẫn sử dụng"
+      aria-label={t('onboarding.dialogAria')}
     >
       {/* Blurred backdrop */}
       <div

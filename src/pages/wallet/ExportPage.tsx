@@ -1,16 +1,17 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
 import { useExportTransactions, transactionsToCSV, downloadCSV } from '@/lib/export'
 import { Button } from '@/components/ui/Button'
 import { SectionLabel } from '@/design-system'
 
 const PRESETS = [
-  { label: 'Tất cả',       days: null, key: 'all'        },
-  { label: '7 ngày',       days: 7,    key: '7d'         },
-  { label: '30 ngày',      days: 30,   key: '30d'        },
-  { label: '90 ngày',      days: 90,   key: '90d'        },
-  { label: 'Tháng này',    days: null, key: 'this-month' },
-  { label: 'Tháng trước',  days: null, key: 'last-month' },
+  { labelKey: 'export.presetAll',       days: null, key: 'all'        },
+  { labelKey: 'export.preset7d',        days: 7,    key: '7d'         },
+  { labelKey: 'export.preset30d',       days: 30,   key: '30d'        },
+  { labelKey: 'export.preset90d',       days: 90,   key: '90d'        },
+  { labelKey: 'export.presetThisMonth', days: null, key: 'this-month' },
+  { labelKey: 'export.presetLastMonth', days: null, key: 'last-month' },
 ]
 
 function getDateRange(key: string): { from: string; to: string } | null {
@@ -45,14 +46,21 @@ function getDateRange(key: string): { from: string; to: string } | null {
   }
 }
 
+// Render an ISO yyyy-mm-dd as dd/mm/yyyy (consistent with the rest of the app).
+function fmtRange(iso: string): string {
+  const [y, m, d] = iso.split('-')
+  return `${d}/${m}/${y}`
+}
+
 export default function ExportPage() {
+  const { t } = useTranslation()
   const [selectedPreset, setSelectedPreset] = useState('this-month')
   const [isExporting, setIsExporting] = useState(false)
 
-  const { data, isLoading, refetch } = useExportTransactions()
+  const { data, isLoading } = useExportTransactions()
 
   const handleExport = async () => {
-    if (!data) { toast.error('Chưa có dữ liệu'); return }
+    if (!data) { toast.error(t('export.noData')); return }
     setIsExporting(true)
     try {
       let txs = data.transactions
@@ -63,17 +71,25 @@ export default function ExportPage() {
       }
 
       if (txs.length === 0) {
-        toast.error('Không có giao dịch nào trong khoảng thời gian này')
+        toast.error(t('export.noTxInRange'))
         setIsExporting(false)
         return
       }
 
-      const csv = transactionsToCSV(txs, data.wallets, data.categories)
+      const csv = transactionsToCSV(txs, data.wallets, data.categories, {
+        headers: [
+          t('export.csvHeaderDate'), t('export.csvHeaderType'), t('export.csvHeaderAmount'),
+          t('export.csvHeaderWallet'), t('export.csvHeaderCategory'), t('export.csvHeaderNote'),
+          t('export.csvHeaderCreatedAt'),
+        ],
+        expense: t('export.csvExpense'),
+        income: t('export.csvIncome'),
+      })
       const dateStr = new Date().toISOString().split('T')[0]
       downloadCSV(csv, `wallet-export-${dateStr}`)
-      toast.success(`Đã xuất ${txs.length} giao dịch!`)
+      toast.success(t('export.exported', { count: txs.length }))
     } catch {
-      toast.error('Lỗi khi xuất file')
+      toast.error(t('export.exportError'))
     } finally {
       setIsExporting(false)
     }
@@ -86,16 +102,16 @@ export default function ExportPage() {
     : totalCount
 
   return (
-    <div className="space-y-5">
+    <div className="page-enter space-y-5">
       {/* Header */}
       <div>
-        <p className="font-mono text-[10px] uppercase tracking-widest text-muted mb-0.5">Account / Export</p>
-        <h2 className="text-base font-semibold text-primary">Xuất dữ liệu</h2>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-muted mb-0.5">{t('export.subtitle')}</p>
+        <h2 className="font-display italic text-[28px] leading-none text-primary">{t('export.title')}</h2>
       </div>
 
       {/* ── Format info panel ────────────────────────────── */}
       <section className="space-y-3">
-        <SectionLabel>Format</SectionLabel>
+        <SectionLabel>{t('export.format')}</SectionLabel>
 
         <div className="bg-surface border border-border rounded-lg p-4 space-y-4">
           {/* CSV format row */}
@@ -104,9 +120,9 @@ export default function ExportPage() {
               <span className="font-mono text-[11px] font-bold text-accent">CSV</span>
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-primary">Comma-separated values</p>
+              <p className="text-sm font-medium text-primary">{t('export.csvName')}</p>
               <p className="font-mono text-[11px] text-muted mt-0.5">
-                Ngày · Loại · Số tiền · Ví · Danh mục · Ghi chú — UTF-8, Excel compatible
+                {t('export.csvDesc')}
               </p>
             </div>
           </div>
@@ -116,15 +132,15 @@ export default function ExportPage() {
             <div className="grid grid-cols-3 gap-0 border-t border-border pt-4">
               <div className="text-center border-r border-border">
                 <p className="font-mono text-xl font-bold text-primary">{totalCount}</p>
-                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">Giao dịch</p>
+                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">{t('export.transactions')}</p>
               </div>
               <div className="text-center border-r border-border">
                 <p className="font-mono text-xl font-bold text-primary">{data.wallets.length}</p>
-                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">Ví</p>
+                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">{t('export.wallets')}</p>
               </div>
               <div className="text-center">
                 <p className="font-mono text-xl font-bold text-primary">{data.categories.length}</p>
-                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">Danh mục</p>
+                <p className="font-mono text-[10px] uppercase tracking-wide text-muted mt-0.5">{t('export.categories')}</p>
               </div>
             </div>
           )}
@@ -147,11 +163,11 @@ export default function ExportPage() {
         <SectionLabel right={
           data
             ? range
-              ? `${filteredCount} giao dịch`
-              : `${totalCount} giao dịch`
+              ? t('export.transactionsCount', { count: filteredCount })
+              : t('export.transactionsCount', { count: totalCount })
             : undefined
         }>
-          Khoảng thời gian
+          {t('export.dateRange')}
         </SectionLabel>
 
         <div className="grid grid-cols-3 gap-2">
@@ -165,34 +181,35 @@ export default function ExportPage() {
                   : 'border-border bg-surface text-muted hover:border-border-hi hover:text-primary'
               }`}
             >
-              {p.label}
+              {t(p.labelKey)}
             </button>
           ))}
         </div>
 
         {data && range && (
           <p className="font-mono text-[11px] text-muted">
-            {range.from} → {range.to}
+            {fmtRange(range.from)} → {fmtRange(range.to)}
           </p>
         )}
       </section>
 
       {/* ── Export action ─────────────────────────────────── */}
       <section className="space-y-3">
-        <SectionLabel>Download</SectionLabel>
+        <SectionLabel>{t('export.download')}</SectionLabel>
 
+        {/* Bone fill + ink text so the CTA label is legible (audit §2.11). */}
         <Button
           onClick={handleExport}
           disabled={isExporting || isLoading || !data}
-          className="w-full py-3 font-mono text-[12px] uppercase tracking-[0.06em]"
+          className="w-full min-h-[44px] py-3 font-mono text-[12px] uppercase tracking-[0.06em] !bg-[#f5f1e8] !text-[#0d0c0a] hover:!bg-[#e8e2d4] active:scale-[0.98]"
         >
           {isExporting || isLoading
-            ? 'Đang chuẩn bị...'
-            : `Tải file CSV · ${data ? filteredCount : 0} giao dịch`}
+            ? t('export.preparing')
+            : t('export.downloadCsv', { count: data ? filteredCount : 0 })}
         </Button>
 
         <p className="font-mono text-[10px] text-faint text-center">
-          UTF-8 · tương thích Excel tiếng Việt · Google Sheets · Numbers
+          {t('export.footnote')}
         </p>
       </section>
     </div>

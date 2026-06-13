@@ -1,50 +1,13 @@
 import { test, expect } from '@playwright/test'
+import { content } from '../helpers/app'
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173'
+const BASE = process.env.BASE_URL || 'http://localhost:3000'
 
-// Empty storageState = unauthenticated browser, regardless of project
-const NO_AUTH: { storageState: { cookies: never[]; origins: never[] } } = {
-  storageState: { cookies: [], origins: [] },
-}
-
-// ─── Login Page ─────────────────────────────────────────────────────────────────
-// Login page must be tested without auth (chromium-noauth), else user is redirected
-// away from /login automatically. Uses NO_AUTH override regardless of project.
-test.describe('Login Page', () => {
-  test.use(NO_AUTH)
-
-  test('shows login content', async ({ page }) => {
-    await page.goto(`${BASE}/login`)
-    await page.waitForLoadState('domcontentloaded')
-    await expect(page.getByText('Wallet').first()).toBeVisible()
-    await expect(page.getByRole('button', { name: /Tiếp tục với Google/i })).toBeVisible()
-  })
-})
-
-// ─── Protected Routes — Unauthenticated ───────────────────────────────────────
-// These MUST use NO_AUTH so they run unauthenticated even inside chromium-auth project.
-test.describe('Protected Routes (no auth)', () => {
-  test.use(NO_AUTH)
-
-  for (const route of [
-    '/', '/transactions', '/add', '/wallets', '/wallets/transfer',
-    '/debts', '/debts/new', '/categories', '/budgets',
-    '/recurring', '/export', '/notifications', '/profile',
-  ]) {
-    test(`redirects ${route} to /login`, async ({ page }) => {
-      await page.goto(`${BASE}${route}`)
-      await page.waitForLoadState('domcontentloaded')
-      await expect(page).toHaveURL(/\/login/)
-    })
-  }
-})
+// Authenticated specs — run in chromium-auth + iphone-12 (storageState from
+// global-setup). The unauthenticated counterparts live in auth.noauth.spec.ts.
 
 // ─── Protected Routes — Authenticated ──────────────────────────────────────────
-// chromium-auth project (has storageState) — these tests only run when authenticated.
 test.describe('Protected Routes (authenticated)', () => {
-  const HAS_AUTH = !!(process.env.WALLET_TOKEN || (process.env.TEST_EMAIL && process.env.TEST_PASSWORD))
-  if (!HAS_AUTH) test.skip()
-
   for (const route of [
     '/', '/transactions', '/add', '/wallets', '/wallets/transfer',
     '/debts', '/debts/new', '/categories', '/budgets',
@@ -60,9 +23,6 @@ test.describe('Protected Routes (authenticated)', () => {
 
 // ─── Authenticated user on /login ─────────────────────────────────────────────
 test.describe('Authenticated on /login', () => {
-  const HAS_AUTH = !!(process.env.WALLET_TOKEN || (process.env.TEST_EMAIL && process.env.TEST_PASSWORD))
-  if (!HAS_AUTH) test.skip()
-
   test('redirected away from /login', async ({ page }) => {
     await page.goto(`${BASE}/login`)
     await page.waitForLoadState('domcontentloaded')
@@ -70,31 +30,13 @@ test.describe('Authenticated on /login', () => {
   })
 })
 
-// ─── Invalid Token ─────────────────────────────────────────────────────────────
-test.describe('Invalid Token', () => {
-  test('malformed token rejected gracefully', async ({ page }) => {
-    await page.goto(`${BASE}/`)
-    await page.evaluate(() => localStorage.setItem('wallet_token', 'bad.token.here'))
-    await page.reload()
-    await page.waitForLoadState('domcontentloaded')
-    await page.waitForTimeout(2_000)
-    const onLogin = page.url().includes('/login')
-    if (!onLogin) {
-      const body = await page.locator('body').textContent()
-      expect(body?.trim().length).toBeGreaterThan(0)
-    }
-  })
-})
-
 // ─── Logout ─────────────────────────────────────────────────────────────────
 test.describe('Logout', () => {
-  const HAS_AUTH = !!(process.env.WALLET_TOKEN || (process.env.TEST_EMAIL && process.env.TEST_PASSWORD))
-  if (!HAS_AUTH) test.skip()
-
   test('logout from profile redirects to /login', async ({ page }) => {
     await page.goto(`${BASE}/profile`)
     await page.waitForLoadState('domcontentloaded')
-    await page.getByText('Đăng xuất').click()
+    // Danger-zone CTA: "Đăng xuất thiết bị này →"
+    await content(page).getByRole('button', { name: /Đăng xuất/i }).click()
     await page.waitForURL(/\/login/, { timeout: 15_000 })
     const token = await page.evaluate(() => localStorage.getItem('wallet_token'))
     expect(token).toBeNull()
@@ -103,7 +45,7 @@ test.describe('Logout', () => {
   test('after logout, / redirects to /login', async ({ page }) => {
     await page.goto(`${BASE}/profile`)
     await page.waitForLoadState('domcontentloaded')
-    await page.getByText('Đăng xuất').click()
+    await content(page).getByRole('button', { name: /Đăng xuất/i }).click()
     await page.waitForURL(/\/login/, { timeout: 15_000 })
     await page.goto(`${BASE}/`)
     await page.waitForLoadState('domcontentloaded')

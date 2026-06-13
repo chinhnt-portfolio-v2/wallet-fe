@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Card } from '@/components/ui/Card'
 import { formatCurrency } from '@/lib/utils'
 import type { BudgetJar } from '@/types'
@@ -9,6 +10,7 @@ interface JarCardProps {
 }
 
 export function JarCard({ jar, onEdit, onDelete }: JarCardProps) {
+  const { t } = useTranslation()
   const spentPct = jar.allocated > 0
     ? Math.min((jar.spent / jar.allocated) * 100, 100)
     : jar.spent > 0 ? 100 : 0
@@ -29,7 +31,7 @@ export function JarCard({ jar, onEdit, onDelete }: JarCardProps) {
           </div>
           <div className="min-w-0">
             <p className="text-sm font-semibold text-primary truncate">{jar.name}</p>
-            <p className="text-xs text-muted">{jar.percentage}% thu nhập</p>
+            <p className="text-xs text-secondary">{t('budget.jarPercentIncome', { pct: jar.percentage })}</p>
           </div>
         </div>
         <div className="flex items-center gap-1 shrink-0">
@@ -37,13 +39,13 @@ export function JarCard({ jar, onEdit, onDelete }: JarCardProps) {
             onClick={onEdit}
             className="text-xs text-muted hover:text-accent px-2 py-1 transition-colors"
           >
-            Sửa
+            {t('common.edit')}
           </button>
           <button
             onClick={onDelete}
             className="text-xs text-negative hover:underline px-2 py-1"
           >
-            Xóa
+            {t('common.delete')}
           </button>
         </div>
       </div>
@@ -51,13 +53,13 @@ export function JarCard({ jar, onEdit, onDelete }: JarCardProps) {
       {/* Amounts row */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-xs text-muted">Đã chi</p>
+          <p className="text-xs text-secondary">{t('budget.spent')}</p>
           <p className="text-sm font-semibold" style={{ color: isExceeded ? '#F43F5E' : 'var(--color-primary)' }}>
             {formatCurrency(jar.spent)}
           </p>
         </div>
         <div className="text-right">
-          <p className="text-xs text-muted">Phân bổ</p>
+          <p className="text-xs text-secondary">{t('budget.jarAllocated')}</p>
           <p className="text-sm font-medium text-secondary">{formatCurrency(jar.allocated)}</p>
         </div>
       </div>
@@ -75,10 +77,10 @@ export function JarCard({ jar, onEdit, onDelete }: JarCardProps) {
             {Math.round(spentPct)}%
           </p>
           {isExceeded ? (
-            <p className="text-xs text-negative font-medium">⚠️ Vượt hũ!</p>
+            <p className="text-xs text-negative font-medium">{t('budget.jarExceeded')}</p>
           ) : (
-            <p className="text-xs text-muted">
-              Còn {formatCurrency(jar.remaining)}
+            <p className="text-xs text-secondary">
+              {t('budget.jarRemaining', { amount: formatCurrency(jar.remaining) })}
             </p>
           )}
         </div>

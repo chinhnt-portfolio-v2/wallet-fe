@@ -86,13 +86,22 @@ async function globalSetup(_config: FullConfig) {
     await page.evaluate(
       (t) => {
         localStorage.setItem('wallet_token', t)
-        localStorage.removeItem('wallet_onboarding_done')
+        // Pin the UI language so spec text is deterministic. Headless Chrome
+        // reports English to the language detector; the product's primary
+        // language is Vietnamese, so all specs assert vi.ts strings.
+        localStorage.setItem('wallet_language', 'vi')
+        // Mark onboarding done so the modal never overlays seeded pages.
+        localStorage.setItem('wallet_onboarding_done', 'true')
       },
       token,
     )
 
     await page.reload()
     await page.waitForLoadState('domcontentloaded')
+    // Give React a moment to hydrate + run the auth redirect so the URL check
+    // below reflects the real authenticated state (not a pre-hydration snapshot).
+    await page.waitForLoadState('networkidle').catch(() => {})
+    await page.waitForTimeout(1_000)
 
     const currentURL = page.url()
     if (currentURL.includes('/login')) {

@@ -1,12 +1,16 @@
+import { useTranslation } from 'react-i18next'
 import type { WishlistItem, WishlistPriority } from '@/types'
 import { formatCurrency } from '@/lib/utils'
 import { useUpdateWishlistStatus, useDeleteWishlistItem } from '@/hooks/use-wishlist'
 import { toast } from 'sonner'
 
-const PRIORITY_BADGE: Record<WishlistPriority, { label: string; className: string }> = {
-  HIGH:   { label: 'Cao',    className: 'bg-red-100 text-red-700' },
-  MEDIUM: { label: 'Trung bình', className: 'bg-yellow-100 text-yellow-700' },
-  LOW:    { label: 'Thấp',   className: 'bg-green-100 text-green-700' },
+// Priority → badge label i18n key + style class.
+// Raised contrast for the dark theme (audit §2.14): solid-tinted backgrounds with
+// bright foreground text instead of the washed-out light-mode `*-100/*-700` pairs.
+const PRIORITY_BADGE: Record<WishlistPriority, { labelKey: string; className: string }> = {
+  HIGH:   { labelKey: 'wishlist.priorityHigh',   className: 'bg-negative/20 text-negative' },
+  MEDIUM: { labelKey: 'wishlist.priorityMedium', className: 'bg-warning/20 text-warning' },
+  LOW:    { labelKey: 'wishlist.priorityLow',    className: 'bg-positive/20 text-positive' },
 }
 
 interface WishlistItemCardProps {
@@ -15,6 +19,7 @@ interface WishlistItemCardProps {
 }
 
 export function WishlistItemCard({ item, onEdit }: WishlistItemCardProps) {
+  const { t } = useTranslation()
   const updateStatus = useUpdateWishlistStatus()
   const deleteItem   = useDeleteWishlistItem()
 
@@ -23,21 +28,21 @@ export function WishlistItemCard({ item, onEdit }: WishlistItemCardProps) {
   function handlePurchased() {
     updateStatus.mutate(
       { id: item.id, status: 'PURCHASED' },
-      { onSuccess: () => toast.success('Đã đánh dấu đã mua!') }
+      { onSuccess: () => toast.success(t('wishlist.markedPurchased')) }
     )
   }
 
   function handleCancelled() {
     updateStatus.mutate(
       { id: item.id, status: 'CANCELLED' },
-      { onSuccess: () => toast.success('Đã huỷ mặt hàng.') }
+      { onSuccess: () => toast.success(t('wishlist.markedCancelled')) }
     )
   }
 
   function handleDelete() {
-    if (!window.confirm(`Xóa "${item.name}"?`)) return
+    if (!window.confirm(t('wishlist.deleteConfirm', { name: item.name }))) return
     deleteItem.mutate(item.id, {
-      onSuccess: () => toast.success('Đã xóa.'),
+      onSuccess: () => toast.success(t('wishlist.deleted')),
     })
   }
 
@@ -47,8 +52,8 @@ export function WishlistItemCard({ item, onEdit }: WishlistItemCardProps) {
       <div className="flex-1 min-w-0" role="button" tabIndex={0} onClick={() => onEdit(item)} onKeyDown={(e) => e.key === 'Enter' && onEdit(item)}>
         <div className="flex items-center gap-2 flex-wrap">
           <p className="text-sm font-medium text-primary truncate">{item.name}</p>
-          <span className={`text-2xs px-1.5 py-0.5 rounded font-medium ${badge.className}`}>
-            {badge.label}
+          <span className={`text-2xs px-1.5 py-0.5 rounded font-mono uppercase tracking-wide ${badge.className}`}>
+            {t(badge.labelKey)}
           </span>
         </div>
 
@@ -60,7 +65,7 @@ export function WishlistItemCard({ item, onEdit }: WishlistItemCardProps) {
 
         <div className="flex items-center gap-2 mt-1 flex-wrap">
           {item.targetDate && (
-            <p className="text-2xs text-muted">
+            <p className="text-2xs text-secondary">
               🗓 {new Date(item.targetDate).toLocaleDateString('vi-VN')}
             </p>
           )}
@@ -72,11 +77,11 @@ export function WishlistItemCard({ item, onEdit }: WishlistItemCardProps) {
               onClick={(e) => e.stopPropagation()}
               className="text-2xs text-accent hover:underline"
             >
-              🔗 Link
+              🔗 {t('wishlist.link')}
             </a>
           )}
           {item.notes && (
-            <p className="text-2xs text-muted truncate max-w-[200px]">{item.notes}</p>
+            <p className="text-2xs text-secondary truncate max-w-[200px]">{item.notes}</p>
           )}
         </div>
       </div>
@@ -89,14 +94,14 @@ export function WishlistItemCard({ item, onEdit }: WishlistItemCardProps) {
             disabled={updateStatus.isPending}
             className="text-2xs bg-positive/10 text-positive px-2 py-1 rounded font-medium hover:bg-positive/20 transition-colors whitespace-nowrap"
           >
-            ✓ Đã mua
+            ✓ {t('wishlist.markPurchased')}
           </button>
           <button
             onClick={handleCancelled}
             disabled={updateStatus.isPending}
             className="text-2xs bg-surface-2 text-muted px-2 py-1 rounded font-medium hover:bg-surface-3 transition-colors whitespace-nowrap"
           >
-            Huỷ
+            {t('wishlist.cancel')}
           </button>
         </div>
       )}
@@ -106,7 +111,7 @@ export function WishlistItemCard({ item, onEdit }: WishlistItemCardProps) {
           onClick={handleDelete}
           disabled={deleteItem.isPending}
           className="text-2xs text-negative/70 hover:text-negative px-2 py-1 transition-colors shrink-0"
-          aria-label="Xóa"
+          aria-label={t('wishlist.deleteAria')}
         >
           🗑
         </button>

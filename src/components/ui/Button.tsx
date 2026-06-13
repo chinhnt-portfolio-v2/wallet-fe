@@ -27,13 +27,18 @@ export function Button({
   className,
   ...props
 }: ButtonProps) {
+  // Fancy (audit §4.2): accent CTAs get a lime glow + scale-on-press micro-interaction
+  // via `.cta-glow` (CSS-only, reduced-motion gated in index.css). Other variants keep
+  // the plain active-scale press feedback.
+  const isAccent = variant === 'accent'
   return (
     <button
       className={cn(
         'inline-flex items-center justify-center gap-2 font-medium transition-all duration-150',
         'focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2',
-        'active:scale-95 disabled:opacity-50 disabled:pointer-events-none',
+        'disabled:opacity-50 disabled:pointer-events-none',
         'rounded-md',
+        isAccent ? 'cta-glow' : 'active:scale-95',
         variants[variant],
         sizes[size],
         className

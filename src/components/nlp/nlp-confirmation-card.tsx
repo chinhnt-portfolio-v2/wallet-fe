@@ -1,4 +1,6 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
+import { ymdToInstant } from '@/lib/date-utils'
 import type { NlpParseResult, CreateTransactionRequest, TxnType } from '@/types'
 
 interface NlpConfirmationCardProps {
@@ -18,6 +20,7 @@ export function NlpConfirmationCard({
   onEdit,
   onDismiss,
 }: NlpConfirmationCardProps) {
+  const { t } = useTranslation()
   const [walletId, setWalletId] = useState<number | null>(result.walletId ?? null)
   const [categoryId, setCategoryId] = useState<number | null>(result.categoryId ?? null)
   const [amount, setAmount] = useState<string>(result.amount != null ? String(result.amount) : '')
@@ -34,7 +37,8 @@ export function NlpConfirmationCard({
       categoryId: categoryId ?? undefined,
       amount: parseFloat(amount),
       type,
-      date,
+      // F10: convert the NLP-parsed date to an ISO instant before creating.
+      date: ymdToInstant(date),
       note: note || undefined,
     }
     onConfirm(req)
@@ -61,19 +65,19 @@ export function NlpConfirmationCard({
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm font-semibold text-primary">Xác nhận giao dịch</p>
+          <p className="text-sm font-semibold text-primary">{t('nlp.confirmTitle')}</p>
           <p className="text-xs text-muted">
-            Độ chính xác: {Math.round(result.confidence * 100)}%
+            {t('nlp.accuracy', { pct: Math.round(result.confidence * 100) })}
             {result.unresolvedFields.length > 0 && (
               <span className="text-warning ml-1">
-                · Cần bổ sung: {result.unresolvedFields.join(', ')}
+                {t('nlp.needMore', { fields: result.unresolvedFields.join(', ') })}
               </span>
             )}
           </p>
         </div>
         <button
           onClick={onDismiss}
-          aria-label="Đóng xác nhận"
+          aria-label={t('nlp.closeAria')}
           className="btn-ghost text-muted text-sm px-2"
         >
           ✕
@@ -82,19 +86,19 @@ export function NlpConfirmationCard({
 
       {/* Type toggle */}
       <div className="flex gap-1 bg-surface-2 rounded-md p-1">
-        {(['EXPENSE', 'INCOME'] as const).map((t) => (
+        {(['EXPENSE', 'INCOME'] as const).map((tt) => (
           <button
-            key={t}
-            onClick={() => setType(t)}
+            key={tt}
+            onClick={() => setType(tt)}
             className={`flex-1 py-1.5 text-xs rounded-sm transition-all ${
-              type === t
-                ? t === 'EXPENSE'
+              type === tt
+                ? tt === 'EXPENSE'
                   ? 'bg-negative text-white font-medium'
                   : 'bg-positive text-white font-medium'
                 : 'text-muted hover:text-primary'
             }`}
           >
-            {t === 'EXPENSE' ? '💸 Chi' : '📥 Thu'}
+            {tt === 'EXPENSE' ? `💸 ${t('nlp.expense')}` : `📥 ${t('nlp.income')}`}
           </button>
         ))}
       </div>
@@ -102,7 +106,7 @@ export function NlpConfirmationCard({
       {/* Amount */}
       <div>
         <label className="block text-xs font-medium text-secondary mb-1">
-          Số tiền {isUnresolved('amount') && <span className="text-warning">(chưa rõ)</span>}
+          {t('nlp.amount')} {isUnresolved('amount') && <span className="text-warning">{t('nlp.unresolved')}</span>}
         </label>
         <input
           type="number"
@@ -117,14 +121,14 @@ export function NlpConfirmationCard({
       {/* Wallet */}
       <div>
         <label className="block text-xs font-medium text-secondary mb-1">
-          Ví {isUnresolved('walletId') && <span className="text-warning">(chưa rõ)</span>}
+          {t('nlp.wallet')} {isUnresolved('walletId') && <span className="text-warning">{t('nlp.unresolved')}</span>}
         </label>
         <select
           value={walletId ?? ''}
           onChange={(e) => setWalletId(e.target.value ? Number(e.target.value) : null)}
           className={fieldClass('walletId')}
         >
-          <option value="">-- Chọn ví --</option>
+          <option value="">{t('nlp.selectWallet')}</option>
           {wallets.map((w) => (
             <option key={w.id} value={w.id}>
               {w.icon} {w.name}
@@ -136,14 +140,14 @@ export function NlpConfirmationCard({
       {/* Category */}
       <div>
         <label className="block text-xs font-medium text-secondary mb-1">
-          Danh mục {isUnresolved('categoryId') && <span className="text-warning">(chưa rõ)</span>}
+          {t('nlp.category')} {isUnresolved('categoryId') && <span className="text-warning">{t('nlp.unresolved')}</span>}
         </label>
         <select
           value={categoryId ?? ''}
           onChange={(e) => setCategoryId(e.target.value ? Number(e.target.value) : null)}
           className={fieldClass('categoryId')}
         >
-          <option value="">-- Không có danh mục --</option>
+          <option value="">{t('nlp.noCategory')}</option>
           {filteredCategories.map((c) => (
             <option key={c.id} value={c.id}>
               {c.icon} {c.name}
@@ -154,7 +158,7 @@ export function NlpConfirmationCard({
 
       {/* Date */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">Ngày</label>
+        <label className="block text-xs font-medium text-secondary mb-1">{t('nlp.date')}</label>
         <input
           type="date"
           value={date}
@@ -165,12 +169,12 @@ export function NlpConfirmationCard({
 
       {/* Note */}
       <div>
-        <label className="block text-xs font-medium text-secondary mb-1">Ghi chú</label>
+        <label className="block text-xs font-medium text-secondary mb-1">{t('nlp.note')}</label>
         <input
           type="text"
           value={note}
           onChange={(e) => setNote(e.target.value)}
-          placeholder="Không có ghi chú"
+          placeholder={t('nlp.notePlaceholder')}
           className="input text-sm w-full"
         />
       </div>
@@ -182,13 +186,13 @@ export function NlpConfirmationCard({
           disabled={!walletId || !amount}
           className="flex-1 btn-primary py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         >
-          ✓ Xác nhận
+          ✓ {t('nlp.confirm')}
         </button>
         <button
           onClick={handleEdit}
           className="flex-1 btn-ghost py-2 text-sm border border-border"
         >
-          ✏️ Chỉnh sửa
+          ✏️ {t('nlp.edit')}
         </button>
       </div>
     </div>

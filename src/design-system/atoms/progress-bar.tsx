@@ -9,7 +9,14 @@ interface ProgressBarProps {
   className?: string
 }
 
-/** Minimal rounded progress bar. Use over=true to surface overspend. */
+/**
+ * Minimal rounded progress bar. Use over=true to surface overspend.
+ *
+ * Fancy (audit §4.5): the fill animates its width on mount/change via a CSS
+ * transition. The transition is disabled under `prefers-reduced-motion: reduce`
+ * (handled by the `.progress-fill` rule in index.css), so motion-sensitive users
+ * see the bar snap to its final width with no tween.
+ */
 export function ProgressBar({
   pct,
   height = 4,
@@ -25,7 +32,7 @@ export function ProgressBar({
       style={{ height, background }}
     >
       <div
-        className="absolute inset-0 rounded-full"
+        className="progress-fill absolute inset-y-0 left-0 rounded-full"
         style={{
           width: `${w}%`,
           background: over ? 'var(--color-negative)' : color,

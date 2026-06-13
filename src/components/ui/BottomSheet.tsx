@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
 
 interface BottomSheetProps {
@@ -10,6 +11,7 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ open, onClose, title, children, className }: BottomSheetProps) {
+  const { t } = useTranslation()
   const closeButtonRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -59,7 +61,7 @@ export function BottomSheet({ open, onClose, title, children, className }: Botto
           <button
             ref={closeButtonRef}
             onClick={onClose}
-            aria-label="Đóng"
+            aria-label={t('common.close')}
             className="text-muted hover:text-primary text-xl transition-colors ml-auto"
           >
             &times;

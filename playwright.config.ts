@@ -4,21 +4,24 @@ import { defineConfig, devices } from '@playwright/test'
  * Playwright config for wallet-fe E2E tests.
  *
  * Auth strategy: storageState from global-setup
- *   1. global-setup.ts injects WALLET_TOKEN into localStorage once
- *   2. Saves browser context (with auth) to e2e/.auth/state.json
- *   3. Project "chromium-auth" inherits auth → fast, no per-test reload
- *   4. Project "chromium-noauth" has no storageState → fresh browser for
- *      unauthenticated tests (clearAuth, protected-route redirects)
+ *   1. global-setup.ts logs in (TEST_EMAIL/TEST_PASSWORD) or injects WALLET_TOKEN,
+ *      pins wallet_language='vi', and saves the context to e2e/.auth/state.json.
+ *   2. Project "chromium-auth" + "iphone-12" inherit auth → fast, no per-test reload.
+ *   3. Project "chromium-noauth" has NO storageState → fresh browser for the
+ *      unauthenticated specs (login page, protected-route redirects).
  *
- * Usage:
- *   # Against Vercel deploy (recommended for CI)
- *   BASE_URL=https://wallet-fe-two.vercel.app WALLET_TOKEN=eyJ... npx playwright test
+ * Project / spec split (the key fix — previously every spec ran in every project,
+ * so auth specs always failed in chromium-noauth):
+ *   - `*.noauth.spec.ts` → run ONLY in chromium-noauth (unauthenticated).
+ *   - every other `*.spec.ts` → run in chromium-auth + iphone-12 (authenticated),
+ *     and are EXCLUDED from chromium-noauth.
  *
- *   # Local dev (requires vite dev server on port 5173)
- *   BASE_URL=http://localhost:5173 WALLET_TOKEN=eyJ... npx playwright test
- *
- *   # Without token: all auth tests skip; unauth tests still run
+ * Usage (local stack):
+ *   BASE_URL=http://localhost:3000 VITE_API_BASE_URL=http://localhost:8080 \
+ *     TEST_EMAIL=test@example.com TEST_PASSWORD='Test1234!' npx playwright test
  */
+const NOAUTH_GLOB = '**/*.noauth.spec.ts'
+
 export default defineConfig({
   testDir: './e2e/tests',
 
@@ -33,31 +36,36 @@ export default defineConfig({
   ],
 
   use: {
-    baseURL: process.env.BASE_URL || 'http://localhost:5173', // Vite proxy forwards /api → GCP backend in dev
+    // Local FE runs on :3000 (vite dev, proxies /api → :8080). E2E command passes
+    // BASE_URL explicitly; the default mirrors that so a bare run still works.
+    baseURL: process.env.BASE_URL || 'http://localhost:3000',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
     video: 'retain-on-failure',
-    // 30s aligns with waitForReact() button-wait strategy
+    // 30s aligns with waitForReact() button-wait strategy.
     actionTimeout: 30_000,
   },
 
-  // "chromium-auth" — inherits storageState from global-setup (fast auth)
   projects: [
+    // Authenticated desktop — inherits storageState from global-setup.
     {
       name: 'chromium-auth',
+      testIgnore: NOAUTH_GLOB,
       use: {
         ...devices['Desktop Chrome'],
         storageState: 'e2e/.auth/state.json',
       },
     },
-    // "chromium-noauth" — no storageState for unauthenticated tests
+    // Unauthenticated — only the noauth specs (login page, redirect guards).
     {
       name: 'chromium-noauth',
+      testMatch: NOAUTH_GLOB,
       use: { ...devices['Desktop Chrome'] },
     },
-    // Mobile
+    // Authenticated mobile.
     {
       name: 'iphone-12',
+      testIgnore: NOAUTH_GLOB,
       use: {
         ...devices['iPhone 12'],
         storageState: 'e2e/.auth/state.json',

@@ -1,37 +1,36 @@
 import { test, expect } from '@playwright/test'
-import { waitForReact } from '../helpers/app'
+import { waitForReact, content } from '../helpers/app'
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173'
-
-test.use({ storageState: 'e2e/.auth/state.json' })
+const BASE = process.env.BASE_URL || 'http://localhost:3000'
 
 // ─── Wallets List ───────────────────────────────────────────────────────────────
 test.describe('Wallets Page', () => {
   test('renders with "Ví của tôi" heading', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    await expect(page.getByRole('heading', { name: /Ví của tôi/i })).toBeVisible()
+    await expect(content(page).getByRole('heading', { name: /Ví của tôi/i })).toBeVisible()
   })
 
   test('shows transfer + add wallet buttons', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    await expect(page.getByRole('button', { name: /↔ Chuyển/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /Thêm ví/i }).first()).toBeVisible()
+    // Pills: "↔ Chuyển tiền" and "+ Ví mới".
+    await expect(content(page).getByRole('button', { name: /Chuyển tiền/i })).toBeVisible()
+    await expect(content(page).getByRole('button', { name: /Ví mới/i })).toBeVisible()
   })
 
-  test('wallet cards visible', async ({ page }) => {
+  test('shows seeded wallet cards', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    // Just verify the heading and action buttons render — cards may or may not exist
-    await expect(page.getByRole('heading', { name: /Ví của tôi/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /Thêm ví/i }).first()).toBeVisible()
+    // Seeded wallets.
+    await expect(content(page).getByText('Vietcombank').first()).toBeVisible({ timeout: 30_000 })
+    await expect(content(page).getByText('Tiền mặt').first()).toBeVisible()
   })
 
   test('transfer button navigates to /wallets/transfer', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    await page.getByRole('button', { name: /↔ Chuyển/i }).click()
+    await content(page).getByRole('button', { name: /Chuyển tiền/i }).click()
     await page.waitForLoadState('domcontentloaded')
     await expect(page).toHaveURL(/\/wallets\/transfer/)
   })
@@ -39,54 +38,51 @@ test.describe('Wallets Page', () => {
 
 // ─── Add Wallet Form ───────────────────────────────────────────────────────────
 test.describe('Add Wallet Form', () => {
-  test('form opens on "Thêm ví" click', async ({ page }) => {
+  test('form opens on "Ví mới" click', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    await page.getByRole('button', { name: /Thêm ví/i }).first().click()
-    await expect(page.getByPlaceholder(/VD: Ví MoMo/i)).toBeVisible()
+    await content(page).getByRole('button', { name: /Ví mới/i }).click()
+    await expect(content(page).getByPlaceholder(/VD: Ví MoMo/i)).toBeVisible()
   })
 
   test('create disabled when name empty', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    await page.getByRole('button', { name: /Thêm ví/i }).first().click()
-    await expect(page.getByRole('button', { name: /Tạo ví/ }).first()).toBeDisabled()
+    await content(page).getByRole('button', { name: /Ví mới/i }).click()
+    await expect(content(page).getByPlaceholder(/VD: Ví MoMo/i)).toBeVisible()
+    await expect(content(page).getByRole('button', { name: /Tạo ví/i }).first()).toBeDisabled()
   })
 
   test('create enables when name filled', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    await page.getByRole('button', { name: /Thêm ví/i }).first().click()
-    const nameInput = page.getByPlaceholder(/VD: Ví MoMo/i)
+    await content(page).getByRole('button', { name: /Ví mới/i }).click()
+    const nameInput = content(page).getByPlaceholder(/VD: Ví MoMo/i)
     await nameInput.waitFor({ state: 'visible', timeout: 5_000 })
     await nameInput.fill('Ví Test PW')
-    // Check button is enabled immediately after fill (no waitForTimeout needed)
-    // Use negation form: expect button NOT to be disabled (works even if page navigates)
-    const createBtn = page.locator('button').filter({ hasText: /Tạo ví/ })
-    await expect(createBtn.first()).not.toBeDisabled()
+    await expect(content(page).getByRole('button', { name: /Tạo ví/i }).first()).not.toBeDisabled()
   })
 
   test('cancel closes the form', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    await page.getByRole('button', { name: /Thêm ví/i }).first().click()
-    await page.getByRole('button', { name: /Hủy/i }).click()
-    await expect(page.getByPlaceholder(/VD: Ví MoMo/i)).not.toBeVisible()
+    await content(page).getByRole('button', { name: /Ví mới/i }).click()
+    await expect(content(page).getByPlaceholder(/VD: Ví MoMo/i)).toBeVisible()
+    await content(page).getByRole('button', { name: /Hủy/i }).click()
+    await expect(content(page).getByPlaceholder(/VD: Ví MoMo/i)).toHaveCount(0)
   })
 })
 
 // ─── Edit Wallet ───────────────────────────────────────────────────────────────
 test.describe('Edit Wallet', () => {
-  test('edit button opens BottomSheet', async ({ page }) => {
+  test('edit button opens the edit BottomSheet', async ({ page }) => {
     await page.goto(`${BASE}/wallets`)
     await waitForReact(page)
-    const cards = page.locator('.card').filter({ has: page.locator('[class*="rounded-full"]') })
-    if (await cards.count() === 0) return
-    await cards.first().hover()
-    await page.waitForTimeout(500)
-    const editBtn = cards.first().locator('button[aria-label*="Sửa ví"]')
-    if (!(await editBtn.isVisible().catch(() => false))) return
-    await editBtn.click()
-    await expect(page.getByText(/✏️ Sửa ví|Sửa ví/)).toBeVisible()
+    // Edit button is hover-revealed (opacity-0 → group-hover). Force the click
+    // since visibility-by-opacity isn't actionable without a hover on touch.
+    const editBtn = content(page).getByRole('button', { name: /Sửa ví/i }).first()
+    if ((await editBtn.count()) === 0) return
+    await editBtn.click({ force: true })
+    await expect(content(page).getByText('Sửa ví').first()).toBeVisible()
   })
 })

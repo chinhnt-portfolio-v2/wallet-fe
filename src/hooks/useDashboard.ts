@@ -1,6 +1,6 @@
 import { useQuery } from '@tanstack/react-query'
 import apiClient from '@/api/client'
-import type { DashboardSummary, DebtSummary } from '@/types'
+import type { DashboardSummary, DebtGroup, DebtSummary } from '@/types'
 
 // Force fresh data on every mount to avoid stale error cache
 export function useDashboardSummary() {
@@ -16,7 +16,23 @@ export function useDashboardSummary() {
 export function useOpenDebts() {
   return useQuery<DebtSummary[]>({
     queryKey: ['dashboard-debts'],
-    queryFn: () => apiClient.get('/wallet/groups?status=OPEN,PARTIAL').then((r) => r.data),
+    // The endpoint returns DebtGroup objects (`id`, `wallet.name`) — map them to
+    // the DebtSummary shape the dashboard widget renders (`groupId`, `walletName`).
+    queryFn: () =>
+      apiClient.get<DebtGroup[]>('/wallet/groups?status=OPEN,PARTIAL').then((r) =>
+        r.data.map((g) => ({
+          groupId: g.id,
+          title: g.title,
+          groupType: g.groupType,
+          remaining: g.remaining,
+          dueDate: g.dueDate,
+          walletName: g.wallet?.name ?? '',
+          walletIcon: g.wallet?.icon ?? '',
+          isOverdue: g.dueDate
+            ? g.dueDate.slice(0, 10) < new Date().toISOString().slice(0, 10)
+            : false,
+        })),
+      ),
     staleTime: 0,
     refetchOnMount: true,
     refetchOnWindowFocus: true,

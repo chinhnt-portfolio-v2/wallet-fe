@@ -1,4 +1,5 @@
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useWishlistItems } from '@/hooks/use-wishlist'
 import { formatCurrency } from '@/lib/utils'
 import { Card } from '@/components/ui/Card'
@@ -12,6 +13,7 @@ const PRIORITY_DOT: Record<WishlistPriority, string> = {
 
 export function ZoneWishlist() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const { data: items } = useWishlistItems('SAVING')
 
   if (!items || items.length === 0) return null
@@ -21,12 +23,14 @@ export function ZoneWishlist() {
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-medium text-muted uppercase tracking-wide">🎯 Muốn mua</p>
+        <p className="font-mono text-[10px] uppercase tracking-widest text-faint">
+          🎯 {t('nav.wishlist')}
+        </p>
         <button
           onClick={() => navigate('/wishlist')}
-          className="text-xs text-accent hover:underline"
+          className="font-mono text-[10px] uppercase tracking-widest text-accent hover:text-primary transition-colors min-h-[44px] px-1"
         >
-          Xem tất cả
+          {t('common.viewAll')} →
         </button>
       </div>
       <Card padding="none">
@@ -39,7 +43,7 @@ export function ZoneWishlist() {
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-primary truncate">{item.name}</p>
               {item.targetDate && (
-                <p className="text-2xs text-muted">
+                <p className="font-mono text-[10px] text-muted mt-0.5">
                   🗓 {new Date(item.targetDate).toLocaleDateString('vi-VN')}
                 </p>
               )}

@@ -18,7 +18,12 @@ Quản lý tài chính cá nhân: thu/chi, ví, nợ BNPL, báo cáo.
 ```bash
 npm install
 cp .env.example .env.local
-npm run dev
+VITE_API_BASE_URL=http://localhost:8080 npm run dev
+```
+
+Or set `VITE_API_BASE_URL` in `.env.local`:
+```
+VITE_API_BASE_URL=http://localhost:8080
 ```
 
 ## Variables
@@ -41,9 +46,39 @@ npm run dev
 | `/wallets` | Quản lý ví (CRUD) |
 | `/profile` | Cài đặt + đăng xuất |
 
+## Development Commands
+
+```bash
+# Dev server (port 3000)
+npm run dev
+
+# Type checking
+npm run typecheck
+
+# Linting
+npm run lint
+
+# Build
+npm run build
+
+# Unit/Component tests
+npm run test
+
+# E2E tests (requires local backend at :8080, frontend at :3000)
+BASE_URL=http://localhost:3000 VITE_API_BASE_URL=http://localhost:8080 \
+  TEST_EMAIL=test@example.com TEST_PASSWORD='Test1234!' npx playwright test
+
+# E2E with seed data
+node e2e/setup/seed-test-data.mjs  # Populates test DB first
+# Then run playwright test (above)
+
+# Capture UI screenshots (animations disabled)
+node e2e/setup/capture-ui-screenshots.mjs
+```
+
 ## Design System
 
-- **Style:** Fintech Minimalist
+- **Style:** Dark Editorial + Acid Lime Accents
 - **Colors:** Navy `#0F172A`, Sky Accent `#0EA5E9`, Emerald `#10B981`, Rose `#F43F5E`
-- **Font:** Inter + JetBrains Mono
-- **Dark mode:** supported (class-based)
+- **Fonts:** Inter (UI) + JetBrains Mono (code) + Lora (Vietnamese diacritics display)
+- **Dark mode:** CSS custom properties (no `dark:` classes)

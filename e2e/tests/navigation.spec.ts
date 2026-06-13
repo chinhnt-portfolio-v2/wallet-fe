@@ -1,44 +1,56 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, Page } from '@playwright/test'
 import { waitForReact } from '../helpers/app'
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173'
+const BASE = process.env.BASE_URL || 'http://localhost:3000'
 
-// ─── Bottom Navigation ─────────────────────────────────────────────────────────
-test.describe('Bottom Navigation', () => {
+// Authed specs (chromium-auth desktop + iphone-12 mobile). The layout differs by
+// viewport: desktop renders the Sidebar (md:flex), mobile renders the Header brand
+// + BottomNav (md:hidden). The app-shell keeps BOTH layouts in the DOM and hides
+// one per viewport with CSS, so queries must target the *visible* element.
+
+/** A visible nav link whose accessible name contains `name` (glyph-prefixed). */
+function navLink(page: Page, name: RegExp) {
+  return page.getByRole('link', { name }).locator('visible=true').first()
+}
+
+// ─── Primary navigation links ──────────────────────────────────────────────────
+test.describe('Primary Navigation', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto(`${BASE}/`)
     await waitForReact(page)
   })
 
-  test('shows all 4 nav items', async ({ page }) => {
-    await expect(page.getByRole('link', { name: /Tổng quan/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /Giao dịch/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /Nợ/i })).toBeVisible()
-    await expect(page.getByRole('link', { name: /Ví/i })).toBeVisible()
+  test('shows the 4 primary nav items', async ({ page }) => {
+    await expect(navLink(page, /Tổng quan/)).toBeVisible()
+    await expect(navLink(page, /Giao dịch/)).toBeVisible()
+    await expect(navLink(page, /Nợ/)).toBeVisible()
+    await expect(navLink(page, /Ngân sách/)).toBeVisible()
   })
 
   test('Tổng quan → /', async ({ page }) => {
-    await page.getByRole('link', { name: /Tổng quan/i }).click()
+    await page.goto(`${BASE}/transactions`)
+    await waitForReact(page)
+    await navLink(page, /Tổng quan/).click()
     await page.waitForLoadState('domcontentloaded')
     await expect(page).toHaveURL(`${BASE}/`)
   })
 
   test('Giao dịch → /transactions', async ({ page }) => {
-    await page.getByRole('link', { name: /Giao dịch/i }).click()
+    await navLink(page, /Giao dịch/).click()
     await page.waitForLoadState('domcontentloaded')
     await expect(page).toHaveURL(/\/transactions/)
   })
 
   test('Nợ → /debts', async ({ page }) => {
-    await page.getByRole('link', { name: /Nợ/i }).click()
+    await navLink(page, /Nợ/).click()
     await page.waitForLoadState('domcontentloaded')
     await expect(page).toHaveURL(/\/debts/)
   })
 
-  test('Ví → /wallets', async ({ page }) => {
-    await page.getByRole('link', { name: /Ví/i }).click()
+  test('Ngân sách → /budgets', async ({ page }) => {
+    await navLink(page, /Ngân sách/).click()
     await page.waitForLoadState('domcontentloaded')
-    await expect(page).toHaveURL(/\/wallets/)
+    await expect(page).toHaveURL(/\/budgets/)
   })
 })
 
@@ -49,34 +61,26 @@ test.describe('Header', () => {
     await waitForReact(page)
   })
 
-  test('shows Wallet logo', async ({ page }) => {
-    await expect(page.getByText('Wallet').first()).toBeVisible()
-  })
-
   test('notification bell points to /notifications', async ({ page }) => {
-    await expect(page.locator('a[href="/notifications"]')).toBeVisible()
+    await expect(page.locator('a[href="/notifications"]').locator('visible=true').first()).toBeVisible()
   })
 
-  test('settings link points to /profile', async ({ page }) => {
-    await expect(page.locator('a[href="/profile"]')).toBeVisible()
-  })
-
-  test('dark mode toggle clickable', async ({ page }) => {
-    const toggle = page.locator('button[aria-label*="chế độ"]')
+  test('language toggle is visible and clickable', async ({ page }) => {
+    // Header replaced the dark-mode toggle with an EN/VI language toggle.
+    const toggle = page
+      .getByRole('button', { name: /Switch to English|Chuyển sang Tiếng Việt/i })
+      .locator('visible=true')
+      .first()
     await expect(toggle).toBeVisible()
     await toggle.click()
   })
-})
 
-// ─── FAB ──────────────────────────────────────────────────────────────────────
-test.describe('Floating Action Button', () => {
-  test('FAB links to /add', async ({ page }) => {
-    await page.goto(`${BASE}/`)
-    await waitForReact(page)
-    // FAB only appears when user has at least one wallet — skip if not present
-    const fab = page.locator('a[href="/add"]').or(page.getByRole('link', { name: '+' }))
-    if (!(await fab.first().isVisible().catch(() => false))) return
-    await fab.first().click()
+  test('"Log expense" pill navigates to /add', async ({ page }) => {
+    await page
+      .getByRole('button', { name: /Ghi chi tiêu/i })
+      .locator('visible=true')
+      .first()
+      .click()
     await page.waitForLoadState('domcontentloaded')
     await expect(page).toHaveURL(/\/add/)
   })
@@ -88,32 +92,5 @@ test.describe('Unknown Route', () => {
     await page.goto(`${BASE}/this-does-not-exist`)
     await page.waitForLoadState('domcontentloaded')
     await expect(page).toHaveURL(`${BASE}/`)
-  })
-})
-
-// ─── Mobile Navigation ─────────────────────────────────────────────────────────
-test.describe('Mobile Navigation', () => {
-  test.use({ viewport: { width: 375, height: 812 } })
-
-  test('bottom nav visible', async ({ page }) => {
-    await page.goto(`${BASE}/`)
-    await waitForReact(page)
-    await expect(page.getByRole('navigation')).toBeVisible()
-  })
-
-  test('all nav links work on mobile', async ({ page }) => {
-    await page.goto(`${BASE}/`)
-    await waitForReact(page)
-    const links = [
-      page.getByRole('link', { name: /Tổng quan/i }),
-      page.getByRole('link', { name: /Giao dịch/i }),
-      page.getByRole('link', { name: /Nợ/i }),
-      page.getByRole('link', { name: /Ví/i }),
-    ]
-    for (const link of links) {
-      await link.click()
-      await page.waitForLoadState('domcontentloaded')
-      await expect(link).toBeVisible()
-    }
   })
 })

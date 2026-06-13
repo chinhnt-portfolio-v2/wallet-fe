@@ -1,13 +1,12 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { toast } from 'sonner'
-import { Button } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { Card } from '@/components/ui/Card'
 import { useWallets } from '@/hooks/useWallets'
 import { useCategories } from '@/hooks/useCategories'
 import { useCreateTransaction } from '@/hooks/useTransactions'
-import { WALLET_TYPE_LABEL } from '@/lib/utils'
 import { NlpInputBar } from '@/components/nlp/nlp-input-bar'
 import { NlpConfirmationCard } from '@/components/nlp/nlp-confirmation-card'
 import {
@@ -16,13 +15,23 @@ import {
   CategoryChip,
   Pill,
 } from '@/design-system'
+import { formatVndDigits } from '@/lib/utils'
+import { ymdToInstant, todayYmd } from '@/lib/date-utils'
 import type { TxnType, CreateTransactionRequest, NlpParseResult } from '@/types'
 
-// Helper: today's date + N days as YYYY-MM-DD
+// Helper: today's date + N days as YYYY-MM-DD (local calendar day).
 function addDays(days: number): string {
   const d = new Date()
   d.setDate(d.getDate() + days)
-  return d.toISOString().split('T')[0]
+  const yyyy = d.getFullYear()
+  const mm = String(d.getMonth() + 1).padStart(2, '0')
+  const dd = String(d.getDate()).padStart(2, '0')
+  return `${yyyy}-${mm}-${dd}`
+}
+
+// Strip non-digits so state holds the raw integer string (no separators).
+function toRawDigits(input: string): string {
+  return input.replace(/\D/g, '')
 }
 
 // ─── Field wrapper ────────────────────────────────────────────────────────────
@@ -40,17 +49,22 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 // ─── Main page ────────────────────────────────────────────────────────────────
 export default function AddTransactionPage() {
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [txType, setTxType] = useState<TxnType>('EXPENSE')
   const [amount, setAmount] = useState('')
   const [walletId, setWalletId] = useState<number | null>(null)
   const [categoryId, setCategoryId] = useState<number | null>(null)
   const [note, setNote] = useState('')
-  const [date, setDate] = useState(new Date().toISOString().split('T')[0])
-  const [showAdvanced, setShowAdvanced] = useState(false)
+  const [date, setDate] = useState(todayYmd())
+  // Tri-state advanced toggle: null = follow auto rule (open for postpaid),
+  // true/false = explicit user choice. Avoids a setState-in-effect.
+  const [advancedOverride, setAdvancedOverride] = useState<boolean | null>(null)
 
-  // BNPL debt creation fields
+  // BNPL debt creation fields. `debtTitleInput` holds the user's edits;
+  // the effective title falls back to a category-derived default (derived
+  // during render, not via a setState effect).
   const [createDebt, setCreateDebt] = useState(false)
-  const [debtTitle, setDebtTitle] = useState('')
+  const [debtTitleInput, setDebtTitleInput] = useState('')
   const [debtDueDate, setDebtDueDate] = useState(addDays(30))
   const [debtCounterparty, setDebtCounterparty] = useState('')
 
@@ -69,22 +83,20 @@ export default function AddTransactionPage() {
 
   const selectedCategory = categories?.find((c) => c.id === categoryId)
 
-  // F3: BNPL Auto-Expand — when POSTPAID wallet is selected, auto-expand the advanced section
-  useEffect(() => {
-    if (isPostpaid) {
-      setShowAdvanced(true)
-    }
-  }, [isPostpaid])
+  // F3: BNPL Auto-Expand — open advanced for POSTPAID unless the user overrode it.
+  const showAdvanced = advancedOverride ?? isPostpaid
 
-  useEffect(() => {
-    if (isExpenseOnPostpaid && selectedCategory && !debtTitle) {
-      setDebtTitle(`Mua hàng: ${selectedCategory.name}`)
-    }
-  }, [isExpenseOnPostpaid, selectedCategory, debtTitle])
+  // Default debt title derived from the selected category; the user's typed
+  // value (debtTitleInput) takes precedence once entered.
+  const debtTitleDefault =
+    isExpenseOnPostpaid && selectedCategory
+      ? t('transaction.defaultPurchaseTitle', { name: selectedCategory.name })
+      : ''
+  const debtTitle = debtTitleInput || debtTitleDefault
 
   const handleSubmit = () => {
     if (!walletId || !amount) {
-      toast.error('Chọn ví và nhập số tiền')
+      toast.error(t('transaction.selectWalletAndAmount'))
       return
     }
 
@@ -94,22 +106,25 @@ export default function AddTransactionPage() {
       type: txType,
       categoryId: categoryId ?? undefined,
       note: note || undefined,
+      // F1: send the user-selected date as an ISO instant so the chosen day is kept.
+      date: ymdToInstant(date),
     }
 
     // If expense on POSTPAID wallet and user opted to create BNPL debt
     if (isExpenseOnPostpaid && createDebt) {
-      payload.groupTitle = debtTitle || `Mua trả sau ${new Date().toLocaleDateString('vi-VN')}`
-      payload.groupDueDate = debtDueDate || undefined
+      payload.groupTitle = debtTitle || t('transaction.defaultDebtTitle', { date: new Date().toLocaleDateString('vi-VN') })
+      // F3: BNPL due date as ISO instant for a consistent contract.
+      payload.groupDueDate = ymdToInstant(debtDueDate)
       payload.groupCounterparty = debtCounterparty || undefined
     }
 
     createTx.mutate(payload, {
       onSuccess: (res) => {
-        toast.success('Đã thêm giao dịch!')
+        toast.success(t('transaction.added'))
         if (res.group) {
-          toast.success('Đã tạo nhóm nợ trả sau!', {
+          toast.success(t('transaction.debtGroupCreated'), {
             action: {
-              label: 'Xem ngay',
+              label: t('transaction.viewNow'),
               onClick: () => navigate(`/debts/${res.group.id}`),
             },
           })
@@ -123,17 +138,20 @@ export default function AddTransactionPage() {
   }
 
   const amountNum = parseFloat(amount) || 0
+  // Display the raw digits with vi-VN thousands separators while keeping `amount`
+  // as a bare digit string in state (so parseFloat / payload stays clean).
+  const amountDisplay = amount ? formatVndDigits(amountNum) : ''
 
   return (
-    <div className="space-y-5 pb-8">
+    <div className="page-enter space-y-5 pb-8">
       {/* ── Page header ──────────────────────────────────────────────── */}
       <div className="flex items-start justify-between">
         <div>
           <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted mb-1">
-            ◇ Quick log
+            ◇ {t('transaction.quickLog')}
           </div>
           <h2 className="font-display italic text-[28px] leading-none text-primary">
-            Log a transaction
+            {t('transaction.logTransaction')}
           </h2>
         </div>
         <button
@@ -155,7 +173,7 @@ export default function AddTransactionPage() {
           onConfirm={(req) => {
             createTx.mutate(req, {
               onSuccess: (res) => {
-                toast.success('Đã thêm giao dịch!')
+                toast.success(t('transaction.added'))
                 setNlpResult(null)
                 if (res.group) {
                   navigate(`/debts/${res.group.id}`)
@@ -173,7 +191,7 @@ export default function AddTransactionPage() {
             if (prefill.type) setTxType(prefill.type)
             if (prefill.note) setNote(prefill.note)
             setNlpResult(null)
-            setShowAdvanced(true)
+            setAdvancedOverride(true)
           }}
           onDismiss={() => setNlpResult(null)}
         />
@@ -186,72 +204,73 @@ export default function AddTransactionPage() {
         </div>
         <div className="relative flex justify-center">
           <span className="bg-bg px-2 font-mono text-[10px] uppercase tracking-[0.1em] text-faint">
-            or enter manually
+            {t('transaction.enterManually')}
           </span>
         </div>
       </div>
 
       {/* ── Type tabs ────────────────────────────────────────────────── */}
       <div className="flex gap-1 bg-surface rounded-[10px] p-[3px] border border-border">
-        {(['EXPENSE', 'INCOME'] as const).map((t) => (
+        {(['EXPENSE', 'INCOME'] as const).map((tt) => (
           <button
-            key={t}
+            key={tt}
             onClick={() => {
-              setTxType(t)
-              if (t !== 'EXPENSE') setCreateDebt(false)
+              setTxType(tt)
+              if (tt !== 'EXPENSE') setCreateDebt(false)
               setCategoryId(null)
             }}
             className={`flex-1 h-[34px] rounded-[8px] border-none cursor-pointer font-mono text-[11px] uppercase tracking-[0.1em] transition-colors ${
-              txType === t
+              txType === tt
                 ? 'bg-surface-3 text-primary shadow-[inset_0_0_0_1px_var(--color-border-hi)]'
                 : 'bg-transparent text-muted hover:text-primary'
             }`}
           >
-            {t === 'EXPENSE' ? 'Expense' : 'Income'}
+            {t(tt === 'EXPENSE' ? 'transaction.expense' : 'transaction.income')}
           </button>
         ))}
       </div>
 
-      {/* ── Amount display (serif italic hero) ───────────────────────── */}
-      <div className="py-2 text-center">
-        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted mb-3">Amount</div>
-        <div className="flex items-baseline justify-center gap-3">
+      {/* ── Amount input (serif numeral hero, like Transfer) ─────────── */}
+      <div className="py-2">
+        <div className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted mb-3 text-center">{t('transaction.amountLabel')}</div>
+        <div className="relative mx-auto max-w-sm bg-surface border border-border rounded-[var(--radius-md)] overflow-hidden focus-within:border-accent/60 focus-within:ring-1 focus-within:ring-accent/20 transition-all">
           <input
-            type="number"
-            inputMode="decimal"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
+            type="text"
+            inputMode="numeric"
+            pattern="[0-9]*"
+            value={amountDisplay}
+            onChange={(e) => setAmount(toRawDigits(e.target.value))}
             placeholder="0"
             autoFocus
-            className={`w-full max-w-xs h-14 px-4 rounded-[var(--radius-md)] border bg-surface text-primary font-mono text-3xl outline-none tabular-nums transition-colors ${
-              amountNum > 0 ? 'border-accent/60 focus:border-accent' : 'border-border focus:border-border-hi'
-            }`}
-            style={{ fontVariantNumeric: 'tabular-nums', letterSpacing: '-0.01em' }}
+            aria-label={t('transaction.amountAria')}
+            className="w-full bg-transparent px-4 pt-4 pb-3 font-numeral italic text-[40px] leading-none text-primary text-center outline-none pr-16 placeholder:text-muted/40"
           />
-          <span className="font-mono text-sm text-muted shrink-0">VND</span>
+          <span className="absolute right-4 bottom-4 font-mono text-[11px] uppercase tracking-widest text-muted">
+            VND
+          </span>
         </div>
         {amountNum > 0 && (
           <div className="mt-3 flex justify-center">
-            <DisplayAmount value={amountNum} size={42} />
+            <DisplayAmount value={amountNum} size={28} />
           </div>
         )}
       </div>
 
-      {/* ── Category strip (horizontal scroll, expense only) ─────────── */}
+      {/* ── Category chips (wrap, full names, expense only) ──────────── */}
       {txType === 'EXPENSE' && (
         <div>
-          <SectionLabel className="mb-3">Category</SectionLabel>
-          <div className="flex gap-2 overflow-x-auto pb-1 -mx-0" style={{ scrollbarWidth: 'none' }}>
+          <SectionLabel className="mb-3">{t('transaction.category')}</SectionLabel>
+          <div className="flex flex-wrap gap-2">
             {filteredCategories.map((c) => {
               const sel = categoryId === c.id
               return (
                 <button
                   key={c.id}
                   onClick={() => setCategoryId(sel ? null : c.id)}
-                  className={`flex-shrink-0 flex flex-col items-center gap-1.5 px-3 py-2 rounded-[12px] border transition-colors min-w-[70px] ${
+                  className={`min-h-[44px] flex items-center gap-2 px-3 py-2 rounded-[12px] border transition-colors ${
                     sel
-                      ? 'border-accent bg-accent/10'
-                      : 'border-border bg-surface hover:border-border-hi'
+                      ? 'border-accent bg-accent/10 text-primary'
+                      : 'border-border bg-surface text-secondary hover:border-border-hi'
                   }`}
                 >
                   <CategoryChip
@@ -259,10 +278,8 @@ export default function AddTransactionPage() {
                     name={c.name}
                     size={22}
                   />
-                  <span className={`font-mono text-[9px] uppercase tracking-[0.05em] ${
-                    sel ? 'text-primary' : 'text-muted'
-                  }`}>
-                    {c.name.split(' ')[0]}
+                  <span className="font-sans text-xs max-w-[10rem] truncate">
+                    {c.name}
                   </span>
                 </button>
               )
@@ -273,7 +290,7 @@ export default function AddTransactionPage() {
 
       {/* ── Wallet selector ──────────────────────────────────────────── */}
       <div>
-        <SectionLabel className="mb-3">From wallet</SectionLabel>
+        <SectionLabel className="mb-3">{t('transaction.fromWallet')}</SectionLabel>
         {loadingWallets ? (
           <div className="flex gap-2 overflow-x-auto pb-1">
             {[1, 2, 3].map((i) => (
@@ -289,30 +306,31 @@ export default function AddTransactionPage() {
                   key={w.id}
                   onClick={() => setWalletId(w.id)}
                   aria-pressed={sel}
-                  aria-label={`Chọn ví ${w.name}`}
-                  className={`flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-[10px] border transition-colors font-sans text-xs ${
+                  aria-label={t('wallet.selectWalletAria', { name: w.name })}
+                  className={`min-h-[44px] flex-shrink-0 flex items-center gap-2 px-3 py-2 rounded-[10px] border transition-colors font-sans text-xs ${
                     sel
-                      ? 'border-border-hi bg-surface-3 text-primary'
+                      ? 'border-accent bg-accent/10 text-primary ring-1 ring-accent/20'
                       : 'border-border bg-surface text-secondary hover:border-border-hi'
                   }`}
                 >
                   <span
-                    className="w-2 h-2 rounded-[2px] shrink-0"
+                    className="w-2.5 h-2.5 rounded-[3px] shrink-0"
                     style={{ background: w.color }}
                   />
-                  <span>{w.name}</span>
+                  <span className="font-medium">{w.name}</span>
                   <span className="font-mono text-[10px] text-muted">
-                    {WALLET_TYPE_LABEL[w.type] ?? w.type}
+                    {t(`wallet.types.${w.type}`)}
                   </span>
+                  {sel && <span className="font-mono text-[11px] text-accent" aria-hidden="true">✓</span>}
                 </button>
               )
             })}
           </div>
         ) : (
           <Card className="p-4 text-center">
-            <p className="font-sans text-sm text-muted">No wallets yet.</p>
+            <p className="font-sans text-sm text-muted">{t('transaction.noWalletLink')}</p>
             <a href="/wallets" className="font-mono text-[11px] text-accent hover:underline mt-1 block">
-              Create wallet →
+              {t('transaction.createWalletLink')} →
             </a>
           </Card>
         )}
@@ -320,16 +338,16 @@ export default function AddTransactionPage() {
 
       {/* ── Advanced toggle ───────────────────────────────────────────── */}
       <button
-        onClick={() => setShowAdvanced(!showAdvanced)}
+        onClick={() => setAdvancedOverride(!showAdvanced)}
         className="font-mono text-[11px] uppercase tracking-[0.08em] text-accent hover:underline"
       >
-        {showAdvanced ? '▲ Collapse' : '▼ More details'}
+        {showAdvanced ? `▲ ${t('transaction.collapse')}` : `▼ ${t('transaction.moreDetails')}`}
       </button>
 
       {showAdvanced && (
         <div className="space-y-4 border-t border-border pt-4">
           {/* date */}
-          <Field label="Date">
+          <Field label={t('transaction.date')}>
             <input
               type="date"
               value={date}
@@ -341,15 +359,15 @@ export default function AddTransactionPage() {
 
           {/* note */}
           <Input
-            label="Merchant / note"
+            label={t('transaction.merchantNote')}
             value={note}
             onChange={(e) => setNote(e.target.value)}
-            placeholder={txType === 'INCOME' ? 'e.g. Salary, freelance, gift…' : 'e.g. Pizza 4Ps, Grab, rent…'}
+            placeholder={txType === 'INCOME' ? t('transaction.notePlaceholderIncome') : t('transaction.notePlaceholderExpense')}
           />
 
           {/* income category strip */}
           {txType === 'INCOME' && filteredCategories.length > 0 && (
-            <Field label="Category">
+            <Field label={t('transaction.category')}>
               <div className="flex flex-wrap gap-2">
                 {filteredCategories.map((c) => {
                   const sel = categoryId === c.id
@@ -378,16 +396,16 @@ export default function AddTransactionPage() {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <p className="font-mono text-[11px] uppercase tracking-[0.08em] text-negative">
-                    ◈ BNPL debt tracking
+                    ◈ {t('transaction.bnplTracking')}
                   </p>
                   <p className="font-sans text-xs text-muted mt-1">
-                    Create a debt group to track this buy-now-pay-later purchase
+                    {t('transaction.bnplCreateGroup')}
                   </p>
                 </div>
                 <button
                   role="switch"
                   aria-checked={createDebt}
-                  aria-label="Ghi nhận nợ trả sau"
+                  aria-label={t('transaction.bnplToggleAria')}
                   onClick={() => setCreateDebt(!createDebt)}
                   className={`w-10 h-6 rounded-full transition-all relative shrink-0 ${
                     createDebt ? 'bg-negative' : 'bg-border'
@@ -402,23 +420,23 @@ export default function AddTransactionPage() {
               {createDebt && (
                 <div className="space-y-2">
                   <Input
-                    label="Tên khoản nợ"
+                    label={t('transaction.debtTitle')}
                     value={debtTitle}
-                    onChange={(e) => setDebtTitle(e.target.value)}
-                    placeholder="VD: Mua trả sau tháng 3"
+                    onChange={(e) => setDebtTitleInput(e.target.value)}
+                    placeholder={t('transaction.debtTitlePlaceholder')}
                   />
                   <Input
-                    label="Ngày hết hạn"
+                    label={t('transaction.debtDueDate')}
                     type="date"
                     value={debtDueDate}
                     onChange={(e) => setDebtDueDate(e.target.value)}
-                    hint="Mặc định: 30 ngày sau"
+                    hint={t('transaction.debtDueDateHint')}
                   />
                   <Input
-                    label="Đơn vị / người bán (tùy chọn)"
+                    label={t('transaction.debtCounterparty')}
                     value={debtCounterparty}
                     onChange={(e) => setDebtCounterparty(e.target.value)}
-                    placeholder="VD: Shopee, MoMo, Lazada…"
+                    placeholder={t('transaction.debtCounterpartyPlaceholder')}
                   />
                 </div>
               )}
@@ -432,9 +450,7 @@ export default function AddTransactionPage() {
         <div className="flex items-start gap-2.5 p-3 border border-border rounded-[var(--radius-md)] bg-surface-2">
           <span className="font-mono text-negative text-sm shrink-0">ℹ</span>
           <p className="font-sans text-xs text-muted">
-            Postpaid wallet — enable{' '}
-            <strong className="font-mono text-[11px] text-negative uppercase tracking-[0.06em]">BNPL tracking</strong>
-            {' '}above to create a debt group and track payments on time.
+            {t('transaction.bnplInfo')}
           </p>
         </div>
       )}
@@ -447,7 +463,7 @@ export default function AddTransactionPage() {
           disabled={createTx.isPending || !walletId || !amount}
           className="w-full h-[50px] rounded-[var(--radius-md)] text-[13px] tracking-[0.12em] justify-center"
         >
-          {createTx.isPending ? 'Saving…' : `Save ${txType === 'EXPENSE' ? 'expense' : 'income'} →`}
+          {createTx.isPending ? t('common.saving') : (txType === 'EXPENSE' ? t('transaction.saveExpense') : t('transaction.saveIncome'))}
         </Pill>
       </div>
     </div>

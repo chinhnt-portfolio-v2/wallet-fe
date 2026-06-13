@@ -6,17 +6,23 @@ interface SectionLabelProps {
   className?: string
 }
 
-/** Small uppercase mono label with rule + tick. Editorial divider for content sections. */
+/**
+ * Small uppercase mono label with rule + tick. Editorial divider for content sections.
+ *
+ * Legibility floor (audit §3): informational micro-labels render at min 11px and the
+ * `text-muted` tier (45% opacity). The 28% `text-faint` tier is reserved for purely
+ * decorative elements (the crosshair tick + the hairline rule), never for readable copy.
+ */
 export function SectionLabel({ children, right, className }: SectionLabelProps) {
   return (
     <div className={`flex items-center gap-2 ${className ?? ''}`}>
       <Tick />
-      <span className="font-mono text-[10px] uppercase tracking-widest text-muted">
+      <span className="font-mono text-[11px] uppercase tracking-widest text-muted">
         {children}
       </span>
       <div className="flex-1 h-px bg-border" />
       {right && (
-        <span className="font-mono text-[10px] uppercase tracking-[0.08em] text-muted">
+        <span className="font-mono text-[11px] uppercase tracking-[0.08em] text-muted">
           {right}
         </span>
       )}

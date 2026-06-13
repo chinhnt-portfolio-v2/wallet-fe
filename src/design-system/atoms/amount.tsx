@@ -1,4 +1,5 @@
 import { type CSSProperties } from 'react'
+import { formatVndDigits } from '@/lib/utils'
 
 interface AmountProps {
   value: number
@@ -24,7 +25,7 @@ export function Amount({
   bare = false,
 }: AmountProps) {
   const v = Math.round(value)
-  const s = Math.abs(v).toLocaleString('en-US')
+  const s = formatVndDigits(v)
   const signCh = v < 0 ? '−' : sign && v > 0 ? '+' : ''
   return (
     <span
@@ -65,11 +66,11 @@ interface DisplayAmountProps {
 /** Editorial hero amount — Instrument Serif italic + VND tag. */
 export function DisplayAmount({ value, size = 76, sub, className }: DisplayAmountProps) {
   const v = Math.round(value)
-  const s = Math.abs(v).toLocaleString('en-US')
+  const s = formatVndDigits(v)
   return (
     <div className={`flex items-baseline gap-2.5 ${className ?? ''}`}>
       <span
-        className="font-display tabular text-primary"
+        className="font-numeral tabular text-primary"
         style={{
           fontSize: size,
           lineHeight: 0.92,

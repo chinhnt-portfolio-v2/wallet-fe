@@ -1,71 +1,59 @@
 import { test, expect } from '@playwright/test'
-import { waitForReact } from '../helpers/app'
+import { waitForReact, content } from '../helpers/app'
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173'
-
-test.use({ storageState: 'e2e/.auth/state.json' })
+const BASE = process.env.BASE_URL || 'http://localhost:3000'
 
 // ─── Recurring Page ─────────────────────────────────────────────────────────
 test.describe('Recurring Page', () => {
   test('renders with "Giao dịch định kỳ" heading', async ({ page }) => {
     await page.goto(`${BASE}/recurring`)
     await waitForReact(page)
-    await expect(page.getByRole('heading', { name: /Giao dịch định kỳ/i })).toBeVisible()
+    await expect(content(page).getByRole('heading', { name: /Giao dịch định kỳ/i })).toBeVisible()
   })
 
   test('shows "Tạo mới" button', async ({ page }) => {
     await page.goto(`${BASE}/recurring`)
     await waitForReact(page)
-    await expect(page.getByRole('button', { name: /Tạo mới/i })).toBeVisible()
+    await expect(content(page).getByRole('button', { name: /Tạo mới/i })).toBeVisible()
   })
-})
 
-// ─── Recurring Cards ───────────────────────────────────────────────────────────
-test.describe('Recurring Cards', () => {
-  test('shows cards or empty state', async ({ page }) => {
+  test('renders seeded recurring rules (no 500)', async ({ page }) => {
     await page.goto(`${BASE}/recurring`)
     await waitForReact(page)
-    // Page renders with heading even if no cards — verify heading regardless
-    await expect(page.getByRole('heading', { name: /Giao dịch định kỳ/i })).toBeVisible()
+    // P1 fixed the GET /recurring 500. Seeded rules: "Lương hàng tháng" + "Internet".
+    // The page must render a rules section ("Đang hoạt động"), never an error.
+    await expect(content(page).getByText(/Đang hoạt động/i).first()).toBeVisible({ timeout: 30_000 })
   })
 })
 
 // ─── Create Recurring Rule ───────────────────────────────────────────────────
 test.describe('Create Recurring Rule', () => {
-  test('opens BottomSheet with all fields', async ({ page }) => {
+  test('opens BottomSheet with type tabs', async ({ page }) => {
     await page.goto(`${BASE}/recurring`)
     await waitForReact(page)
-    // Click the "Tạo mới" button — may be hidden if no wallet (skip in that case)
-    const createBtn = page.getByRole('button', { name: /Tạo mới/i }).first()
-    if (!(await createBtn.isVisible().catch(() => false))) return
-    await createBtn.click()
-    // Wait for the modal's cancel button — signals modal opened
-    const cancelBtn = page.getByRole('button', { name: /Hủy/i })
+    await content(page).getByRole('button', { name: /Tạo mới/i }).first().click()
+    const cancelBtn = content(page).getByRole('button', { name: /Hủy/i })
     await cancelBtn.waitFor({ state: 'visible', timeout: 10_000 })
-    await expect(page.getByRole('button', { name: /💸 Chi/i })).toBeVisible()
-    await expect(page.getByRole('button', { name: /📥 Thu/i })).toBeVisible()
+    // Type tabs are a SegmentedControl: "Chi" / "Thu".
+    await expect(content(page).getByRole('tab', { name: /Chi/i })).toBeVisible()
+    await expect(content(page).getByRole('tab', { name: /Thu/i })).toBeVisible()
   })
 
   test('shows frequency options', async ({ page }) => {
     await page.goto(`${BASE}/recurring`)
     await waitForReact(page)
-    const createBtn = page.getByRole('button', { name: /Tạo mới/i }).first()
-    if (!(await createBtn.isVisible().catch(() => false))) return
-    await createBtn.click()
-    await page.waitForTimeout(500)
+    await content(page).getByRole('button', { name: /Tạo mới/i }).first().click()
+    await content(page).getByRole('button', { name: /Hủy/i }).waitFor({ state: 'visible', timeout: 10_000 })
     for (const freq of ['Hàng ngày', 'Hàng tuần', 'Hàng tháng', 'Hàng năm']) {
-      const btn = page.getByText(freq)
-      if (await btn.isVisible().catch(() => false)) await expect(btn).toBeVisible()
+      await expect(content(page).getByRole('button', { name: freq }).first()).toBeVisible()
     }
   })
 
   test('cancel closes form', async ({ page }) => {
     await page.goto(`${BASE}/recurring`)
     await waitForReact(page)
-    const createBtn = page.getByRole('button', { name: /Tạo mới/i }).first()
-    if (!(await createBtn.isVisible().catch(() => false))) return
-    await createBtn.click()
-    const cancelBtn = page.getByRole('button', { name: /Hủy/i })
+    await content(page).getByRole('button', { name: /Tạo mới/i }).first().click()
+    const cancelBtn = content(page).getByRole('button', { name: /Hủy/i })
     await cancelBtn.waitFor({ state: 'visible', timeout: 10_000 })
     await cancelBtn.click()
     await cancelBtn.waitFor({ state: 'hidden', timeout: 5_000 })

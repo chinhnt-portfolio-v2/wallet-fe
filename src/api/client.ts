@@ -1,4 +1,5 @@
 import axios from 'axios'
+import i18n from '@/i18n'
 
 // Dev: use relative /api/v1 so Vite proxy (vite.config.ts) forwards to backend
 // (avoids CORS). Prod: use absolute VITE_API_BASE_URL for direct calls.
@@ -11,14 +12,26 @@ const BASE_URL = import.meta.env.DEV
 // ─── Token Refresh State ────────────────────────────────────────────────────
 
 let isRefreshing = false
-let refreshSubscribers: Array<(token: string) => void> = []
 
-function subscribeTokenRefresh(cb: (token: string) => void) {
-  refreshSubscribers.push(cb)
+// Queued 401 requests waiting on an in-flight refresh. Both callbacks are kept
+// so a failed refresh can reject every waiter (otherwise they hang forever).
+interface RefreshSubscriber {
+  resolve: (token: string) => void
+  reject: (err: unknown) => void
+}
+let refreshSubscribers: RefreshSubscriber[] = []
+
+function subscribeTokenRefresh(subscriber: RefreshSubscriber) {
+  refreshSubscribers.push(subscriber)
 }
 
 function onRefreshComplete(newToken: string) {
-  refreshSubscribers.forEach((cb) => cb(newToken))
+  refreshSubscribers.forEach((s) => s.resolve(newToken))
+  refreshSubscribers = []
+}
+
+function onRefreshFailed(err: unknown) {
+  refreshSubscribers.forEach((s) => s.reject(err))
   refreshSubscribers = []
 }
 
@@ -78,11 +91,15 @@ apiClient.interceptors.response.use(
     // ── 401: Token refresh flow ────────────────────────────────────────────
     if (error.response?.status === 401 && !originalRequest._retry) {
       if (isRefreshing) {
-        // Another refresh is already in-flight; queue this request.
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((token: string) => {
-            originalRequest.headers.Authorization = `Bearer ${token}`
-            resolve(apiClient(originalRequest))
+        // Another refresh is already in-flight; queue this request. If the
+        // refresh fails, reject() flushes us so the caller doesn't hang.
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh({
+            resolve: (token: string) => {
+              originalRequest.headers.Authorization = `Bearer ${token}`
+              resolve(apiClient(originalRequest))
+            },
+            reject,
           })
         })
       }
@@ -97,38 +114,40 @@ apiClient.interceptors.response.use(
           isRefreshing = false
           return apiClient(originalRequest)
         })
-        .catch(() => {
+        .catch((err: unknown) => {
           isRefreshing = false
+          // Flush queued requests with the failure so they don't hang forever.
+          const sessionError = new Error(i18n.t('errors.sessionExpired'))
+          onRefreshFailed(sessionError)
           // Tokens already cleared + redirect inside refreshAccessToken()
-          return Promise.reject(
-            new Error('Hết phiên đăng nhập. Đang chuyển về trang đăng nhập...')
-          )
+          void err
+          return Promise.reject(sessionError)
         })
     }
 
-    // ── Non-401 errors: humanize message ───────────────────────────────────
+    // ── Non-401 errors: humanize message (via i18n, EN/VI parity) ──────────
     const status = error.response?.status
-    let message = 'Có lỗi xảy ra. Vui lòng thử lại.'
+    let message = i18n.t('errors.generic')
 
     if (status === 400) {
-      message = 'Dữ liệu không hợp lệ. Vui lòng kiểm tra lại.'
+      message = i18n.t('errors.badRequest')
     } else if (status === 403) {
-      message = 'Bạn không có quyền thực hiện thao tác này.'
+      message = i18n.t('errors.forbidden')
     } else if (status === 404) {
-      message = 'Không tìm thấy dữ liệu.'
+      message = i18n.t('errors.notFound')
     } else if (status === 409) {
-      message = 'Dữ liệu bị xung đột. Vui lòng thử lại.'
+      message = i18n.t('errors.conflict')
     } else if (status === 422) {
       const detail = error.response?.data?.detail
-      message = typeof detail === 'string' ? detail : 'Thông tin không hợp lệ. Vui lòng kiểm tra lại.'
+      message = typeof detail === 'string' ? detail : i18n.t('errors.unprocessable')
     } else if (status === 429) {
-      message = 'Thao tác quá nhanh. Vui lòng chở một chút rồi thử lại.'
+      message = i18n.t('errors.tooManyRequests')
     } else if (status === 500) {
-      message = 'Máy chủ đang bận. Vui lòng thử lại sau.'
+      message = i18n.t('errors.server')
     } else if (!navigator.onLine) {
-      message = 'Không có kết nối internet. Vui lòng kiểm tra mạng.'
+      message = i18n.t('errors.offline')
     } else if (error.code === 'ECONNABORTED' || error.code === 'ERR_NETWORK') {
-      message = 'Kết nối bị gián đoạn. Vui lòng thử lại.'
+      message = i18n.t('errors.network')
     }
 
     return Promise.reject(new Error(message))

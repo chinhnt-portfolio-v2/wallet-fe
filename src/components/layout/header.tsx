@@ -1,30 +1,31 @@
-import { Link, useLocation } from 'react-router-dom'
+import { Link, useLocation, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Pill } from '@/design-system'
 
+// Maps each route to a [section, page] pair of i18n nav keys (resolved via t()).
 const ROUTE_CRUMBS: Record<string, [string, string]> = {
-  '/': ['Overview', 'Dashboard'],
-  '/transactions': ['Overview', 'Transactions'],
-  '/add': ['Overview', 'Log expense'],
-  '/wallets': ['Money', 'Wallets'],
-  '/wallets/transfer': ['Money', 'Transfer'],
-  '/budgets': ['Money', 'Budgets'],
-  '/debts': ['Money', 'Debts'],
-  '/wishlist': ['Money', 'Savings'],
-  '/categories': ['Account', 'Categories'],
-  '/recurring': ['Account', 'Recurring'],
-  '/profile': ['Account', 'Settings'],
-  '/notifications': ['Account', 'Notifications'],
-  '/export': ['Account', 'Export'],
+  '/': ['nav.overview', 'nav.dashboard'],
+  '/transactions': ['nav.overview', 'nav.transactions'],
+  '/add': ['nav.overview', 'nav.logExpense'],
+  '/wallets': ['nav.money', 'nav.wallets'],
+  '/wallets/transfer': ['nav.money', 'nav.transfer'],
+  '/budgets': ['nav.money', 'nav.budgets'],
+  '/debts': ['nav.money', 'nav.debts'],
+  '/wishlist': ['nav.money', 'nav.wishlist'],
+  '/categories': ['nav.account', 'nav.categories'],
+  '/recurring': ['nav.account', 'nav.recurring'],
+  '/profile': ['nav.account', 'nav.profile'],
+  '/notifications': ['nav.account', 'nav.notifications'],
+  '/export': ['nav.account', 'nav.export'],
 }
 
-function getCrumbs(pathname: string): [string, string] {
+function getCrumbKeys(pathname: string): [string, string] {
   if (ROUTE_CRUMBS[pathname]) return ROUTE_CRUMBS[pathname]
   // longest-prefix match for dynamic routes (e.g. /debts/:id)
   const match = Object.keys(ROUTE_CRUMBS)
     .filter((p) => p !== '/' && pathname.startsWith(p))
     .sort((a, b) => b.length - a.length)[0]
-  return match ? ROUTE_CRUMBS[match] : ['Overview', 'Dashboard']
+  return match ? ROUTE_CRUMBS[match] : ['nav.overview', 'nav.dashboard']
 }
 
 function LanguageToggle() {
@@ -42,27 +43,13 @@ function LanguageToggle() {
   )
 }
 
-function SearchBox() {
-  return (
-    <div className="hidden md:flex items-center gap-2 px-3 h-[34px] rounded-md min-w-[220px] bg-surface border border-border text-muted">
-      <svg width={13} height={13} viewBox="0 0 24 24" fill="none" aria-hidden="true">
-        <circle cx="11" cy="11" r="7" stroke="currentColor" strokeWidth="1.5" />
-        <path d="M20 20l-3.5-3.5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" />
-      </svg>
-      <input
-        placeholder="Search transactions, wallets…"
-        className="flex-1 bg-transparent border-0 text-primary font-sans text-xs outline-none min-w-0"
-      />
-      <span className="font-mono text-[10px] text-faint px-1.5 py-0.5 border border-border-hi rounded">
-        ⌘K
-      </span>
-    </div>
-  )
-}
-
 export function Header() {
   const location = useLocation()
-  const [section, page] = getCrumbs(location.pathname)
+  const navigate = useNavigate()
+  const { t } = useTranslation()
+  const [sectionKey, pageKey] = getCrumbKeys(location.pathname)
+  const section = t(sectionKey)
+  const page = t(pageKey)
 
   return (
     <header
@@ -84,17 +71,16 @@ export function Header() {
 
       <div className="flex-1" />
 
-      <SearchBox />
-
-      <Pill accent onClick={() => (window.location.href = '/add')}>
-        + Log expense
+      {/* F14: SPA navigation instead of a full page reload. */}
+      <Pill accent onClick={() => navigate('/add')}>
+        + {t('nav.logExpense')}
       </Pill>
 
       <div className="flex items-center gap-1">
         <LanguageToggle />
         <Link
           to="/notifications"
-          aria-label="Notifications"
+          aria-label={t('nav.notifications')}
           className="w-8 h-8 flex items-center justify-center rounded-md text-muted hover:text-primary hover:bg-surface-2 transition-colors"
         >
           <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">

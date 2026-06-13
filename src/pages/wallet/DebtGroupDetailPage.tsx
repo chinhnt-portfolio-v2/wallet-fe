@@ -1,28 +1,31 @@
 import { useState } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
+import type { TFunction } from 'i18next'
 import { toast } from 'sonner'
 import { useDebtGroup, useSettleDebt } from '@/hooks/useDebtGroups'
 import { useWallets } from '@/hooks/useWallets'
 import { useTransactions } from '@/hooks/useTransactions'
 import { Button } from '@/components/ui/Button'
-import { Input } from '@/components/ui/Input'
 import { Skeleton } from '@/components/ui/Skeleton'
 import { DisplayAmount, Amount, SectionLabel, ProgressBar, Pill } from '@/design-system'
-import { formatDate, isOverdue, GROUP_TYPE_LABEL } from '@/lib/utils'
+import { formatDate, isOverdue, formatVndDigits } from '@/lib/utils'
+import { isReceivable, debtSettleKey, debtAmountColor } from '@/components/debts/debt-semantics'
 
-function relDue(dateStr: string | null | undefined): string {
+function relDue(dateStr: string | null | undefined, t: TFunction): string {
   if (!dateStr) return '—'
   const diff = Math.round((new Date(dateStr).getTime() - Date.now()) / 86_400_000)
-  if (diff < 0)  return `${Math.abs(diff)}d overdue`
-  if (diff === 0) return 'Due today'
-  if (diff < 7)  return `Due in ${diff}d`
-  if (diff < 30) return `Due in ${Math.round(diff / 7)}w`
-  return `Due in ${Math.round(diff / 30)}mo`
+  if (diff < 0)  return t('debt.relOverdue', { days: Math.abs(diff) })
+  if (diff === 0) return t('debt.relDueToday2')
+  if (diff < 7)  return t('debt.relDueInDays', { days: diff })
+  if (diff < 30) return t('debt.relDueInWeeks', { weeks: Math.round(diff / 7) })
+  return t('debt.relDueInMonths', { months: Math.round(diff / 30) })
 }
 
 export default function DebtGroupDetailPage() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [showSettle, setShowSettle] = useState(false)
   const [settleAmount, setSettleAmount] = useState('')
   const [settleWalletId, setSettleWalletId] = useState<number | null>(null)
@@ -45,8 +48,8 @@ export default function DebtGroupDetailPage() {
 
   if (!group) {
     return (
-      <div className="text-center py-16 font-mono text-[12px] text-muted">
-        Không tìm thấy nhóm nợ
+      <div className="text-center py-16 font-mono text-[12px] text-secondary">
+        {t('debt.notFound')}
       </div>
     )
   }
@@ -56,21 +59,24 @@ export default function DebtGroupDetailPage() {
     ? Number(group.paidAmount) / Number(group.totalAmount)
     : 0
   const overdue = isOverdue(group.dueDate)
+  // Direction semantics: receivables (loan given) are green + "Collect"; payables red + "Pay".
+  const receivable = isReceivable(group.groupType)
+  const accentColor = debtAmountColor(group.groupType)
 
   const handleSettle = () => {
     if (!settleWalletId || !settleAmount) {
-      toast.error('Chọn ví và nhập số tiền')
+      toast.error(t('debt.selectWalletAndAmount'))
       return
     }
     if (parseFloat(settleAmount) > remaining) {
-      toast.error('Số tiền vượt quá số nợ còn lại')
+      toast.error(t('debt.amountExceedsRemaining'))
       return
     }
     settleMutation.mutate(
       { amount: parseFloat(settleAmount), walletId: settleWalletId },
       {
         onSuccess: () => {
-          toast.success('Đã thanh toán!')
+          toast.success(t('debt.settled'))
           setShowSettle(false)
           setSettleAmount('')
         },
@@ -80,31 +86,37 @@ export default function DebtGroupDetailPage() {
   }
 
   return (
-    <div className="space-y-5">
+    <div className="page-enter space-y-5">
       {/* ── back breadcrumb ── */}
       <button
         onClick={() => navigate(-1)}
-        className="font-mono text-[11px] text-muted hover:text-primary transition-colors uppercase tracking-[0.08em]"
+        className="font-mono text-[11px] text-secondary hover:text-primary transition-colors uppercase tracking-[0.08em]"
       >
-        ← Debts
+        ← {t('debt.title')}
       </button>
 
       {/* ── hero card ── */}
       <div
         className="rounded-sm border px-6 py-5"
         style={{
-          background: `linear-gradient(135deg, var(--color-negative)11, transparent)`,
-          borderColor: `color-mix(in srgb, var(--color-negative) 25%, transparent)`,
+          background: `linear-gradient(135deg, ${accentColor}11, transparent)`,
+          borderColor: `color-mix(in srgb, ${accentColor} 25%, transparent)`,
         }}
       >
         {/* eyebrow */}
         <div className="flex items-center gap-2 mb-4">
-          <p className="font-mono text-[10px] uppercase tracking-widest text-muted">
-            {GROUP_TYPE_LABEL[group.groupType] ?? group.groupType}
+          <p className="font-mono text-[11px] uppercase tracking-widest text-secondary">
+            {t(`debt.types.${group.groupType}`)}
           </p>
+          <span
+            className="font-mono text-[11px] uppercase tracking-[0.08em]"
+            style={{ color: accentColor }}
+          >
+            · {receivable ? t('debt.directionReceivable') : t('debt.directionPayable')}
+          </span>
           {overdue && (
-            <span className="font-mono text-[10px] text-negative uppercase tracking-[0.08em]">
-              · Overdue
+            <span className="font-mono text-[11px] text-negative uppercase tracking-[0.08em]">
+              · {t('debt.overdue')}
             </span>
           )}
         </div>
@@ -115,25 +127,25 @@ export default function DebtGroupDetailPage() {
         {/* hero amount row */}
         <div className="grid grid-cols-[1.4fr_1fr_1fr] gap-4 items-start">
           <div>
-            <p className="font-mono text-[10px] uppercase tracking-[0.14em] text-muted mb-2">
-              Outstanding
+            <p className="font-mono text-[11px] uppercase tracking-[0.14em] text-secondary mb-2">
+              {receivable ? t('debt.toCollect') : t('debt.outstanding')}
             </p>
             <DisplayAmount value={remaining} size={40} />
           </div>
 
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted mb-1.5">
-              Total
+              {t('debt.total')}
             </p>
             <Amount value={Number(group.totalAmount)} size={14} weight={500} />
           </div>
 
           <div>
             <p className="font-mono text-[10px] uppercase tracking-[0.1em] text-muted mb-1.5">
-              Due
+              {t('debt.dueDate')}
             </p>
             <p className={`font-mono text-[13px] ${overdue ? 'text-negative' : 'text-primary'}`}>
-              {relDue(group.dueDate)}
+              {relDue(group.dueDate, t)}
             </p>
             {group.dueDate && (
               <p className="font-mono text-[10px] text-faint mt-0.5">{formatDate(group.dueDate)}</p>
@@ -146,46 +158,47 @@ export default function DebtGroupDetailPage() {
           <ProgressBar
             pct={progress}
             height={4}
-            color="var(--color-positive)"
+            color={accentColor}
             background="var(--color-border)"
           />
-          <div className="flex justify-between mt-1.5 font-mono text-[10px] text-muted">
-            <span>Paid {Math.round(progress * 100)}%</span>
-            <span><Amount value={Number(group.paidAmount)} size={10} bare /> / <Amount value={Number(group.totalAmount)} size={10} bare />₫</span>
+          <div className="flex justify-between mt-1.5 font-mono text-[11px] text-secondary">
+            <span>{receivable ? t('debt.collected', { pct: Math.round(progress * 100) }) : t('debt.paid', { pct: Math.round(progress * 100) })}</span>
+            <span><Amount value={Number(group.paidAmount)} size={11} bare /> / <Amount value={Number(group.totalAmount)} size={11} bare />₫</span>
           </div>
         </div>
 
         {/* counterparty */}
         {group.counterparty && (
-          <p className="mt-4 font-mono text-[11px] text-muted">
-            Counterparty · <span className="text-primary">{group.counterparty}</span>
+          <p className="mt-4 font-mono text-[11px] text-secondary">
+            {t('debt.counterpartyLabel')} · <span className="text-primary">{group.counterparty}</span>
           </p>
         )}
       </div>
 
-      {/* ── pay action ── */}
+      {/* ── settle action ── */}
       {group.status === 'SETTLED' ? (
         <div className="rounded-sm border border-positive/30 bg-positive/5 px-4 py-3 text-center">
           <p className="font-mono text-[12px] text-positive uppercase tracking-widest">
-            Settled — paid in full
+            {receivable ? t('debt.collectedInFull') : t('debt.settledInFull')}
           </p>
         </div>
       ) : showSettle ? (
         <div className="rounded-sm border border-border bg-surface px-4 py-4 space-y-3">
-          <p className="font-mono text-[11px] uppercase tracking-widest text-muted">
-            Record payment
+          <p className="font-mono text-[11px] uppercase tracking-widest text-secondary">
+            {receivable ? t('debt.recordCollection') : t('debt.recordPayment')}
           </p>
 
           <div>
             <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-1.5">
-              Số tiền thanh toán
+              {t('debt.settleAmount')}
             </label>
             <input
               type="number"
+              inputMode="decimal"
               value={settleAmount}
               onChange={(e) => setSettleAmount(e.target.value)}
-              placeholder={`Max ${remaining.toLocaleString('en-US')}`}
-              className="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-primary placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              placeholder={`Max ${formatVndDigits(remaining)}`}
+              className="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-primary [color-scheme:dark] placeholder:text-faint focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
             />
             {settleAmount && (
               <p className="font-mono text-[10px] text-muted mt-1">
@@ -196,14 +209,14 @@ export default function DebtGroupDetailPage() {
 
           <div>
             <label className="block font-mono text-[10px] uppercase tracking-widest text-muted mb-1.5">
-              Thanh toán từ ví
+              {t('debt.settleFromWallet')}
             </label>
             <select
               value={settleWalletId ?? ''}
               onChange={(e) => setSettleWalletId(Number(e.target.value) || null)}
-              className="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-primary focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
+              className="w-full rounded-sm border border-border bg-surface-2 px-3 py-2 font-mono text-sm text-primary [color-scheme:dark] focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent"
             >
-              <option value="">Chọn ví...</option>
+              <option value="">{t('debt.selectWalletAndAmount')}</option>
               {wallets?.map((w) => (
                 <option key={w.id} value={w.id}>{w.icon} {w.name}</option>
               ))}
@@ -212,14 +225,14 @@ export default function DebtGroupDetailPage() {
 
           <div className="flex gap-2 pt-1">
             <Button variant="outline" onClick={() => setShowSettle(false)} className="flex-1">
-              Hủy
+              {t('common.cancel')}
             </Button>
             <Button
               onClick={handleSettle}
               disabled={settleMutation.isPending || !settleWalletId || !settleAmount}
               className="flex-1"
             >
-              {settleMutation.isPending ? 'Đang xử lý...' : 'Xác nhận'}
+              {settleMutation.isPending ? t('common.processing') : t('common.confirm')}
             </Button>
           </div>
         </div>
@@ -227,16 +240,16 @@ export default function DebtGroupDetailPage() {
         <Pill
           accent
           onClick={() => setShowSettle(true)}
-          className="w-full !h-10 !rounded-sm !text-[12px] justify-center"
+          className="w-full !h-11 !rounded-sm !text-[12px] justify-center cta-glow"
         >
-          Pay debt
+          {t(debtSettleKey(group.groupType))}
         </Pill>
       )}
 
       {/* ── pay history ── */}
       <div>
-        <SectionLabel right={`${txs?.length ?? 0} entries`} className="mb-2">
-          Pay history
+        <SectionLabel right={t('debt.payHistoryEntries', { count: txs?.length ?? 0 })} className="mb-2">
+          {t('debt.payHistory')}
         </SectionLabel>
 
         <div className="rounded-sm border border-border bg-surface overflow-hidden">
@@ -260,10 +273,10 @@ export default function DebtGroupDetailPage() {
               {/* label + date */}
               <div className="flex-1">
                 <p className="font-sans text-sm text-primary">
-                  {tx.txnType === 'PRINCIPAL'    ? 'Phát sinh nợ'
-                   : tx.txnType === 'FINAL_PAYMENT' ? 'Thanh toán cuối'
-                   : tx.txnType === 'INTEREST'    ? 'Lãi suất'
-                   : 'Thanh toán'}
+                  {tx.txnType === 'PRINCIPAL'    ? t('debt.txPrincipal')
+                   : tx.txnType === 'FINAL_PAYMENT' ? t('debt.txFinalPayment')
+                   : tx.txnType === 'INTEREST'    ? t('debt.txInterest')
+                   : t('debt.txPayment')}
                 </p>
                 <p className="font-mono text-[10px] text-muted mt-0.5">{formatDate(tx.date)}</p>
               </div>
@@ -283,7 +296,7 @@ export default function DebtGroupDetailPage() {
             </div>
           )) : (
             <div className="px-4 py-8 text-center font-mono text-[11px] text-faint uppercase tracking-widest">
-              No transactions yet
+              {t('debt.noPayHistory')}
             </div>
           )}
         </div>

@@ -1,5 +1,6 @@
 import { useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useAuthStore } from '@/stores/authStore'
 
 export function OAuthCallbackHandler() {
   const navigate = useNavigate()
@@ -20,8 +21,13 @@ export function OAuthCallbackHandler() {
         .then((r) => r.json())
         .then((data) => {
           if (data.accessToken) {
-            localStorage.setItem('wallet_token', data.accessToken)
-            localStorage.setItem('wallet_refresh_token', data.refreshToken ?? '')
+            // Update zustand store (it persists to localStorage itself) so
+            // ProtectedRoute/LoginPage, which read store state, see the session.
+            if (data.refreshToken) {
+              useAuthStore.getState().setTokens(data.accessToken, data.refreshToken)
+            } else {
+              useAuthStore.getState().setToken(data.accessToken)
+            }
           }
           window.history.replaceState(null, '', '/')
           navigate('/', { replace: true })
@@ -34,8 +40,7 @@ export function OAuthCallbackHandler() {
     }
 
     if (accessToken && refreshToken) {
-      localStorage.setItem('wallet_token', accessToken)
-      localStorage.setItem('wallet_refresh_token', refreshToken)
+      useAuthStore.getState().setTokens(accessToken, refreshToken)
       window.history.replaceState(null, '', '/')
       navigate('/', { replace: true })
     }

@@ -26,7 +26,11 @@ export default {
         '2xs': ['0.625rem', { lineHeight: '0.875rem' }],
       },
       fontFamily: {
-        display: ['Instrument Serif', 'ui-serif', 'Georgia', 'serif'],
+        // Text headings: Lora has a vietnamese subset so diacritics ("Chuyển tiền")
+        // render correctly. Instrument Serif (no VI subset) kept only as fallback.
+        display: ['Lora', 'Instrument Serif', 'ui-serif', 'Georgia', 'serif'],
+        // Pure-ASCII hero numerals keep the distinctive Instrument Serif look.
+        numeral: ['Instrument Serif', 'Lora', 'ui-serif', 'Georgia', 'serif'],
         sans: ['Geist', 'ui-sans-serif', 'system-ui', 'sans-serif'],
         mono: ['Geist Mono', 'ui-monospace', 'SF Mono', 'Menlo', 'monospace'],
       },

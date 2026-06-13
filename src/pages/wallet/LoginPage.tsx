@@ -1,37 +1,45 @@
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Navigate, useNavigate } from 'react-router-dom'
 import { useForm } from 'react-hook-form'
+import { useTranslation } from 'react-i18next'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { z } from 'zod'
 import { Input } from '@/components/ui/Input'
 import { useAuthStore } from '@/stores/authStore'
 import { login, register, googleOAuthUrl } from '@/api/auth'
+import { APP_VERSION } from '@/lib/app-meta'
 
-const loginSchema = z.object({
-  email: z.string().email('Email không hợp lệ'),
-  password: z.string().min(6, 'Mật khẩu ít nhất 6 ký tự'),
-})
-
-const registerSchema = loginSchema.extend({
-  name: z.string().optional(),
-})
-
-type FormValues = z.infer<typeof registerSchema>
+interface FormValues {
+  email: string
+  password: string
+  name?: string
+}
 
 export default function LoginPage() {
   const token = useAuthStore((s) => s.token)
   const setTokens = useAuthStore((s) => s.setTokens)
   const navigate = useNavigate()
+  const { t } = useTranslation()
   const [isRegister, setIsRegister] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [submitError, setSubmitError] = useState<string | null>(null)
+
+  // Schemas built with localized validation messages; rebuilt when the language
+  // or register/login mode changes.
+  const schema = useMemo(() => {
+    const base = z.object({
+      email: z.string().email(t('login.invalidEmail')),
+      password: z.string().min(6, t('login.passwordMin')),
+    })
+    return isRegister ? base.extend({ name: z.string().optional() }) : base
+  }, [t, isRegister])
 
   const {
     register: registerForm,
     handleSubmit,
     formState: { errors },
   } = useForm<FormValues>({
-    resolver: zodResolver(isRegister ? registerSchema : loginSchema),
+    resolver: zodResolver(schema),
     defaultValues: { email: '', password: '', name: '' },
   })
 
@@ -53,7 +61,7 @@ export default function LoginPage() {
       setTokens(data.accessToken, data.refreshToken)
       navigate('/', { replace: true })
     } catch (err) {
-      setSubmitError(err instanceof Error ? err.message : 'Đăng nhập thất bại')
+      setSubmitError(err instanceof Error ? err.message : t('login.loginFailed'))
     } finally {
       setIsLoading(false)
     }
@@ -70,7 +78,7 @@ export default function LoginPage() {
         <div className="text-center mb-8">
           <div className="text-5xl text-accent mb-3 leading-none select-none" aria-hidden="true">◇</div>
           <h1 className="font-display italic text-3xl text-primary tracking-tight">ledger</h1>
-          <p className="font-mono text-xs text-muted mt-1 tracking-widest uppercase">v2.0 · personal finance terminal</p>
+          <p className="font-mono text-xs text-muted mt-1 tracking-widest uppercase">{APP_VERSION} · {t('login.tagline')}</p>
         </div>
 
         {/* Card */}
@@ -78,15 +86,15 @@ export default function LoginPage() {
           <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-3">
             {isRegister && (
               <Input
-                label="Họ và tên"
-                placeholder="Nguyễn Văn A"
+                label={t('login.name')}
+                placeholder={t('login.namePlaceholder')}
                 autoComplete="name"
                 {...registerForm('name')}
               />
             )}
 
             <Input
-              label="Email"
+              label={t('login.email')}
               type="email"
               placeholder="you@example.com"
               autoComplete="email"
@@ -95,7 +103,7 @@ export default function LoginPage() {
             />
 
             <Input
-              label="Mật khẩu"
+              label={t('login.password')}
               type="password"
               placeholder="••••••••"
               autoComplete={isRegister ? 'new-password' : 'current-password'}
@@ -114,7 +122,7 @@ export default function LoginPage() {
               disabled={isLoading}
               className="w-full mt-1 bg-accent text-accent-ink font-mono text-sm font-medium tracking-widest uppercase px-4 py-2.5 rounded border border-accent hover:bg-accent/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
             >
-              {isLoading ? '...' : isRegister ? 'Đăng ký' : 'Đăng nhập'}
+              {isLoading ? '...' : isRegister ? t('login.signUp') : t('login.signIn')}
             </button>
           </form>
 
@@ -124,7 +132,7 @@ export default function LoginPage() {
               <div className="w-full border-t border-border" />
             </div>
             <div className="relative flex justify-center">
-              <span className="bg-surface px-3 font-mono text-xs text-faint uppercase tracking-widest">hoặc</span>
+              <span className="bg-surface px-3 font-mono text-xs text-faint uppercase tracking-widest">{t('common.or')}</span>
             </div>
           </div>
 
@@ -140,12 +148,12 @@ export default function LoginPage() {
               <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z" />
               <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z" />
             </svg>
-            Tiếp tục với Google
+            {t('login.continueWithGoogle')}
           </button>
 
           {/* Toggle */}
           <p className="font-mono text-xs text-faint text-center">
-            {isRegister ? 'Đã có tài khoản? ' : 'Chưa có tài khoản? '}
+            {isRegister ? t('login.haveAccount') : t('login.noAccount')}
             <button
               type="button"
               onClick={() => {
@@ -154,17 +162,17 @@ export default function LoginPage() {
               }}
               className="text-accent hover:underline bg-transparent border-none cursor-pointer"
             >
-              {isRegister ? 'Đăng nhập' : 'Đăng ký'}
+              {isRegister ? t('login.signIn') : t('login.signUp')}
             </button>
           </p>
         </div>
 
         {/* Footer */}
         <p className="font-mono text-center text-xs text-faint mt-5">
-          Bằng việc tiếp tục, bạn đồng ý với{' '}
-          <span className="underline cursor-pointer hover:text-muted transition-colors">Điều khoản</span>
-          {' '}và{' '}
-          <span className="underline cursor-pointer hover:text-muted transition-colors">Chính sách bảo mật</span>
+          {t('login.agreePrefix')}
+          <span className="underline cursor-pointer hover:text-muted transition-colors">{t('login.terms')}</span>
+          {t('login.and')}
+          <span className="underline cursor-pointer hover:text-muted transition-colors">{t('login.privacy')}</span>
         </p>
       </div>
     </div>

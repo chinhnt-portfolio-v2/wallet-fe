@@ -1,15 +1,35 @@
 import { test, expect } from '@playwright/test'
-import { waitForReact } from '../helpers/app'
+import { waitForReact, content } from '../helpers/app'
 
-const BASE = process.env.BASE_URL || 'http://localhost:5173'
+const BASE = process.env.BASE_URL || 'http://localhost:3000'
 
-test.use({ storageState: 'e2e/.auth/state.json' })
-
+// ─── Categories Page ──────────────────────────────────────────────────────────
 test.describe('Categories Page', () => {
-  test('page loads successfully', async ({ page }) => {
+  test('renders with "Danh mục" heading', async ({ page }) => {
     await page.goto(`${BASE}/categories`)
     await waitForReact(page)
-    const body = await page.locator('body').textContent()
-    expect(body?.trim().length).toBeGreaterThan(0)
+    await expect(content(page).getByRole('heading', { name: /Danh mục/i })).toBeVisible()
+  })
+
+  test('shows EXPENSE / INCOME segmented tabs', async ({ page }) => {
+    await page.goto(`${BASE}/categories`)
+    await waitForReact(page)
+    await expect(content(page).getByRole('tab', { name: /Chi tiêu/i })).toBeVisible()
+    await expect(content(page).getByRole('tab', { name: /Thu nhập/i })).toBeVisible()
+  })
+
+  test('lists seeded expense categories', async ({ page }) => {
+    await page.goto(`${BASE}/categories`)
+    await waitForReact(page)
+    // Default tab is EXPENSE; "Ăn uống" is a seeded expense category.
+    await expect(content(page).getByText('Ăn uống').first()).toBeVisible({ timeout: 30_000 })
+  })
+
+  test('"Thêm" opens the create form', async ({ page }) => {
+    await page.goto(`${BASE}/categories`)
+    await waitForReact(page)
+    await content(page).getByRole('button', { name: /Thêm/i }).first().click()
+    // The create form input ("Tên danh mục" placeholder) appears.
+    await expect(content(page).getByPlaceholder(/VD: Ăn uống, Đi lại/i)).toBeVisible()
   })
 })

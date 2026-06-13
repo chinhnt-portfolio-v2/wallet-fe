@@ -1,4 +1,5 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import { BottomSheet } from '@/components/ui/BottomSheet'
 import { useCreateWishlistItem, useUpdateWishlistItem } from '@/hooks/use-wishlist'
 import type { WishlistItem, WishlistPriority, CreateWishlistItemRequest } from '@/types'
@@ -10,44 +11,48 @@ interface WishlistFormProps {
   editing?: WishlistItem | null
 }
 
-const PRIORITIES: { value: WishlistPriority; label: string }[] = [
-  { value: 'HIGH',   label: '🔴 Cao' },
-  { value: 'MEDIUM', label: '🟡 Trung bình' },
-  { value: 'LOW',    label: '🟢 Thấp' },
+const PRIORITIES: { value: WishlistPriority; emoji: string; labelKey: string }[] = [
+  { value: 'HIGH',   emoji: '🔴', labelKey: 'wishlist.priorityHigh' },
+  { value: 'MEDIUM', emoji: '🟡', labelKey: 'wishlist.priorityMedium' },
+  { value: 'LOW',    emoji: '🟢', labelKey: 'wishlist.priorityLow' },
 ]
 
 export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
+  const { t } = useTranslation()
   const create = useCreateWishlistItem()
   const update = useUpdateWishlistItem()
 
-  const [name,       setName]       = useState('')
-  const [price,      setPrice]      = useState('')
-  const [priority,   setPriority]   = useState<WishlistPriority>('MEDIUM')
-  const [targetDate, setTargetDate] = useState('')
-  const [notes,      setNotes]      = useState('')
-  const [url,        setUrl]        = useState('')
+  // Reset key — when editing target or open state changes, this changes and we
+  // re-seed local state during render (the recommended "store previous prop"
+  // pattern) instead of calling setState inside an effect.
+  const resetKey = `${open ? 1 : 0}:${editing?.id ?? 'new'}`
+  const [seededKey, setSeededKey] = useState(resetKey)
+
+  const [name,       setName]       = useState(editing?.name ?? '')
+  const [price,      setPrice]      = useState(editing?.estimatedPrice != null ? String(editing.estimatedPrice) : '')
+  const [priority,   setPriority]   = useState<WishlistPriority>(editing?.priority ?? 'MEDIUM')
+  const [targetDate, setTargetDate] = useState(editing?.targetDate ?? '')
+  const [notes,      setNotes]      = useState(editing?.notes ?? '')
+  const [url,        setUrl]        = useState(editing?.url ?? '')
   const [urlError,   setUrlError]   = useState('')
 
-  // Populate form when editing
-  useEffect(() => {
-    if (editing) {
-      setName(editing.name)
-      setPrice(editing.estimatedPrice != null ? String(editing.estimatedPrice) : '')
-      setPriority(editing.priority)
-      setTargetDate(editing.targetDate ?? '')
-      setNotes(editing.notes ?? '')
-      setUrl(editing.url ?? '')
-    } else {
-      setName(''); setPrice(''); setPriority('MEDIUM')
-      setTargetDate(''); setNotes(''); setUrl('')
-    }
+  if (seededKey !== resetKey) {
+    // Re-seed fields from the (possibly new) editing target. Runs during render,
+    // synchronously, before the form is painted.
+    setSeededKey(resetKey)
+    setName(editing?.name ?? '')
+    setPrice(editing?.estimatedPrice != null ? String(editing.estimatedPrice) : '')
+    setPriority(editing?.priority ?? 'MEDIUM')
+    setTargetDate(editing?.targetDate ?? '')
+    setNotes(editing?.notes ?? '')
+    setUrl(editing?.url ?? '')
     setUrlError('')
-  }, [editing, open])
+  }
 
   function validateUrl(val: string): boolean {
     if (!val.trim()) return true
     if (!/^https?:\/\//.test(val)) {
-      setUrlError('URL phải bắt đầu bằng https:// hoặc http://')
+      setUrlError(t('wishlist.urlError'))
       return false
     }
     setUrlError('')
@@ -72,13 +77,13 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
       update.mutate(
         { id: editing.id, ...body },
         {
-          onSuccess: () => { toast.success('Đã cập nhật!'); onClose() },
+          onSuccess: () => { toast.success(t('wishlist.updated')); onClose() },
           onError: (err) => toast.error(err.message),
         }
       )
     } else {
       create.mutate(body, {
-        onSuccess: () => { toast.success('Đã thêm vào danh sách!'); onClose() },
+        onSuccess: () => { toast.success(t('wishlist.added')); onClose() },
         onError: (err) => toast.error(err.message),
       })
     }
@@ -87,16 +92,16 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
   const isPending = create.isPending || update.isPending
 
   return (
-    <BottomSheet open={open} onClose={onClose} title={editing ? 'Sửa mặt hàng' : 'Thêm mặt hàng'}>
+    <BottomSheet open={open} onClose={onClose} title={editing ? t('wishlist.editItem') : t('wishlist.addItem')}>
       <form onSubmit={handleSubmit} className="space-y-4">
         {/* Name */}
         <div>
-          <label className="text-xs text-muted mb-1 block">Tên mặt hàng *</label>
+          <label className="text-xs text-muted mb-1 block">{t('wishlist.name')}</label>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
-            placeholder="VD: AirPods Pro 2"
+            placeholder={t('wishlist.namePlaceholder')}
             required
             className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:ring-2 focus:ring-accent"
           />
@@ -104,7 +109,7 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
 
         {/* Price */}
         <div>
-          <label className="text-xs text-muted mb-1 block">Giá dự kiến (VND)</label>
+          <label className="text-xs text-muted mb-1 block">{t('wishlist.price')}</label>
           <input
             type="number"
             value={price}
@@ -117,7 +122,7 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
 
         {/* Priority */}
         <div>
-          <label className="text-xs text-muted mb-1 block">Ưu tiên</label>
+          <label className="text-xs text-muted mb-1 block">{t('wishlist.priority')}</label>
           <div className="flex gap-2">
             {PRIORITIES.map((p) => (
               <button
@@ -130,7 +135,7 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
                     : 'border-border text-muted bg-surface-2'
                 }`}
               >
-                {p.label}
+                {p.emoji} {t(p.labelKey)}
               </button>
             ))}
           </div>
@@ -138,7 +143,7 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
 
         {/* Target date */}
         <div>
-          <label className="text-xs text-muted mb-1 block">Ngày dự kiến mua</label>
+          <label className="text-xs text-muted mb-1 block">{t('wishlist.targetDate')}</label>
           <input
             type="date"
             value={targetDate}
@@ -149,12 +154,12 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
 
         {/* URL */}
         <div>
-          <label className="text-xs text-muted mb-1 block">Link sản phẩm</label>
+          <label className="text-xs text-muted mb-1 block">{t('wishlist.productLink')}</label>
           <input
             type="url"
             value={url}
             onChange={(e) => { setUrl(e.target.value); validateUrl(e.target.value) }}
-            placeholder="https://shopee.vn/..."
+            placeholder={t('wishlist.productLinkPlaceholder')}
             className={`w-full bg-surface-2 border rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:ring-2 focus:ring-accent ${
               urlError ? 'border-negative' : 'border-border'
             }`}
@@ -164,12 +169,12 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
 
         {/* Notes */}
         <div>
-          <label className="text-xs text-muted mb-1 block">Ghi chú</label>
+          <label className="text-xs text-muted mb-1 block">{t('wishlist.notes')}</label>
           <textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             rows={2}
-            placeholder="Màu đen mới..."
+            placeholder={t('wishlist.notesPlaceholder')}
             className="w-full bg-surface-2 border border-border rounded-lg px-3 py-2 text-sm text-primary placeholder:text-muted outline-none focus:ring-2 focus:ring-accent resize-none"
           />
         </div>
@@ -179,7 +184,7 @@ export function WishlistForm({ open, onClose, editing }: WishlistFormProps) {
           disabled={isPending || !name.trim()}
           className="w-full bg-accent text-white py-2.5 rounded-lg text-sm font-semibold hover:bg-accent/90 transition-colors disabled:opacity-50"
         >
-          {isPending ? 'Đang lưu...' : editing ? 'Cập nhật' : 'Thêm vào danh sách'}
+          {isPending ? t('common.saving') : editing ? t('wishlist.update') : t('wishlist.addToList')}
         </button>
       </form>
     </BottomSheet>

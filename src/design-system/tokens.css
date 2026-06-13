@@ -13,7 +13,11 @@
   --color-border: rgba(245, 241, 232, 0.08);
   --color-border-hi: rgba(245, 241, 232, 0.16);
 
-  /* Bone-white text scale */
+  /* Bone-white text scale.
+     Legibility floor (audit §3): any text that conveys information must use
+     `--color-text-muted` (45%) or brighter, at min 11px. The 28%
+     `--color-text-faint` tier is DECORATIVE ONLY — hairline rules, crosshair
+     ticks, chart axis marks — never readable labels, values, or helper copy. */
   --color-text-primary: #f5f1e8;
   --color-text-secondary: rgba(245, 241, 232, 0.72);
   --color-text-muted: rgba(245, 241, 232, 0.45);
@@ -26,8 +30,10 @@
   --color-negative: #ff5e4a;
   --color-warning: #ffb648;
 
-  /* Typography */
-  --font-display: 'Instrument Serif', ui-serif, Georgia, serif;
+  /* Typography — display uses Lora (has vietnamese subset) so VI heading
+     diacritics render correctly; Instrument Serif kept for ASCII hero numerals. */
+  --font-display: 'Lora', 'Instrument Serif', ui-serif, Georgia, serif;
+  --font-numeral: 'Instrument Serif', 'Lora', ui-serif, Georgia, serif;
   --font-sans: 'Geist', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, 'SF Mono', Menlo, monospace;
 

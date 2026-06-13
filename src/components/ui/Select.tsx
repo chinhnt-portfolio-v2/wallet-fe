@@ -21,6 +21,8 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           ref={ref}
           className={cn(
             'w-full rounded-sm border bg-surface px-3 py-2 text-sm text-primary',
+            // Dark color-scheme so the native option dropdown renders dark.
+            '[color-scheme:dark]',
             'focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent',
             'transition-all duration-150 cursor-pointer',
             error ? 'border-negative' : 'border-border',

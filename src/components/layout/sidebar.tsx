@@ -1,36 +1,39 @@
 import { Link, useLocation } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { cn } from '@/lib/utils'
+import { useUser } from '@/hooks/useUser'
+import { APP_VERSION, APP_TAGLINE } from '@/lib/app-meta'
 
 interface NavItem {
   href: string
-  label: string
+  labelKey: string
   glyph: string
   warn?: boolean
 }
 
-const NAV_SECTIONS: { section: string; items: NavItem[] }[] = [
+const NAV_SECTIONS: { sectionKey: string; items: NavItem[] }[] = [
   {
-    section: 'Overview',
+    sectionKey: 'nav.overview',
     items: [
-      { href: '/', label: 'Dashboard', glyph: '◐' },
-      { href: '/transactions', label: 'Transactions', glyph: '◑' },
+      { href: '/', labelKey: 'nav.dashboard', glyph: '◐' },
+      { href: '/transactions', labelKey: 'nav.transactions', glyph: '◑' },
     ],
   },
   {
-    section: 'Money',
+    sectionKey: 'nav.money',
     items: [
-      { href: '/wallets', label: 'Wallets', glyph: '◔' },
-      { href: '/budgets', label: 'Budgets', glyph: '◕' },
-      { href: '/debts', label: 'Debts', glyph: '◖', warn: true },
-      { href: '/wishlist', label: 'Savings', glyph: '◗' },
+      { href: '/wallets', labelKey: 'nav.wallets', glyph: '◔' },
+      { href: '/budgets', labelKey: 'nav.budgets', glyph: '◕' },
+      { href: '/debts', labelKey: 'nav.debts', glyph: '◖', warn: true },
+      { href: '/wishlist', labelKey: 'nav.wishlist', glyph: '◗' },
     ],
   },
   {
-    section: 'Account',
+    sectionKey: 'nav.account',
     items: [
-      { href: '/categories', label: 'Categories', glyph: '◓' },
-      { href: '/recurring', label: 'Recurring', glyph: '◒' },
-      { href: '/profile', label: 'Settings', glyph: '○' },
+      { href: '/categories', labelKey: 'nav.categories', glyph: '◓' },
+      { href: '/recurring', labelKey: 'nav.recurring', glyph: '◒' },
+      { href: '/profile', labelKey: 'nav.profile', glyph: '○' },
     ],
   },
 ]
@@ -42,6 +45,12 @@ function isActiveHref(pathname: string, href: string) {
 
 export function Sidebar() {
   const location = useLocation()
+  const { t } = useTranslation()
+  const { data: user } = useUser()
+
+  // F12: derive a display name + avatar initial from the real authenticated user.
+  const displayName = user?.name?.trim() || user?.email || t('nav.account')
+  const avatarInitial = (user?.name?.trim() || user?.email || '?')[0]?.toUpperCase() ?? '?'
 
   return (
     <aside
@@ -58,18 +67,18 @@ export function Sidebar() {
             ledger
           </div>
           <div className="font-mono text-[9px] uppercase tracking-[0.16em] text-faint mt-0.5">
-            v0 · personal
+            {APP_VERSION} · {APP_TAGLINE}
           </div>
         </div>
       </div>
 
-      <nav className="px-3 flex-1 overflow-y-auto" aria-label="Sidebar navigation">
-        {NAV_SECTIONS.map(({ section, items }) => (
-          <div key={section} className="mb-4">
+      <nav className="px-3 flex-1 overflow-y-auto" aria-label={t('profile.account')}>
+        {NAV_SECTIONS.map(({ sectionKey, items }) => (
+          <div key={sectionKey} className="mb-4">
             <div className="font-mono text-[9px] uppercase tracking-[0.14em] text-faint px-2.5 pt-1 pb-1.5">
-              {section}
+              {t(sectionKey)}
             </div>
-            {items.map(({ href, label, glyph, warn }) => {
+            {items.map(({ href, labelKey, glyph, warn }) => {
               const active = isActiveHref(location.pathname, href)
               return (
                 <Link
@@ -91,7 +100,7 @@ export function Sidebar() {
                   >
                     {glyph}
                   </span>
-                  <span className="flex-1 font-sans">{label}</span>
+                  <span className="flex-1 font-sans">{t(labelKey)}</span>
                 </Link>
               )
             })}
@@ -99,17 +108,31 @@ export function Sidebar() {
         ))}
       </nav>
 
-      {/* Account chip */}
-      <div className="mx-3.5 mb-4 px-3 py-2.5 rounded-xl bg-surface border border-border flex items-center gap-2.5">
-        <div className="w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center font-mono text-xs text-primary">
-          K
-        </div>
+      {/* Account chip — F12: real user, links to settings */}
+      <Link
+        to="/profile"
+        aria-label={t('profile.title')}
+        className="mx-3.5 mb-4 px-3 py-2.5 rounded-xl bg-surface border border-border flex items-center gap-2.5 hover:border-border-hi transition-colors"
+      >
+        {user?.picture ? (
+          <img
+            src={user.picture}
+            alt={displayName}
+            className="w-7 h-7 rounded-full object-cover border border-border"
+          />
+        ) : (
+          <div className="w-7 h-7 rounded-full bg-surface-2 flex items-center justify-center font-mono text-xs text-primary">
+            {avatarInitial}
+          </div>
+        )}
         <div className="flex-1 min-w-0 leading-tight">
-          <div className="font-sans text-xs text-primary truncate">khanh.ng</div>
-          <div className="font-mono text-[9px] text-faint">vi · vnd</div>
+          <div className="font-sans text-xs text-primary truncate">{displayName}</div>
+          <div className="font-mono text-[9px] text-faint truncate">
+            {user?.email ?? 'vnd'}
+          </div>
         </div>
         <span className="text-muted">›</span>
-      </div>
+      </Link>
     </aside>
   )
 }

@@ -1,5 +1,6 @@
-import { useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { useDashboardSummary, useOpenDebts, useMonthlyComparison } from '@/hooks/useDashboard'
 import { useRecentTransactions } from '@/hooks/useTransactions'
 import { useBudgetWithSpending } from '@/hooks/useBudgets'
@@ -16,6 +17,43 @@ import {
   CategoryChip,
   Sparkline,
 } from '@/design-system'
+import { isReceivable, debtActionKey } from '@/components/debts/debt-semantics'
+
+// ── Count-up hook (fancy §4.1) ──
+// Animates a number toward `target` with an ease-out curve over ~600ms.
+// Respects `prefers-reduced-motion` (snaps to the value, no animation). No deps:
+// drives the tween entirely inside requestAnimationFrame (so no synchronous
+// setState in the effect body), and cleans up on unmount / target change.
+function useCountUp(target: number, durationMs = 600): number {
+  const [value, setValue] = useState(target)
+  const fromRef = useRef(0)
+
+  useEffect(() => {
+    const prefersReduced =
+      typeof window !== 'undefined' &&
+      window.matchMedia?.('(prefers-reduced-motion: reduce)').matches
+
+    // Snap (no animation) for reduced-motion or a no-op target. The rAF below is
+    // async, so even the snap path avoids a synchronous setState in the effect.
+    const from = prefersReduced || target === 0 ? target : fromRef.current
+    let raf = 0
+    let start: number | null = null
+
+    const tick = (now: number) => {
+      if (start === null) start = now
+      const t = Math.min(1, (now - start) / durationMs)
+      const eased = 1 - Math.pow(1 - t, 3) // ease-out cubic
+      setValue(Math.round(from + (target - from) * eased))
+      if (t < 1) raf = requestAnimationFrame(tick)
+      else fromRef.current = target
+    }
+    raf = requestAnimationFrame(tick)
+
+    return () => cancelAnimationFrame(raf)
+  }, [target, durationMs])
+
+  return value
+}
 
 // ── Card surface — editorial card with thin border ──
 function Panel({
@@ -40,10 +78,9 @@ function Panel({
 
 // ── Zone A: Net worth hero ──
 function NetWorthHero() {
+  const { t } = useTranslation()
   const { data: summary, isLoading } = useDashboardSummary()
   const { data: months } = useMonthlyComparison(2)
-
-  if (isLoading) return <DashboardSkeleton />
 
   const s = summary ?? {
     totalAssets: 0,
@@ -52,6 +89,11 @@ function NetWorthHero() {
     netWorth: 0,
     currency: 'VND',
   }
+  // Hook must run unconditionally (before any early return).
+  const animatedNetWorth = useCountUp(s.netWorth)
+
+  if (isLoading) return <DashboardSkeleton />
+
   const thisMonth = months?.[0]
   const lastMonth = months?.[1]
   const deltaExpense =
@@ -64,27 +106,28 @@ function NetWorthHero() {
 
   return (
     <Panel padding="lg" className="relative">
-      <SectionLabel right="updated · live">Net worth</SectionLabel>
+      <SectionLabel right={t('dashboard.updatedLive')}>{t('dashboard.netWorth')}</SectionLabel>
       <div className="mt-4 mb-6">
-        <DisplayAmount value={s.netWorth} size={64} sub="as of today" />
+        <DisplayAmount value={animatedNetWorth} size={64} sub={t('dashboard.asOfToday')} />
       </div>
 
-      <div className="grid grid-cols-3 gap-4 pt-4 border-t border-border">
+      {/* Stat triplet: stack vertically <480px (no horizontal overflow), 3-col ≥480px. */}
+      <div className="grid grid-cols-1 min-[480px]:grid-cols-3 gap-3 min-[480px]:gap-4 pt-4 border-t border-border">
         <div>
           <p className="font-mono text-[10px] uppercase tracking-widest text-faint mb-2">
-            Assets
+            {t('dashboard.assets')}
           </p>
           <Amount value={s.totalAssets} size={18} className="text-positive" />
         </div>
-        <div className="border-l border-border pl-4">
+        <div className="min-[480px]:border-l min-[480px]:border-border min-[480px]:pl-4 pt-3 min-[480px]:pt-0 border-t min-[480px]:border-t-0 border-border">
           <p className="font-mono text-[10px] uppercase tracking-widest text-faint mb-2">
-            Liabilities
+            {t('dashboard.liabilities')}
           </p>
           <Amount value={s.totalDebt} size={18} className="text-negative" />
         </div>
-        <div className="border-l border-border pl-4">
+        <div className="min-[480px]:border-l min-[480px]:border-border min-[480px]:pl-4 pt-3 min-[480px]:pt-0 border-t min-[480px]:border-t-0 border-border">
           <p className="font-mono text-[10px] uppercase tracking-widest text-faint mb-2">
-            Receivable
+            {t('dashboard.receivable')}
           </p>
           <Amount value={s.totalReceivable} size={18} className="text-accent" />
         </div>
@@ -93,14 +136,14 @@ function NetWorthHero() {
       {deltaPercent !== null && (
         <div className="mt-4 pt-3 border-t border-border flex items-center gap-2">
           <span className="font-mono text-[10px] uppercase tracking-widest text-faint">
-            vs last month
+            {t('dashboard.vsLastMonth')}
           </span>
           <span
             className={`font-mono text-xs ${
               isExpenseUp ? 'text-negative' : 'text-positive'
             }`}
           >
-            {isExpenseUp ? '↑' : '↓'} {Math.abs(Number(deltaPercent))}% spend
+            {isExpenseUp ? '↑' : '↓'} {t('dashboard.spendChange', { pct: Math.abs(Number(deltaPercent)) })}
           </span>
         </div>
       )}
@@ -110,6 +153,7 @@ function NetWorthHero() {
 
 // ── Zone B: Cash flow sparkline ──
 function CashFlow() {
+  const { t } = useTranslation()
   const { data: months, isLoading } = useMonthlyComparison(6)
   if (isLoading || !months || months.length === 0) return null
 
@@ -119,27 +163,28 @@ function CashFlow() {
 
   return (
     <div className="space-y-2">
-      <SectionLabel right="6 months">Cash flow</SectionLabel>
+      <SectionLabel right={t('dashboard.sixMonths')}>{t('dashboard.cashFlow')}</SectionLabel>
       <Panel padding="md">
-        <div className="grid grid-cols-2 gap-4">
-          <div>
+        {/* Stack the two trends <480px so neither SVG overflows the viewport. */}
+        <div className="grid grid-cols-1 min-[480px]:grid-cols-2 gap-4">
+          <div className="w-full min-w-0">
             <p className="font-mono text-[10px] uppercase tracking-widest text-faint mb-1">
-              Income
+              {t('transaction.income')}
             </p>
-            <Sparkline points={inc} color="var(--color-accent)" width={300} height={64} />
+            <Sparkline points={inc} color="var(--color-accent)" height={64} />
           </div>
-          <div>
+          <div className="w-full min-w-0">
             <p className="font-mono text-[10px] uppercase tracking-widest text-faint mb-1">
-              Expense
+              {t('transaction.expense')}
             </p>
-            <Sparkline points={exp} color="var(--color-negative)" width={300} height={64} />
+            <Sparkline points={exp} color="var(--color-negative)" height={64} />
           </div>
         </div>
-        <div className="flex justify-between mt-3 pt-3 border-t border-border">
+        <div className="flex justify-between mt-3 pt-3 border-t border-border overflow-hidden">
           {series.map((m) => (
             <span
               key={m.label}
-              className="font-mono text-[10px] uppercase tracking-widest text-faint"
+              className="font-mono text-[10px] uppercase tracking-widest text-faint truncate"
             >
               {m.label}
             </span>
@@ -152,6 +197,7 @@ function CashFlow() {
 
 // ── Open debts ──
 function OpenDebts() {
+  const { t, i18n } = useTranslation()
   const { data: debts, isLoading } = useOpenDebts()
   const navigate = useNavigate()
 
@@ -176,11 +222,11 @@ function OpenDebts() {
       <SectionLabel
         right={
           <button onClick={() => navigate('/debts')} className="hover:text-primary">
-            view all →
+            {t('common.viewAll')} →
           </button>
         }
       >
-        Open debts
+        {t('dashboard.openDebts')}
       </SectionLabel>
       <Panel padding="none">
         {visible.map((d, i) => (
@@ -205,14 +251,25 @@ function OpenDebts() {
                   <>
                     {' · '}
                     <span className={d.isOverdue ? 'text-negative' : ''}>
-                      due {new Date(d.dueDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                      {t('dashboard.due', {
+                        date: new Date(d.dueDate).toLocaleDateString(
+                          i18n.language === 'vi' ? 'vi-VN' : 'en-US',
+                          { month: 'short', day: 'numeric' },
+                        ),
+                      })}
                     </span>
                   </>
                 )}
               </p>
             </div>
-            <Amount value={d.remaining} size={14} className="text-negative" />
-            <Pill onClick={() => navigate(`/debts/${d.groupId}`)}>Pay</Pill>
+            <Amount
+              value={d.remaining}
+              size={14}
+              className={isReceivable(d.groupType) ? 'text-positive' : 'text-negative'}
+            />
+            <Pill onClick={() => navigate(`/debts/${d.groupId}`)}>
+              {t(debtActionKey(d.groupType))}
+            </Pill>
           </div>
         ))}
       </Panel>
@@ -222,6 +279,7 @@ function OpenDebts() {
 
 // ── Budget alerts ──
 function BudgetAlerts() {
+  const { t } = useTranslation()
   const navigate = useNavigate()
   const now = new Date()
   const period = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -239,11 +297,11 @@ function BudgetAlerts() {
       <SectionLabel
         right={
           <button onClick={() => navigate('/budgets')} className="hover:text-primary">
-            view all →
+            {t('common.viewAll')} →
           </button>
         }
       >
-        Budget watch
+        {t('dashboard.budgetWatch')}
       </SectionLabel>
       <Panel padding="md">
         <div className="space-y-4">
@@ -260,7 +318,7 @@ function BudgetAlerts() {
                       size={24}
                     />
                     <span className="text-sm text-primary truncate">
-                      {b.category?.name ?? 'Category'}
+                      {b.category?.name ?? t('budget.category')}
                     </span>
                   </div>
                   <span
@@ -278,7 +336,7 @@ function BudgetAlerts() {
                     <Amount value={b.monthlyLimit} size={10} bare />
                   </span>
                   <span className={exceeded ? 'text-negative' : ''}>
-                    {exceeded ? 'over budget' : 'near limit'}
+                    {exceeded ? t('dashboard.overBudget') : t('dashboard.nearLimit')}
                   </span>
                 </div>
               </div>
@@ -292,7 +350,8 @@ function BudgetAlerts() {
 
 // ── Recent transactions ──
 function RecentTransactions() {
-  const { data: txs, isLoading } = useRecentTransactions(6)
+  const { t } = useTranslation()
+  const { data: txs, isLoading, isError, refetch } = useRecentTransactions(6)
   const navigate = useNavigate()
 
   return (
@@ -300,25 +359,35 @@ function RecentTransactions() {
       <SectionLabel
         right={
           <button onClick={() => navigate('/transactions')} className="hover:text-primary">
-            view all →
+            {t('common.viewAll')} →
           </button>
         }
       >
-        Recent activity
+        {t('dashboard.recentActivity')}
       </SectionLabel>
       <Panel padding="none">
         {isLoading ? (
           <div className="p-4 space-y-3">
             {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center gap-3 animate-pulse">
-                <div className="w-7 h-7 rounded bg-surface-2" />
+              <div key={i} className="flex items-center gap-3">
+                <div className="w-7 h-7 rounded bg-surface-2 animate-shimmer" />
                 <div className="flex-1 space-y-1">
-                  <div className="h-3 w-2/3 bg-surface-2 rounded" />
-                  <div className="h-2 w-1/3 bg-surface-2 rounded" />
+                  <div className="h-3 w-2/3 bg-surface-2 rounded animate-shimmer" />
+                  <div className="h-2 w-1/3 bg-surface-2 rounded animate-shimmer" />
                 </div>
-                <div className="h-4 w-16 bg-surface-2 rounded" />
+                <div className="h-4 w-16 bg-surface-2 rounded animate-shimmer" />
               </div>
             ))}
+          </div>
+        ) : isError ? (
+          <div className="p-6 text-center space-y-2">
+            <p className="text-sm text-negative">{t('transaction.loadError')}</p>
+            <button
+              onClick={() => refetch()}
+              className="font-mono text-[11px] uppercase tracking-[0.08em] text-accent hover:underline min-h-[44px] px-3"
+            >
+              {t('common.retry')}
+            </button>
           </div>
         ) : Array.isArray(txs) && txs.length > 0 ? (
           txs.map((tx, i) => (
@@ -335,7 +404,7 @@ function RecentTransactions() {
               />
               <div className="flex-1 min-w-0">
                 <p className="text-sm text-primary truncate">
-                  {tx.category?.name ?? 'Transaction'}
+                  {tx.category?.name ?? t('transaction.transactionFallback')}
                 </p>
                 {tx.note && (
                   <p className="font-mono text-[10px] uppercase tracking-widest text-faint truncate mt-0.5">
@@ -352,7 +421,7 @@ function RecentTransactions() {
             </div>
           ))
         ) : (
-          <div className="p-6 text-center text-sm text-muted">No transactions yet</div>
+          <div className="p-6 text-center text-sm text-muted">{t('transaction.noTransactionsYet')}</div>
         )}
       </Panel>
     </div>
@@ -363,7 +432,7 @@ function RecentTransactions() {
 export default function DashboardPage() {
   return (
     <>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div className="page-enter grid grid-cols-1 lg:grid-cols-3 gap-4">
         <div className="lg:col-span-2 space-y-4">
           <NetWorthHero />
           <CashFlow />

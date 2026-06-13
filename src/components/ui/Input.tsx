@@ -22,6 +22,9 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           className={cn(
             'w-full rounded-sm border bg-surface px-3 py-2 text-sm text-primary',
             'placeholder:text-muted',
+            // Dark color-scheme so the native date/time picker + calendar icon
+            // render against the dark theme instead of a light OS popup.
+            '[color-scheme:dark]',
             'focus:outline-none focus:ring-2 focus:ring-accent/30 focus:border-accent',
             'transition-all duration-150',
             error ? 'border-negative focus:ring-negative/30 focus:border-negative' : 'border-border',
